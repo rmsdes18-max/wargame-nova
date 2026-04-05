@@ -47,6 +47,7 @@ runMigrations()
     app.listen(PORT, () => console.log(`Wargame Nova listening on :${PORT}`));
   })
   .catch(err => {
-    console.error('Migration failed:', err.message);
+    console.error('Migration failed:', err.message, err.stack);
+    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'set (length=' + process.env.DATABASE_URL.length + ')' : 'NOT SET');
     process.exit(1);
   });
