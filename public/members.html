@@ -1479,7 +1479,7 @@ async function init() {
 
   // Load roster (or fall back to hardcoded defaults)
   var saved = loadRoster();
-  if (saved) {
+  if (saved && saved.length) {
     saved.forEach(function(m){ TLGM_MEMBERS.push(m); });
   } else {
     DEFAULT_MEMBERS.forEach(function(m){ TLGM_MEMBERS.push(m); });
