@@ -169,12 +169,13 @@ input[type=text]:focus{border-color:var(--gold);}
 <nav>
   <div class="nav-logo">カ NOVA ミ</div>
   <div class="nav-tabs">
-    <div class="nav-tab active" onclick="showPage('wars')">All Wars</div>
-    <div class="nav-tab" onclick="showPage('new-war')" id="new-war-tab">New War</div>
-    <a class="nav-tab" href="members.html" style="text-decoration:none;">Members</a>
+    <div class="nav-tab active" onclick="showPage('wars')" data-t="allWars">All Wars</div>
+    <div class="nav-tab" onclick="showPage('new-war')" id="new-war-tab" data-t="newWar">New War</div>
+    <a class="nav-tab" href="members.html" style="text-decoration:none;" data-t="members">Members</a>
   </div>
   <div class="nav-right">
-    <button class="btn-settings" onclick="showPage('settings')" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:#888;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-right:6px;">⚙ Settings</button>
+    <button onclick="toggleLang()" id="lang-btn" style="background:transparent;border:1px solid rgba(255,255,255,.08);color:#666;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;margin-right:6px;font-weight:700;letter-spacing:.04em;">EN</button>
+    <button class="btn-settings" onclick="promptPin()" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:#888;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-right:6px;">⚙ Settings</button>
     <button class="btn-new-war" onclick="startNewWar()">+ New War</button>
   </div>
 </nav>
@@ -195,6 +196,7 @@ input[type=text]:focus{border-color:var(--gold);}
   <div class="wizard">
     <div class="wizard-steps" id="wizard-steps">
       <div class="wstep active" id="ws-1"><span class="wstep-num">1</span>Party Setup</div>
+      <div class="wstep" id="ws-2"><span class="wstep-num">2</span>Scoreboard</div>
     </div>
     <div class="wizard-body">
 
@@ -214,7 +216,7 @@ input[type=text]:focus{border-color:var(--gold);}
           <div class="section-title" style="font-size:16px;">Upload party screenshot</div>
           <div id="step1-btns" style="display:none;gap:8px;flex-shrink:0;">
             <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="document.getElementById('party-upload-zone').style.display='';document.getElementById('party-split-view').style.display='none';document.getElementById('party-img-input').value='';document.getElementById('step1-btns').style.display='none';">↺ Schimbă poza</button>
-            <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="saveWarSimple()">💾 Salvează War</button>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="confirmAndGoStep2()">Confirm Parties →</button>
           </div>
         </div>
         <div class="section-sub" style="margin-bottom:12px;">Screenshot din TL cu toate party-urile (mov=Tank, verde=Healer, roșu=DPS)</div>
@@ -249,6 +251,28 @@ input[type=text]:focus{border-color:var(--gold);}
 
         <div id="party-confirm-display" class="parties-confirm"></div>
         <div id="step1-confirm-btns"></div>
+      </div>
+
+      <!-- STEP 2: Scoreboard upload + extraction -->
+      <div id="step-2" style="display:none;">
+        <div class="section-title" style="font-size:16px;margin-bottom:4px;">Upload scoreboard screenshots</div>
+        <div class="section-sub" style="margin-bottom:12px;">Încarcă pozele de scoreboard din joc (câte una per pagină). Vision AI va extrage statisticile automat.</div>
+
+        <div class="score-upload-grid" id="score-grid"></div>
+        <div class="score-add" style="display:inline-flex;min-width:160px;margin-top:10px;position:relative;">
+          <input type="file" accept="image/*" multiple onchange="handleScoreUpload(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+          <div class="score-add-icon">📷</div>
+          <div class="score-add-txt">Adaugă poze scoreboard</div>
+        </div>
+
+        <div id="score-extract-status" style="margin-top:16px;"></div>
+        <div id="score-results" style="margin-top:16px;"></div>
+
+        <div class="btn-row" style="margin-top:20px;gap:10px;">
+          <button class="btn btn-secondary" onclick="goBackToStep1()">← Înapoi la Party</button>
+          <button class="btn btn-primary" id="score-extract-btn" onclick="extractAllScoreboards()" disabled>🔍 Extrage statisticile</button>
+          <button class="btn btn-primary" id="score-save-btn" onclick="saveWarWithStats()" style="display:none;">💾 Salvează War</button>
+        </div>
       </div>
 
     </div>
@@ -314,6 +338,56 @@ input[type=text]:focus{border-color:var(--gold);}
 </div>
 
 <script>
+// ── LANGUAGE ──────────────────────────────────────────────────────────────
+var _lang = localStorage.getItem('nova_lang') || 'ro';
+var _t = {
+  ro: {
+    allWars:'Toate War-urile', newWar:'New War', members:'Membrii', settings:'Setări',
+    opponent:'Adversar', date:'Data', save:'Salvează', saveChanges:'Salvează modificări',
+    partySetup:'Party Setup', scoreboard:'Scoreboard', uploadParty:'Upload party screenshot',
+    uploadScore:'Upload scoreboard screenshots', extractStats:'Extrage statisticile',
+    extractAgain:'Extrage din nou', saveWar:'Salvează War', saveNoStats:'Salvează fără stats',
+    scoreboardNext:'Scoreboard →', confirmParties:'Confirm Parties →',
+    backToParty:'Înapoi la Party', addMember:'Adaugă membru', player:'Jucător',
+    kills:'Kills', assists:'Assists', dmgDealt:'Dmg Dealt', dmgTaken:'Dmg Taken',
+    healing:'Healing', total:'TOTAL', status:'Status', party:'Party',
+    withStats:'cu stats', noStats:'fără stats', extra:'extra', errors:'erori',
+    suggestions:'Sugestii matching — acești playeri par a fi aceeași persoană:',
+    apply:'Aplică', ignore:'Ignoră', applyAll:'Aplică toate sugestiile',
+    extractComplete:'Extragere completă! Verifică și corectează valorile, apoi salvează.',
+    enterPin:'Introdu PIN-ul', wrongPin:'PIN incorect', cancel:'Anulează',
+    noWars:'Nu există wars înregistrate.', deleteConfirm:'Sigur ștergi?', yes:'Da', no:'Nu',
+    processing:'Se procesează...', back:'Înapoi'
+  },
+  en: {
+    allWars:'All Wars', newWar:'New War', members:'Members', settings:'Settings',
+    opponent:'Opponent', date:'Date', save:'Save', saveChanges:'Save Changes',
+    partySetup:'Party Setup', scoreboard:'Scoreboard', uploadParty:'Upload party screenshot',
+    uploadScore:'Upload scoreboard screenshots', extractStats:'Extract Stats',
+    extractAgain:'Extract Again', saveWar:'Save War', saveNoStats:'Save without stats',
+    scoreboardNext:'Scoreboard →', confirmParties:'Confirm Parties →',
+    backToParty:'Back to Party', addMember:'Add member', player:'Player',
+    kills:'Kills', assists:'Assists', dmgDealt:'Dmg Dealt', dmgTaken:'Dmg Taken',
+    healing:'Healing', total:'TOTAL', status:'Status', party:'Party',
+    withStats:'with stats', noStats:'no stats', extra:'extra', errors:'errors',
+    suggestions:'Match suggestions — these players might be the same person:',
+    apply:'Apply', ignore:'Ignore', applyAll:'Apply all suggestions',
+    extractComplete:'Extraction complete! Review values and save.',
+    enterPin:'Enter PIN', wrongPin:'Wrong PIN', cancel:'Cancel',
+    noWars:'No wars recorded yet.', deleteConfirm:'Delete?', yes:'Yes', no:'No',
+    processing:'Processing...', back:'Back'
+  }
+};
+function t(key){ return (_t[_lang] && _t[_lang][key]) || key; }
+function toggleLang(){
+  _lang = _lang==='ro' ? 'en' : 'ro';
+  localStorage.setItem('nova_lang', _lang);
+  document.getElementById('lang-btn').textContent = _lang==='ro' ? 'EN' : 'RO';
+  // Reload page to apply
+  location.reload();
+}
+(function(){ document.getElementById('lang-btn').textContent = _lang==='ro' ? 'EN' : 'RO'; })();
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 var state = {
   step: 1,
@@ -408,6 +482,38 @@ function matchPartiesAgainstRoster(parties){
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────────
+// ── PIN PROTECTION ────────────────────────────────────────────────────────
+var _PIN = '4465';
+function promptPin(){
+  if(sessionStorage.getItem('nova_pin_ok')==='1'){ showPage('settings'); return; }
+  var overlay = document.createElement('div');
+  overlay.id = 'pin-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px 32px;text-align:center;min-width:280px;">'
+    +'<div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:var(--gold);margin-bottom:14px;">Introdu PIN-ul</div>'
+    +'<input id="pin-input" type="password" maxlength="4" placeholder="____" style="text-align:center;font-size:24px;letter-spacing:12px;width:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px;color:var(--text);outline:none;font-family:Share Tech Mono,monospace;">'
+    +'<div id="pin-error" style="margin-top:10px;font-size:12px;color:#e84040;display:none;">PIN incorect</div>'
+    +'<div style="margin-top:16px;display:flex;gap:8px;justify-content:center;">'
+      +'<button onclick="checkPin()" style="background:var(--gold);border:none;color:#000;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;padding:8px 24px;border-radius:6px;cursor:pointer;">OK</button>'
+      +'<button onclick="document.getElementById(\'pin-overlay\').remove()" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:13px;padding:8px 18px;border-radius:6px;cursor:pointer;">Anulează</button>'
+    +'</div></div>';
+  document.body.appendChild(overlay);
+  setTimeout(function(){ document.getElementById('pin-input').focus(); }, 100);
+  document.getElementById('pin-input').addEventListener('keydown', function(e){ if(e.key==='Enter') checkPin(); });
+}
+function checkPin(){
+  var val = document.getElementById('pin-input').value;
+  if(val === _PIN){
+    sessionStorage.setItem('nova_pin_ok','1');
+    document.getElementById('pin-overlay').remove();
+    showPage('settings');
+  } else {
+    document.getElementById('pin-error').style.display='block';
+    document.getElementById('pin-input').value='';
+    document.getElementById('pin-input').focus();
+  }
+}
+
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
@@ -441,6 +547,21 @@ function goStep(n){ /* single-step wizard */ }
 async function saveWarSimple(){
   var opp = (document.getElementById('opponent-input').value||'').trim() || 'Unknown';
   var dt  = document.getElementById('date-input').value || new Date().toLocaleDateString('ro-RO');
+  // Merge stats din confirmed players înapoi în parties
+  if(state.confirmed && state.confirmed.length){
+    state.parties.forEach(function(p){
+      p.members.forEach(function(m){
+        var stats = state.confirmed.find(function(c){ return namesMatch(c.name, m.name); });
+        if(stats){
+          m.defeat    = stats.defeat    || 0;
+          m.assist    = stats.assist    || 0;
+          m.dmg_dealt = stats.dmg_dealt || 0;
+          m.dmg_taken = stats.dmg_taken || 0;
+          m.healed    = stats.healed    || 0;
+        }
+      });
+    });
+  }
   var war = {id:Date.now(), opponent:opp, date:dt, parties:state.parties};
   try{
     var r = await fetch('/api/wars',{method:'POST',headers:apiHeaders(true),body:JSON.stringify(war)});
@@ -551,7 +672,9 @@ function confirmParties(){
                + (unmatched ? ' · <span style="color:var(--muted);">'+unmatched+' neidentificați</span>' : '')
                + ' · '+total+' total';
   document.getElementById('step1-confirm-btns').innerHTML =
-    '<div class="btn-row" style="margin-top:16px;"><div style="font-size:12px;margin-right:auto;">'+summary+'</div><button class="btn btn-primary" onclick="saveWarSimple()">💾 Salvează War</button></div>';
+    '<div class="btn-row" style="margin-top:16px;"><div style="font-size:12px;margin-right:auto;">'+summary+'</div>'
+    +'<button class="btn btn-secondary" onclick="saveWarSimple()">💾 Salvează fără stats</button>'
+    +'<button class="btn btn-primary" onclick="goToStep2()">Scoreboard → </button></div>';
 }
 
 // ── STEP 2: SCOREBOARD UPLOAD ─────────────────────────────────────────────
@@ -957,16 +1080,34 @@ function viewWar(warId){
   var w = wars.find(function(x){ return x.id===warId; });
   if(!w) return;
 
-  // Populate sidebar (basic info only)
+  // Compute aggregates from parties
+  var totalDefeats=0, totalAssists=0, totalDmg=0, totalTaken=0, totalHealed=0;
+  var allMembers = [];
+  w.parties.forEach(function(p){ p.members.forEach(function(m){
+    totalDefeats += m.defeat||0;
+    totalAssists += m.assist||0;
+    totalDmg     += m.dmg_dealt||0;
+    totalTaken   += m.dmg_taken||0;
+    totalHealed  += m.healed||0;
+    allMembers.push(m);
+  }); });
+  var topKillers = allMembers.filter(function(m){ return m.defeat>0; })
+    .sort(function(a,b){ return (b.defeat||0)-(a.defeat||0); }).slice(0,5);
+
+  // Populate sidebar
   document.getElementById('vw-opponent').textContent = '· '+w.opponent+' ·';
   document.getElementById('vw-date').textContent     = w.date;
-  document.getElementById('vw-defeats').textContent  = '—';
-  document.getElementById('vw-assists').textContent  = '—';
-  document.getElementById('vw-dmg').textContent      = '—';
-  document.getElementById('vw-taken').textContent    = '—';
-  document.getElementById('vw-healed').textContent   = '—';
-  document.getElementById('vw-topkills').innerHTML   = '';
-  document.getElementById('vw-kp-note').textContent  = '';
+  document.getElementById('vw-defeats').textContent  = totalDefeats || '—';
+  document.getElementById('vw-assists').textContent  = totalAssists || '—';
+  document.getElementById('vw-dmg').textContent      = totalDmg ? totalDmg.toLocaleString() : '—';
+  document.getElementById('vw-taken').textContent    = totalTaken ? totalTaken.toLocaleString() : '—';
+  document.getElementById('vw-healed').textContent   = totalHealed ? totalHealed.toLocaleString() : '—';
+  document.getElementById('vw-topkills').innerHTML   = topKillers.map(function(m){
+    return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;">'
+      +'<span style="color:#ddd;">'+escHtml(m.name)+'</span>'
+      +'<span style="color:var(--gold);font-weight:700;">'+m.defeat+'</span></div>';
+  }).join('');
+  document.getElementById('vw-kp-note').textContent  = totalDefeats ? allMembers.length+' membri' : '';
   document.getElementById('vw-ct-text').textContent  = 'Nova vs '+w.opponent+' · '+w.date;
 
   // Reset sidebar toggle state
@@ -988,23 +1129,196 @@ function viewWar(warId){
   html += '<button class="btn btn-primary" style="margin-bottom:20px;" onclick="saveWarEdits('+w.id+')">💾 Salvează modificări</button>';
   html += '</div>';
 
-  // Party cards grid
+  // Color options for party headers
+  var partyColors = [
+    {name:'Mov',       bg:'#1e1545', border:'#3a2a7a'},
+    {name:'Roșu',      bg:'#3a1020', border:'#7a2040'},
+    {name:'Galben',    bg:'#3a3010', border:'#7a6820'},
+    {name:'Albastru',  bg:'#102040', border:'#204080'},
+    {name:'Verde',     bg:'#103020', border:'#207040'},
+    {name:'Portocaliu',bg:'#3a2010', border:'#7a4020'},
+    {name:'Alb',       bg:'#2a2a2a', border:'#555'}
+  ];
+
+  // Party tables grid — 3 per rând + member picker panel
+  html += '<div style="display:flex;gap:16px;grid-column:1/-1;">';
+  html += '<div id="vw-parties-grid" style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">';
+
   w.parties.forEach(function(p, pi){
-    html += '<div class="party-card"><div class="party-card-hdr"><span>'+escHtml(p.name)+'</span><span class="ptag">'+escHtml(p.label||'')+'</span></div>';
-    p.members.forEach(function(m, mi){
-      html += '<div class="party-member">';
-      html += '<div class="role-dot dot-'+m.role+'"></div>';
-      html += '<input data-pi="'+pi+'" data-mi="'+mi+'" value="'+escHtml(m.name)+'" style="flex:1;background:transparent;border:none;border-bottom:1px solid transparent;color:#ddd;font-size:12px;font-weight:600;outline:none;padding:1px 0;font-family:\'Exo 2\',sans-serif;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
-      if(m.tlgmName && m.tlgmName.toLowerCase()!==m.name.toLowerCase())
-        html += '<span style="font-size:10px;color:var(--muted);margin-left:4px;flex-shrink:0;">'+escHtml(m.tlgmName)+'</span>';
-      html += '<span class="role-pill role-'+m.role+'">'+m.role+'</span>';
-      html += '</div>';
+    var pKills=0, pAssists=0, pDmg=0, pTaken=0, pHealed=0;
+    p.members.forEach(function(m){ pKills+=m.defeat||0; pAssists+=m.assist||0; pDmg+=m.dmg_dealt||0; pTaken+=m.dmg_taken||0; pHealed+=m.healed||0; });
+    var pColor = p.color || partyColors[0].bg;
+    var pBorder = partyColors.find(function(c){ return c.bg===pColor; });
+    var borderColor = pBorder ? pBorder.border : 'var(--border)';
+
+    html += '<div style="background:var(--bg2);border:1px solid '+borderColor+';border-radius:10px;overflow:hidden;">';
+
+    // Header cu culoare selectabilă + live change
+    html += '<div id="party-hdr-'+pi+'" style="background:'+pColor+';padding:10px 14px;display:flex;align-items:center;gap:8px;">';
+    html += '<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;flex:1;">'+escHtml(p.name)+'</span>';
+    html += '<select data-pi="'+pi+'" data-field="color" onchange="document.getElementById(\'party-hdr-'+pi+'\').style.background=this.value" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:11px;padding:3px 6px;cursor:pointer;">';
+    partyColors.forEach(function(c){
+      html += '<option value="'+c.bg+'"'+(pColor===c.bg?' selected':'')+'>'+c.name+'</option>';
     });
+    html += '</select></div>';
+
+    // Table
+    var inputStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:4px 6px;font-size:12px;width:100%;font-family:Share Tech Mono,monospace;';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:var(--bg3);">'
+      +'<th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.06em;">PLAYER</th>'
+      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;width:50px;">K</th>'
+      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;width:50px;">A</th>'
+      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">DMG</th>'
+      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">TAKEN</th>'
+      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">HEAL</th>'
+      +'<th style="width:26px;"></th>'
+      +'</tr></thead><tbody>';
+
+    p.members.forEach(function(m, mi){
+      var dotColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
+      html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);">'
+        +'<td style="padding:8px 10px;cursor:pointer;" onclick="openMemberPicker('+w.id+','+pi+','+mi+')">'
+          +'<div style="display:flex;align-items:center;gap:7px;">'
+          +'<span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';flex-shrink:0;"></span>'
+          +'<span data-pi="'+pi+'" data-mi="'+mi+'" data-field="name" style="color:#ddd;font-size:13px;font-weight:600;font-family:Exo 2,sans-serif;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.15);">'+escHtml(m.name)+'</span>'
+        +'</div></td>'
+        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="defeat" value="'+(m.defeat||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="assist" value="'+(m.assist||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_dealt" value="'+(m.dmg_dealt||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_taken" value="'+(m.dmg_taken||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="healed" value="'+(m.healed||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:6px 3px;text-align:center;"><button onclick="removeWarMember('+w.id+','+pi+','+mi+')" style="background:transparent;border:none;color:#e84040;font-size:15px;cursor:pointer;padding:0 3px;">×</button></td>'
+        +'</tr>';
+    });
+
+    // Total row
+    html += '<tr style="background:rgba(240,192,64,.06);border-top:2px solid var(--gold);">'
+      +'<td style="padding:8px 10px;font-weight:700;color:var(--gold);font-size:12px;">TOTAL</td>'
+      +'<td style="text-align:right;padding:8px 6px;font-weight:700;color:var(--gold);font-size:12px;">'+pKills+'</td>'
+      +'<td style="text-align:right;padding:8px 6px;font-weight:700;color:var(--gold);font-size:12px;">'+pAssists+'</td>'
+      +'<td style="text-align:right;padding:8px 8px;font-weight:700;color:var(--gold);font-size:12px;">'+pDmg.toLocaleString()+'</td>'
+      +'<td style="text-align:right;padding:8px 8px;font-weight:700;color:var(--gold);font-size:12px;">'+pTaken.toLocaleString()+'</td>'
+      +'<td style="text-align:right;padding:8px 8px;font-weight:700;color:var(--gold);font-size:12px;">'+pHealed.toLocaleString()+'</td>'
+      +'<td></td></tr>';
+
+    html += '</tbody></table>';
+
+    // Add member button
+    html += '<div style="padding:8px 10px;border-top:1px solid var(--border);">'
+      +'<button onclick="openMemberPicker('+w.id+','+pi+',-1)" style="background:transparent;border:1px dashed var(--border2);color:var(--muted);font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;width:100%;">+ Adaugă membru</button>'
+      +'</div>';
+
     html += '</div>';
   });
 
+  html += '</div>'; // close grid
+
+  // Member picker panel (hidden by default)
+  html += '<div id="member-picker" style="display:none;width:260px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:sticky;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;">'
+    +'<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;">'
+      +'<span style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);flex:1;">Selectează membru</span>'
+      +'<button onclick="closeMemberPicker()" style="background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;">×</button>'
+    +'</div>'
+    +'<div style="padding:8px 10px;">'
+      +'<input id="picker-search" type="text" placeholder="Caută..." oninput="filterPicker()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">'
+    +'</div>'
+    +'<div id="picker-list" style="padding:4px 6px;"></div>'
+  +'</div>';
+
+  html += '</div>'; // close flex wrapper
+
   document.getElementById('view-war-content').innerHTML = html;
   showPage('view-war');
+}
+
+// ── VIEW WAR: Member picker panel ────────────────────────────────────────
+var _pickerWarId = null, _pickerPi = null, _pickerMi = null;
+
+function openMemberPicker(warId, pi, mi){
+  _pickerWarId = warId; _pickerPi = pi; _pickerMi = mi;
+
+  // Show panel, collapse grid to 2 columns
+  document.getElementById('member-picker').style.display = '';
+  document.getElementById('vw-parties-grid').style.gridTemplateColumns = 'repeat(2,1fr)';
+
+  renderPickerList();
+  document.getElementById('picker-search').value = '';
+  document.getElementById('picker-search').focus();
+}
+
+function closeMemberPicker(){
+  document.getElementById('member-picker').style.display = 'none';
+  document.getElementById('vw-parties-grid').style.gridTemplateColumns = 'repeat(3,1fr)';
+  _pickerWarId = null;
+}
+
+function filterPicker(){
+  renderPickerList();
+}
+
+function renderPickerList(){
+  var roster = loadMembriRoster();
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===_pickerWarId; });
+  if(!w){ closeMemberPicker(); return; }
+
+  var search = (document.getElementById('picker-search').value||'').toLowerCase();
+
+  // Get names already in war (for highlighting, not filtering — allow duplicates if needed)
+  var usedNames = {};
+  w.parties.forEach(function(p){ p.members.forEach(function(m){ usedNames[normalizeName(m.name)]=true; }); });
+
+  var listHtml = '';
+  var roles = {TANK:[], HEALER:[], DPS:[]};
+  roster.forEach(function(r){
+    if(search && r.name.toLowerCase().indexOf(search)===-1) return;
+    if(roles[r.role]) roles[r.role].push(r);
+  });
+
+  ['TANK','HEALER','DPS'].forEach(function(role){
+    if(!roles[role].length) return;
+    var roleColor = role==='TANK'?'var(--tank)':role==='HEALER'?'var(--heal)':'var(--dps)';
+    listHtml += '<div style="font-size:10px;color:'+roleColor+';font-weight:700;padding:6px 8px 3px;letter-spacing:.06em;">'+role+'</div>';
+    roles[role].forEach(function(r){
+      var used = usedNames[normalizeName(r.name)];
+      listHtml += '<div onclick="pickMember(\''+escHtml(r.name).replace(/'/g,"\\'")+'\',\''+r.role+'\')" style="padding:7px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:600;color:'+(used?'var(--muted)':'#ddd')+';'+(used?'opacity:.5;':'')+'display:flex;align-items:center;gap:7px;" onmouseenter="this.style.background=\'var(--bg3)\'" onmouseleave="this.style.background=\'transparent\'">'
+        +'<span style="width:7px;height:7px;border-radius:50%;background:'+roleColor+';"></span>'
+        +escHtml(r.name)
+        +(used?'<span style="margin-left:auto;font-size:9px;color:var(--muted);">in war</span>':'')
+        +'</div>';
+    });
+  });
+
+  if(!listHtml) listHtml = '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center;">Niciun rezultat</div>';
+  document.getElementById('picker-list').innerHTML = listHtml;
+}
+
+function pickMember(name, role){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===_pickerWarId; });
+  if(!w) return;
+
+  if(_pickerMi >= 0){
+    // Replace existing member (keep stats)
+    var old = w.parties[_pickerPi].members[_pickerMi];
+    old.name = name;
+    old.role = role;
+  } else {
+    // Add new member
+    w.parties[_pickerPi].members.push({name:name, role:role, defeat:0, assist:0, dmg_dealt:0, dmg_taken:0, healed:0});
+  }
+
+  closeMemberPicker();
+  viewWar(_pickerWarId);
+}
+
+function removeWarMember(warId, pi, mi){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  w.parties[pi].members.splice(mi, 1);
+  viewWar(warId);
 }
 
 async function saveWarEdits(warId){
@@ -1014,10 +1328,22 @@ async function saveWarEdits(warId){
   var opp = document.getElementById('edit-opponent').value.trim() || w.opponent;
   var dt  = document.getElementById('edit-date').value || w.date;
   w.opponent = opp; w.date = dt;
-  document.querySelectorAll('#view-war-content input[data-pi]').forEach(function(inp){
+
+  // Collect all editable fields (name, stats, color)
+  document.querySelectorAll('#view-war-content input[data-pi][data-field="name"]').forEach(function(inp){
     var pi=+inp.dataset.pi, mi=+inp.dataset.mi;
     var v = inp.value.trim();
-    if(v) w.parties[pi].members[mi].name = v;
+    if(v && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = v;
+  });
+  ['defeat','assist','dmg_dealt','dmg_taken','healed'].forEach(function(field){
+    document.querySelectorAll('#view-war-content input[data-field="'+field+'"]').forEach(function(inp){
+      var pi=+inp.dataset.pi, mi=+inp.dataset.mi;
+      if(w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi][field] = +inp.value || 0;
+    });
+  });
+  document.querySelectorAll('#view-war-content select[data-field="color"]').forEach(function(sel){
+    var pi=+sel.dataset.pi;
+    if(w.parties[pi]) w.parties[pi].color = sel.value;
   });
   try{
     var r = await fetch('/api/wars/'+warId,{method:'PUT',headers:apiHeaders(true),
@@ -1046,6 +1372,8 @@ async function initApp(){
   renderWarsList();
 }
 initApp();
+// Apply translations to data-t elements
+document.querySelectorAll('[data-t]').forEach(function(el){ var k=el.getAttribute('data-t'); if(_t[_lang][k]) el.textContent=_t[_lang][k]; });
 
 
 
@@ -1315,40 +1643,418 @@ Respond with ONLY a JSON array, nothing else:
 
 // ── STEP 2: VISION SCOREBOARD EXTRACT ────────────────────────────────────
 async function extractScoreboardFromImage(dataUrl, novaNames){
-  var prompt = `This image shows a war scoreboard from Throne & Liberty.
+  var prompt = `You are analyzing a Throne & Liberty war scoreboard screenshot.
 
-Extract ALL visible player rows — do not filter by guild. Include every row you can see.
+CRITICAL: Extract EVERY visible row. Do NOT skip any player. Count the rows you see and make sure your output has the same count.
 
-Columns in order (left to right):
-1. Ranking number
+Each row contains these columns (left to right):
+1. Rank number (ignore)
 2. Weapon icons (ignore)
-3. Guild name/badge text (e.g. "カNova ミ" or "Faith メ" or "TheExpendables")
-4. Player name (column after guild)
-5. Team color: Yellow or Red
-6. Defeat (integer)
-7. Assist (integer)
-8. Damage Dealt (integer)
-9. Damage Taken (integer)
-10. Amount Healed (integer)
+3. Guild name/badge text (e.g. "カNova ミ", "Faith メ", "TheExpendables")
+4. Player name — PRESERVE special chars exactly: ✗ • ↗ ↙ ✦ · メ 〆 ぞ ゜
+5. Team color indicator (ignore)
+6. Defeat count (integer)
+7. Assist count (integer)
+8. Damage Dealt (integer, may have comma separators like 1,234,567)
+9. Damage Taken (integer, may have comma separators)
+10. Amount Healed (integer, may have comma separators)
 
-Rules:
-- Extract EVERY row visible on screen, regardless of guild
-- Copy player names EXACTLY as shown — preserve decorative chars like ✗ • ↗ ↙ メ
-- Numbers use comma separators (e.g. "1,234,567") — return as pure integer 1234567
-- If a cell shows 0 or is empty, return 0
-- Guild text: copy exactly what is shown next to the guild icon (e.g. "カNova ミ", "Faith メ")
+IMPORTANT RULES:
+- Remove comma/dot separators from numbers: 1,234,567 → 1234567
+- If a number is hard to read, make your BEST GUESS — do NOT default to 0 unless the cell clearly shows 0
+- Extract ALL rows visible in the image, even partially visible ones at the top/bottom
+- Double-check each row: count that you have exactly 5 numeric values (defeat, assist, dmg_dealt, dmg_taken, healed)
+- Guild names contain decorative Unicode characters — copy them exactly
 
-Return ONLY valid JSON array, no markdown, no explanation:
-[
-  {"name":"Reeane","guild":"カNova ミ","defeat":29,"assist":26,"dmg_dealt":1326360,"dmg_taken":1714579,"healed":48124},
-  {"name":"DomFusionTV","guild":"Faith メ","defeat":21,"assist":70,"dmg_dealt":2064986,"dmg_taken":1423682,"healed":28219}
-]`;
+Return ONLY a valid JSON array, no markdown fences, no explanation:
+[{"name":"PlayerName","guild":"GuildName","defeat":15,"assist":23,"dmg_dealt":1234567,"dmg_taken":456789,"healed":0}]`;
 
   var raw = await callClaude(prompt, dataUrl);
   var clean = raw.replace(/```json\n?|```/g,'').trim();
   var match = clean.match(/\[[\s\S]*\]/);
   if(match) clean = match[0];
   return JSON.parse(clean);
+}
+
+// ── STEP 2 FLOW: Scoreboard upload & extraction ──────────────────────────
+function confirmAndGoStep2(){
+  // Parties sunt deja în state.parties — mergi direct la Step 2
+  goToStep2();
+}
+
+function goToStep2(){
+  document.getElementById('step-1').style.display='none';
+  document.getElementById('step-2').style.display='';
+  document.getElementById('ws-1').classList.remove('active');
+  document.getElementById('ws-1').classList.add('done');
+  document.getElementById('ws-2').classList.add('active');
+  state.scoreImgs = [];
+  renderScoreGrid();
+}
+
+function goBackToStep1(){
+  document.getElementById('step-2').style.display='none';
+  document.getElementById('step-1').style.display='';
+  document.getElementById('ws-2').classList.remove('active');
+  document.getElementById('ws-1').classList.add('active');
+  document.getElementById('ws-1').classList.remove('done');
+}
+
+function handleScoreUpload(e){
+  Array.from(e.target.files).forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      state.scoreImgs.push({dataUrl:ev.target.result, name:file.name});
+      renderScoreGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderScoreGrid(){
+  var el = document.getElementById('score-grid');
+  el.innerHTML = state.scoreImgs.map(function(s,i){
+    return '<div class="score-thumb">'
+      +'<img src="'+s.dataUrl+'">'
+      +'<button class="rm" onclick="removeScoreImg('+i+')">✕</button>'
+      +'<div style="position:absolute;bottom:4px;left:4px;font-size:9px;color:#fff;background:rgba(0,0,0,.7);padding:1px 5px;border-radius:3px;">'+(i+1)+'</div>'
+      +'</div>';
+  }).join('');
+  var btn = document.getElementById('score-extract-btn');
+  if(btn) btn.disabled = state.scoreImgs.length === 0;
+}
+
+function removeScoreImg(i){
+  state.scoreImgs.splice(i,1);
+  renderScoreGrid();
+}
+
+async function extractAllScoreboards(){
+  var btn = document.getElementById('score-extract-btn');
+  btn.disabled = true; btn.textContent = '⏳ Se procesează...';
+  var statusEl = document.getElementById('score-extract-status');
+  var resultsEl = document.getElementById('score-results');
+
+  // Collect party member names + aliases for matching
+  var novaNames = [];
+  state.parties.forEach(function(p){ p.members.forEach(function(m){
+    novaNames.push(m.name);
+    if(m.tlgmName) novaNames.push(m.tlgmName);
+  }); });
+  var mAliases = loadMembriAliases(); // {normalizedName: "GameName with ✗"}
+  var wAliases = loadAliases();       // war aliases
+
+  // Helper: check if extracted name matches a nova member (including aliases)
+  function isNovaPlayer(extractedName){
+    if(novaNames.some(function(n){ return namesMatch(n, extractedName); })) return true;
+    // Check aliases: any alias value matches extracted name
+    var aKeys = Object.keys(mAliases);
+    for(var a=0;a<aKeys.length;a++){
+      if(namesMatch(mAliases[aKeys[a]], extractedName)) return true;
+    }
+    aKeys = Object.keys(wAliases);
+    for(var a=0;a<aKeys.length;a++){
+      if(namesMatch(wAliases[aKeys[a]], extractedName)) return true;
+    }
+    return false;
+  }
+
+  var allExtracted = {}; // keyed by normalized name → stats object (MAX merge)
+  var errors = [];
+
+  for(var i=0; i<state.scoreImgs.length; i++){
+    statusEl.innerHTML = '<div class="processing"><span class="spin">◌</span> Se procesează imaginea '+(i+1)+' din '+state.scoreImgs.length+'...</div>';
+    try{
+      var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, novaNames);
+      if(!Array.isArray(players)) throw new Error('Răspuns invalid');
+
+      // Filter for Nova guild members or name matches (including aliases)
+      players.forEach(function(p){
+        var isNova = p.guild && /nova/i.test(p.guild);
+        var isMatch = isNovaPlayer(p.name);
+        if(!isNova && !isMatch) return;
+
+        var key = normalizeName(p.name);
+        if(!allExtracted[key]){
+          allExtracted[key] = {name:p.name, guild:p.guild, defeat:0, assist:0, dmg_dealt:0, dmg_taken:0, healed:0};
+        }
+        // MAX merge — if same player in multiple screenshots, take highest
+        var e = allExtracted[key];
+        e.defeat    = Math.max(e.defeat,    p.defeat||0);
+        e.assist    = Math.max(e.assist,    p.assist||0);
+        e.dmg_dealt = Math.max(e.dmg_dealt, p.dmg_dealt||0);
+        e.dmg_taken = Math.max(e.dmg_taken, p.dmg_taken||0);
+        e.healed    = Math.max(e.healed,    p.healed||0);
+      });
+      statusEl.innerHTML = '<span style="color:var(--heal);">✓ Imaginea '+(i+1)+' procesată — '+players.length+' rânduri extrase</span>';
+    } catch(err){
+      errors.push('Img '+(i+1)+': '+err.message);
+      statusEl.innerHTML = '<span style="color:#e84040;">✗ Eroare imaginea '+(i+1)+': '+err.message+'</span>';
+    }
+  }
+
+  // Build novaPlayers from parties + extracted stats (with alias matching)
+  state.novaPlayers = [];
+  state.parties.forEach(function(p){
+    p.members.forEach(function(m){
+      var found = null;
+      var foundKey = null;
+      var keys = Object.keys(allExtracted);
+      for(var j=0;j<keys.length;j++){
+        var ex = allExtracted[keys[j]];
+        // 1. Direct name match
+        if(namesMatch(m.name, ex.name)){ foundKey = keys[j]; break; }
+        // 2. tlgmName match (from roster matching, e.g. "Nyx ✗")
+        if(m.tlgmName && namesMatch(m.tlgmName, ex.name)){ foundKey = keys[j]; break; }
+        // 3. Member alias: normalizeName(m.name) → alias value matches extracted
+        var mAlias = mAliases[normalizeName(m.name)] || wAliases[normalizeName(m.name)];
+        if(mAlias && namesMatch(mAlias, ex.name)){ foundKey = keys[j]; break; }
+        // 4. Reverse: extracted name's alias points to member
+        var rAlias = mAliases[normalizeName(ex.name)] || wAliases[normalizeName(ex.name)];
+        if(rAlias && namesMatch(rAlias, m.name)){ foundKey = keys[j]; break; }
+        // 5. tlgmName alias
+        if(m.tlgmName){
+          var tAlias = mAliases[normalizeName(m.tlgmName)] || wAliases[normalizeName(m.tlgmName)];
+          if(tAlias && namesMatch(tAlias, ex.name)){ foundKey = keys[j]; break; }
+        }
+      }
+      if(foundKey){ found = allExtracted[foundKey]; delete allExtracted[foundKey]; }
+      state.novaPlayers.push({
+        name: m.name, party: p.name, role: m.role,
+        defeat: found ? found.defeat : 0,
+        assist: found ? found.assist : 0,
+        dmg_dealt: found ? found.dmg_dealt : 0,
+        dmg_taken: found ? found.dmg_taken : 0,
+        healed: found ? found.healed : 0,
+        checked: true,
+        status: found ? 'confirmed' : 'missing',
+        extra: false
+      });
+    });
+  });
+  // Add extra players (in scoreboard but not in parties)
+  Object.keys(allExtracted).forEach(function(k){
+    var e = allExtracted[k];
+    state.novaPlayers.push({
+      name: e.name, party: '?', role: 'DPS',
+      defeat: e.defeat, assist: e.assist, dmg_dealt: e.dmg_dealt,
+      dmg_taken: e.dmg_taken, healed: e.healed,
+      checked: false, status: 'extra', extra: true
+    });
+  });
+
+  // ── Smart matching: sugerează perechi missing ↔ extra ──
+  var missingPlayers = state.novaPlayers.filter(function(p){ return p.status==='missing'; });
+  var extraPlayers   = state.novaPlayers.filter(function(p){ return p.status==='extra'; });
+  state._suggestions = []; // store for apply/ignore buttons
+
+  if(missingPlayers.length && extraPlayers.length){
+    var usedExtras = {};
+    missingPlayers.forEach(function(mp){
+      var bestScore = 0, bestExtra = null;
+      extraPlayers.forEach(function(ep){
+        if(usedExtras[ep.name]) return;
+        var score = nameSimilarity(mp.name, ep.name);
+        if(score > bestScore){ bestScore = score; bestExtra = ep; }
+      });
+      if(bestExtra && bestScore >= 0.3){
+        state._suggestions.push({missing:mp, extra:bestExtra, score:bestScore});
+        usedExtras[bestExtra.name] = true;
+      }
+    });
+  }
+
+  // Render suggestions + results table
+  var confirmed = state.novaPlayers.filter(function(p){ return p.status==='confirmed'; }).length;
+  var missing   = missingPlayers.length;
+  var extra     = extraPlayers.length;
+
+  var summaryHtml = '<div style="margin-bottom:12px;font-size:12px;">'
+    +'<span style="color:var(--heal);">✓ '+confirmed+' cu stats</span>'
+    +(missing ? ' · <span style="color:var(--gold);">⚠ '+missing+' fără stats</span>' : '')
+    +(extra ? ' · <span style="color:var(--muted);">+ '+extra+' extra</span>' : '')
+    +(errors.length ? ' · <span style="color:#e84040;">'+errors.length+' erori</span>' : '')
+    +'</div>';
+
+  // Suggestions panel
+  var suggestHtml = '';
+  if(state._suggestions.length){
+    suggestHtml = '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:8px;padding:14px;margin-bottom:16px;">';
+    suggestHtml += '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;">Sugestii matching — acești playeri par a fi aceeași persoană:</div>';
+    state._suggestions.forEach(function(s, si){
+      suggestHtml += '<div id="suggest-'+si+'" style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:6px;margin-bottom:6px;">'
+        +'<span style="color:var(--gold);font-size:12px;">⚠</span>'
+        +'<span style="color:#ddd;font-weight:600;font-size:13px;">'+escHtml(s.missing.name)+'</span>'
+        +'<span style="color:var(--muted);font-size:11px;">('+s.missing.party+')</span>'
+        +'<span style="color:var(--gold);font-size:14px;">→</span>'
+        +'<span style="color:var(--heal);font-weight:600;font-size:13px;">'+escHtml(s.extra.name)+'</span>'
+        +'<span style="color:var(--muted);font-size:10px;">'+(Math.round(s.score*100))+'% match</span>'
+        +'<span style="margin-left:auto;display:flex;gap:6px;">'
+          +'<button onclick="applySuggestion('+si+')" style="background:var(--heal);border:none;color:#000;font-size:11px;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;">Aplică</button>'
+          +'<button onclick="ignoreSuggestion('+si+')" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Ignoră</button>'
+        +'</span>'
+        +'</div>';
+    });
+    suggestHtml += '<button onclick="applyAllSuggestions()" style="background:rgba(240,192,64,.15);border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;cursor:pointer;margin-top:4px;">Aplică toate sugestiile</button>';
+    suggestHtml += '</div>';
+  }
+
+  // Results table — grouped by party, missing/extra at bottom
+  var inpStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:3px 6px;font-size:12px;font-family:Share Tech Mono,monospace;';
+  var thStyle = 'padding:8px 6px;color:var(--muted);font-size:10px;font-weight:600;text-align:right;';
+  var partyOptions = state.parties.map(function(p){ return p.name; });
+
+  function renderPlayerRow(p, i){
+    var isUnassigned = (p.status==='missing' || p.status==='extra');
+    var partyCell = isUnassigned
+      ? '<select onchange="state.novaPlayers['+i+'].party=this.value" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;padding:2px 4px;">'
+        + partyOptions.map(function(pn){ return '<option'+(p.party===pn?' selected':'')+'>'+escHtml(pn)+'</option>'; }).join('')
+        + '<option value="?"'+(p.party==='?'?' selected':'')+'>(fără party)</option></select>'
+      : '<span style="color:var(--muted);font-size:11px;">'+escHtml(p.party)+'</span>';
+
+    return '<tr style="border-bottom:1px solid rgba(255,255,255,.04);">'
+      +'<td style="padding:7px 10px;color:#ddd;font-weight:600;font-size:13px;">'+escHtml(p.name)+'</td>'
+      +'<td style="padding:7px 6px;text-align:center;">'+partyCell+'</td>'
+      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.defeat||0)+'" onchange="state.novaPlayers['+i+'].defeat=+this.value" style="width:55px;'+inpStyle+'"></td>'
+      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.assist||0)+'" onchange="state.novaPlayers['+i+'].assist=+this.value" style="width:55px;'+inpStyle+'"></td>'
+      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.dmg_dealt||0)+'" onchange="state.novaPlayers['+i+'].dmg_dealt=+this.value" style="width:85px;'+inpStyle+'"></td>'
+      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.dmg_taken||0)+'" onchange="state.novaPlayers['+i+'].dmg_taken=+this.value" style="width:85px;'+inpStyle+'"></td>'
+      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.healed||0)+'" onchange="state.novaPlayers['+i+'].healed=+this.value" style="width:85px;'+inpStyle+'"></td>'
+      +'<td style="padding:5px 4px;text-align:center;">'
+        +(p.status==='confirmed' ? '<span style="color:var(--heal);font-size:14px;">✓</span>'
+        : p.status==='missing' ? '<span style="color:var(--gold);font-size:14px;">⚠</span>'
+        : '<span style="color:var(--muted);font-size:12px;">+</span>')
+      +'</td></tr>';
+  }
+
+  var tableHeader = '<tr style="background:var(--bg3);">'
+    +'<th style="'+thStyle+'text-align:left;padding-left:10px;">Jucător</th>'
+    +'<th style="'+thStyle+'text-align:center;">Party</th>'
+    +'<th style="'+thStyle+'">Kills</th><th style="'+thStyle+'">Assists</th>'
+    +'<th style="'+thStyle+'">Dmg Dealt</th><th style="'+thStyle+'">Dmg Taken</th>'
+    +'<th style="'+thStyle+'">Healed</th><th style="width:30px;"></th></tr>';
+
+  var tableHtml = '<div style="overflow-x:auto;">';
+
+  // Group confirmed by party
+  state.parties.forEach(function(party){
+    var partyPlayers = [];
+    state.novaPlayers.forEach(function(p,i){
+      if(p.party === party.name && p.status === 'confirmed') partyPlayers.push({p:p,i:i});
+    });
+    if(!partyPlayers.length) return;
+    partyPlayers.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
+
+    tableHtml += '<div style="margin-bottom:12px;">';
+    var labelTag = party.label ? ' <span style="font-size:11px;color:#9080cc;background:rgba(255,255,255,.1);padding:1px 8px;border-radius:99px;margin-left:8px;font-weight:600;">'+escHtml(party.label)+'</span>' : '';
+    var pColor = party.color || '#1e1545';
+    var piIdx = state.parties.indexOf(party);
+    var colorSelect = '<select data-score-pi="'+piIdx+'" onchange="state.parties['+piIdx+'].color=this.value;this.parentElement.style.background=this.value" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:11px;padding:3px 6px;cursor:pointer;margin-left:auto;">'
+      +'<option value="#1e1545"'+(pColor==='#1e1545'?' selected':'')+'>Mov</option>'
+      +'<option value="#3a1020"'+(pColor==='#3a1020'?' selected':'')+'>Red</option>'
+      +'<option value="#3a3010"'+(pColor==='#3a3010'?' selected':'')+'>Yellow</option>'
+      +'<option value="#102040"'+(pColor==='#102040'?' selected':'')+'>Blue</option>'
+      +'<option value="#103020"'+(pColor==='#103020'?' selected':'')+'>Green</option>'
+      +'</select>';
+    tableHtml += '<div style="background:'+pColor+';padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;">'+escHtml(party.name)+labelTag+colorSelect+'</div>';
+    tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
+    partyPlayers.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
+    tableHtml += '</table></div>';
+  });
+
+  // Missing players section
+  var missingRows = [];
+  state.novaPlayers.forEach(function(p,i){ if(p.status==='missing') missingRows.push({p:p,i:i}); });
+  if(missingRows.length){
+    tableHtml += '<div style="margin-bottom:12px;">';
+    tableHtml += '<div style="background:rgba(240,192,64,.15);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);">⚠ Fără statistici ('+missingRows.length+')</div>';
+    tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.15);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
+    missingRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
+    tableHtml += '</table></div>';
+  }
+
+  // Extra players section
+  var extraRows = [];
+  state.novaPlayers.forEach(function(p,i){ if(p.status==='extra') extraRows.push({p:p,i:i}); });
+  if(extraRows.length){
+    extraRows.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
+    tableHtml += '<div style="margin-bottom:12px;">';
+    tableHtml += '<div style="background:rgba(255,255,255,.06);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--muted);">+ Extra din scoreboard ('+extraRows.length+')</div>';
+    tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
+    extraRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
+    tableHtml += '</table></div>';
+  }
+
+  tableHtml += '</div>';
+
+  resultsEl.innerHTML = summaryHtml + suggestHtml + tableHtml;
+  statusEl.innerHTML = '<span style="color:var(--heal);font-weight:600;">Extragere completă! Verifică sugestiile și corectează valorile, apoi salvează.</span>';
+
+  btn.textContent = '🔍 Extrage din nou';
+  btn.disabled = false;
+  document.getElementById('score-save-btn').style.display = '';
+}
+
+// ── Name similarity for smart matching ───────────────────────────────────
+function nameSimilarity(a, b){
+  var na = normalizeName(a), nb = normalizeName(b);
+  if(na === nb) return 1;
+  if(na.startsWith(nb) || nb.startsWith(na)) return 0.9;
+  // Character overlap
+  var short = na.length < nb.length ? na : nb;
+  var long  = na.length < nb.length ? nb : na;
+  var common = 0;
+  for(var i=0; i<short.length; i++){
+    if(long.indexOf(short[i]) !== -1) common++;
+  }
+  return common / Math.max(na.length, nb.length);
+}
+
+function applySuggestion(si){
+  var s = state._suggestions[si];
+  if(!s) return;
+  // Copy stats from extra to missing
+  var mp = state.novaPlayers.find(function(p){ return p===s.missing; });
+  var ep = state.novaPlayers.find(function(p){ return p===s.extra; });
+  if(mp && ep){
+    mp.defeat=ep.defeat; mp.assist=ep.assist; mp.dmg_dealt=ep.dmg_dealt;
+    mp.dmg_taken=ep.dmg_taken; mp.healed=ep.healed; mp.status='confirmed';
+    // Remove extra
+    var idx = state.novaPlayers.indexOf(ep);
+    if(idx>=0) state.novaPlayers.splice(idx,1);
+  }
+  // Hide suggestion row
+  var el = document.getElementById('suggest-'+si);
+  if(el) el.style.display='none';
+  state._suggestions[si] = null;
+}
+
+function ignoreSuggestion(si){
+  var el = document.getElementById('suggest-'+si);
+  if(el) el.style.display='none';
+  state._suggestions[si] = null;
+}
+
+function applyAllSuggestions(){
+  for(var i=0; i<state._suggestions.length; i++){
+    if(state._suggestions[i]) applySuggestion(i);
+  }
+}
+
+function saveWarWithStats(){
+  // Add extra players with assigned party to their respective parties
+  state.novaPlayers.forEach(function(p){
+    if(p.status==='extra' && p.party && p.party!=='?'){
+      var targetParty = state.parties.find(function(pt){ return pt.name===p.party; });
+      if(targetParty){
+        targetParty.members.push({name:p.name, role:p.role||'DPS', defeat:p.defeat||0, assist:p.assist||0, dmg_dealt:p.dmg_dealt||0, dmg_taken:p.dmg_taken||0, healed:p.healed||0});
+        p.status = 'confirmed'; // mark as confirmed so it gets included
+      }
+    }
+  });
+  state.confirmed = state.novaPlayers.filter(function(p){ return p.status==='confirmed'; });
+  saveWarSimple();
 }
 
 // ── UPDATED PARTY UPLOAD HANDLER ──────────────────────────────────────────
