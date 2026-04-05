@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nova War Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:       #060b14;
+  --bg2:      #0a1020;
+  --bg3:      #0e1628;
+  --border:   rgba(255,255,255,.06);
+  --border2:  rgba(255,255,255,.12);
+  --gold:     #f0c040;
+  --gold2:    #c8950a;
+  --tank:     #5b8fff;
+  --tank-bg:  rgba(91,143,255,.12);
+  --heal:     #3ecf6e;
+  --heal-bg:  rgba(62,207,110,.12);
+  --dps:      #e84040;
+  --dps-bg:   rgba(232,64,64,.12);
+  --party-hdr:#1e1545;
+  --text:     #d0d8e8;
+  --muted:    #4a5568;
+  --accent:   #f0c040;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* ── NAV ── */
+nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:0;height:52px;position:sticky;top:0;z-index:50;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:.08em;margin-right:28px;white-space:nowrap;}
+.nav-tabs{display:flex;height:100%;gap:0;}
+.nav-tab{height:100%;padding:0 18px;display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;letter-spacing:.04em;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.btn-new-war{background:var(--gold);color:#000;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;transition:opacity .15s;}
+.btn-new-war:hover{opacity:.85;}
+.btn-transfer-data{background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.25);color:var(--gold);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.04em;transition:all .15s;white-space:nowrap;}
+.btn-transfer-data:hover{background:rgba(240,192,64,.2);}
+
+/* ── PAGES ── */
+.page{display:none;padding:28px 24px;max-width:1200px;margin:0 auto;}
+.page.active{display:block;}
+
+/* ── STEP WIZARD ── */
+.wizard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.wizard-steps{display:flex;background:var(--bg3);border-bottom:1px solid var(--border);}
+.wstep{flex:1;padding:12px 8px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--muted);cursor:default;position:relative;transition:all .2s;}
+.wstep.active{color:var(--gold);}
+.wstep.done{color:var(--heal);}
+.wstep.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
+.wstep.done::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--heal);}
+.wstep-num{display:block;font-size:18px;font-family:'Rajdhani',sans-serif;font-weight:700;margin-bottom:2px;}
+.wizard-body{padding:28px;}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(240,192,64,.04);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:36px;margin-bottom:12px;color:var(--muted);}
+.upload-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.upload-sub{font-size:12px;color:var(--muted);}
+.upload-preview{margin-top:16px;max-width:100%;border-radius:8px;border:1px solid var(--border);}
+
+/* ── PARTY DISPLAY ── */
+.parties-confirm{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:20px;}
+.party-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.party-card-hdr{background:var(--party-hdr);padding:8px 12px;display:flex;align-items:center;gap:8px;}
+.party-card-hdr span:first-child{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#fff;}
+.party-card-hdr .ptag{font-size:10px;color:#9080cc;background:rgba(255,255,255,.08);padding:1px 7px;border-radius:99px;}
+.party-member{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.03);}
+.party-member:last-child{border-bottom:none;}
+.role-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.role-pill{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;letter-spacing:.04em;}
+.role-TANK{background:var(--tank-bg);color:var(--tank);}
+.role-HEALER{background:var(--heal-bg);color:var(--heal);}
+.role-DPS{background:var(--dps-bg);color:var(--dps);}
+.dot-TANK{background:var(--tank);}
+.dot-HEALER{background:var(--heal);}
+.dot-DPS{background:var(--dps);}
+.member-name{font-size:12px;font-weight:600;color:#ddd;flex:1;}
+
+/* ── SCOREBOARD PAGES ── */
+.score-upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:16px;}
+.score-thumb{position:relative;border:1px solid var(--border);border-radius:8px;overflow:hidden;aspect-ratio:16/9;cursor:pointer;}
+.score-thumb img{width:100%;height:100%;object-fit:cover;}
+.score-thumb .rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);border:none;border-radius:4px;color:#e84040;font-size:14px;width:22px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.score-add{border:2px dashed var(--border2);border-radius:8px;aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;position:relative;transition:border-color .15s;}
+.score-add:hover{border-color:var(--gold);}
+.score-add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.score-add-icon{font-size:22px;color:var(--muted);}
+.score-add-txt{font-size:11px;color:var(--muted);}
+
+/* ── NOVA LIST ── */
+.nova-list{margin-top:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.nova-list-hdr{background:var(--bg3);padding:8px 14px;display:grid;grid-template-columns:1fr 80px 80px 120px 120px 110px;gap:8px;}
+.nova-list-hdr span{font-size:9px;color:var(--muted);letter-spacing:.07em;font-weight:600;text-transform:uppercase;}
+.nova-row{padding:7px 14px;display:grid;grid-template-columns:1fr 80px 80px 120px 120px 110px;gap:8px;align-items:center;border-top:1px solid rgba(255,255,255,.03);}
+.nova-row:first-child{border-top:none;}
+.nova-row-name{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#ddd;}
+.nova-num{font-size:12px;text-align:right;}
+.nova-check{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;}
+
+/* ── RESULT TABLE ── */
+.result-party{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.result-party-hdr{background:var(--party-hdr);padding:8px 14px;display:flex;align-items:center;gap:8px;}
+.result-tbl{width:100%;border-collapse:collapse;}
+.result-tbl th{padding:6px 10px;font-size:9px;color:var(--muted);letter-spacing:.07em;font-weight:600;text-align:right;background:var(--bg3);border-bottom:1px solid var(--border);}
+.result-tbl th:first-child{text-align:left;}
+.result-tbl td{padding:7px 10px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);text-align:right;}
+.result-tbl td:first-child{text-align:left;}
+.result-tbl tr:last-child td{border-bottom:none;}
+.result-footer{background:#070c18;border-top:2px solid rgba(240,192,64,.2);padding:10px 14px;display:flex;gap:0;justify-content:space-around;}
+.rf-item{text-align:center;}
+.rf-label{font-size:8px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;}
+.rf-val{font-size:16px;font-weight:800;}
+
+/* ── WARS LIST ── */
+.wars-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.war-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .15s;}
+.war-item:hover{border-color:var(--border2);}
+.war-item-date{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);min-width:100px;}
+.war-item-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--text);flex:1;}
+.war-item-vs{font-size:12px;color:var(--muted);}
+.war-item-kills{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--gold);}
+.war-item-kills-lbl{font-size:10px;color:var(--muted);}
+.btn-del{background:none;border:1px solid rgba(232,64,64,.3);border-radius:6px;color:#e84040;font-size:12px;padding:4px 10px;cursor:pointer;transition:all .15s;}
+.btn-del:hover{background:rgba(232,64,64,.1);}
+.btn-view{background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;padding:4px 10px;cursor:pointer;transition:all .15s;}
+.btn-view:hover{background:rgba(255,255,255,.05);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--gold);color:#000;}
+.btn-primary:hover{opacity:.88;}
+.btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text);}
+.btn-secondary:hover{background:rgba(255,255,255,.05);}
+.btn-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ── MISC ── */
+.section-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.section-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:.04em;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state-icon{font-size:40px;margin-bottom:12px;}
+.empty-state-txt{font-size:14px;}
+.status-bar{background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--heal);margin-bottom:16px;display:none;}
+.status-bar.visible{display:block;}
+.warn-bar{background:rgba(240,192,64,.08);border:1px solid rgba(240,192,64,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--gold);margin-bottom:16px;}
+.processing{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
+.spin{display:inline-block;animation:spin 1s linear infinite;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+input[type=text]{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'Exo 2',sans-serif;outline:none;transition:border-color .15s;}
+input[type=text]:focus{border-color:var(--gold);}
+.war-header-view{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.war-header-view h2{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--gold);}
+.kp-bar-wrap{width:30px;height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:4px;}
+.kp-bar-fill{height:100%;background:var(--gold);border-radius:99px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">カ NOVA ミ</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('wars')">All Wars</div>
+    <div class="nav-tab" onclick="showPage('new-war')" id="new-war-tab">New War</div>
+    <a class="nav-tab" href="members.html" style="text-decoration:none;">Members</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-settings" onclick="showPage('settings')" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:#888;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-right:6px;">⚙ Settings</button>
+    <button class="btn-new-war" onclick="startNewWar()">+ New War</button>
+  </div>
+</nav>
+
+<!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
+<div class="page active" id="page-wars">
+  <div class="section-title">War History</div>
+  <div class="section-sub">All recorded wars — click to view results</div>
+  <div class="wars-list" id="wars-list"></div>
+</div>
+
+<!-- ═══════════════ NEW WAR WIZARD ═══════════════ -->
+<div class="page" id="page-new-war">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <div class="section-title">New War</div>
+  </div>
+
+  <div class="wizard">
+    <div class="wizard-steps" id="wizard-steps">
+      <div class="wstep active" id="ws-1"><span class="wstep-num">1</span>Party Setup</div>
+    </div>
+    <div class="wizard-body">
+
+      <!-- STEP 1: Party upload -->
+      <div id="step-1">
+        <div style="display:flex;gap:12px;margin-bottom:16px;">
+          <div style="flex:1;">
+            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Adversar</label>
+            <input id="opponent-input" type="text" placeholder="Nume gilda adversara" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Data</label>
+            <input id="date-input" type="date" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div class="section-title" style="font-size:16px;">Upload party screenshot</div>
+          <div id="step1-btns" style="display:none;gap:8px;flex-shrink:0;">
+            <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="document.getElementById('party-upload-zone').style.display='';document.getElementById('party-split-view').style.display='none';document.getElementById('party-img-input').value='';document.getElementById('step1-btns').style.display='none';">↺ Schimbă poza</button>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="saveWarSimple()">💾 Salvează War</button>
+          </div>
+        </div>
+        <div class="section-sub" style="margin-bottom:12px;">Screenshot din TL cu toate party-urile (mov=Tank, verde=Healer, roșu=DPS)</div>
+
+        <div class="upload-zone" id="party-upload-zone">
+          <input type="file" accept="image/*" id="party-img-input" onchange="handlePartyUploadWithVision(event)">
+          <div class="upload-icon">⬆</div>
+          <div class="upload-title">Drop party screenshot here</div>
+          <div class="upload-sub">sau click să selectezi fișierul</div>
+        </div>
+
+        <div id="party-split-view" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+
+            <!-- LEFT: scrollable parties -->
+            <div style="max-height:70vh;overflow-y:auto;padding-right:6px;">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Verifică rolurile — editează dacă e necesar:</div>
+              <div id="party-manual-editor"></div>
+            </div>
+
+            <!-- RIGHT: fixed image -->
+            <div style="position:sticky;top:70px;">
+              <img id="party-preview-img" style="width:100%;border-radius:8px;border:1px solid var(--border);display:block;">
+              <div style="margin-top:8px;display:flex;gap:12px;font-size:11px;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--tank);display:inline-block;"></span>Mov = Tank</span>
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--heal);display:inline-block;"></span>Verde = Healer</span>
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--dps);display:inline-block;"></span>Roșu = DPS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="party-confirm-display" class="parties-confirm"></div>
+        <div id="step1-confirm-btns"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ VIEW WAR PAGE ═══════════════ -->
+<div class="page" id="page-view-war" style="max-width:100%;padding:0;">
+  <div style="display:flex;min-height:calc(100vh - 52px);">
+
+    <!-- sidebar -->
+    <div id="vw-sidebar" style="width:230px;flex-shrink:0;background:#0a0f1e;border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1);">
+      <div style="padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
+        <div style="font-size:19px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:.05em;">カ Nova ミ</div>
+        <div style="font-size:10px;color:#444;margin-top:2px;">War Games</div>
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
+        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">War info</div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Opponent</span><span style="font-size:12px;font-weight:700;color:#ccc;" id="vw-opponent"></span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Date</span><span style="font-size:12px;font-weight:700;color:#ccc;" id="vw-date"></span></div>
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
+        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">Guild totals</div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Defeats</span><span style="font-size:12px;font-weight:700;color:#ffcc44;" id="vw-defeats"></span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Assists</span><span style="font-size:12px;font-weight:700;color:#aaa;" id="vw-assists"></span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Dmg Dealt</span><span style="font-size:12px;font-weight:700;color:#e8a030;" id="vw-dmg"></span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Dmg Taken</span><span style="font-size:12px;font-weight:700;color:#cc5555;" id="vw-taken"></span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Healed</span><span style="font-size:12px;font-weight:700;color:#4fcf70;" id="vw-healed"></span></div>
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
+        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">Top kills</div>
+        <div id="vw-topkills"></div>
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
+        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">Roles</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--tank);"></div><span style="font-size:11px;color:#555;">Tank</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--heal);"></div><span style="font-size:11px;color:#555;">Healer</span></div>
+          <div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--dps);"></div><span style="font-size:11px;color:#555;">DPS</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:9px;color:#2a2a3a;line-height:1.6;" id="vw-kp-note"></div>
+      </div>
+      <div style="padding:14px 16px;">
+        <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;width:100%;" onclick="showPage('wars')">← All Wars</button>
+      </div>
+    </div>
+
+    <!-- toggle btn -->
+    <button id="vw-toggle" onclick="toggleVwSidebar()" style="position:fixed;top:66px;left:244px;z-index:200;background:#0f1628;border:1px solid rgba(255,255,255,.1);border-radius:7px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left .25s cubic-bezier(.4,0,.2,1);">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <!-- collapsed title -->
+    <div id="vw-collapsed-title" style="position:fixed;top:66px;left:58px;z-index:200;display:none;align-items:center;gap:6px;opacity:0;transition:opacity .2s;">
+      <span style="font-size:14px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;" id="vw-ct-text"></span>
+    </div>
+
+    <!-- main content -->
+    <div id="vw-main" style="flex:1;padding:20px;min-width:0;transition:margin-left .25s;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="view-war-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+var state = {
+  step: 1,
+  partyImg: null,
+  parties: [],       // [{name, label, members:[{name,role}]}]
+  scoreImgs: [],     // [{dataUrl, name}]
+  excelData: null,   // [{name, defeat, assist, dmg_dealt, dmg_taken, healed}]
+  novaPlayers: [],   // [{name,defeat,assist,dmg_dealt,dmg_taken,healed,checked}]
+  confirmed: [],     // after step3 confirm
+  opponent: '',
+  date: '',
+};
+
+// ── API CONFIG ─────────────────────────────────────────────────────────────
+var API_BASE = ''; // URL relativ — frontend si API pe acelasi origin (Dokploy)
+
+function apiHeaders(isAdmin){
+  var h = {'Content-Type':'application/json'};
+  if(isAdmin){
+    var s = localStorage.getItem('nova_admin_secret')||'';
+    if(s) h['X-Admin-Secret'] = s;
+  }
+  return h;
+}
+
+// ── IN-MEMORY CACHE (populat de initApp la incarcare) ──────────────────────
+var _warsCache   = null; // array | null = neîncarcat
+var _aliasCache  = null; // object | null
+var _rosterCache = null; // array | null
+var _mAliasCache = null; // object | null
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+function loadWars(){
+  if(_warsCache !== null) return _warsCache;
+  try{ return JSON.parse(localStorage.getItem('nova_wars')||'[]'); }
+  catch(e){ return []; }
+}
+function saveWars(wars){ _warsCache = wars; } // compatibilitate
+
+function loadAliases(){
+  if(_aliasCache !== null) return _aliasCache;
+  try{ return JSON.parse(localStorage.getItem('nova_aliases')||'{}'); }
+  catch(e){ return {}; }
+}
+function saveAliases(a){
+  _aliasCache = a;
+  fetch('/api/aliases/war',{method:'PUT',headers:apiHeaders(true),body:JSON.stringify(a)})
+    .catch(function(e){ console.warn('alias save failed',e); });
+}
+
+// ── MEMBRI ROSTER + ALIASES (from Members page) ───────────────────────────
+function loadMembriRoster(){
+  if(_rosterCache !== null) return _rosterCache;
+  try{ var r=JSON.parse(localStorage.getItem('nova_membri_roster')||'null');
+       return Array.isArray(r)&&r.length?r:[]; }
+  catch(e){ return []; }
+}
+function loadMembriAliases(){
+  if(_mAliasCache !== null) return _mAliasCache;
+  try{ return JSON.parse(localStorage.getItem('nova_membri_aliases')||'{}'); }
+  catch(e){ return {}; }
+}
+function matchPartiesAgainstRoster(parties){
+  var roster  = loadMembriRoster();
+  var aliases = loadMembriAliases();
+  if(!roster.length) return parties;
+  parties.forEach(function(p){
+    p.members.forEach(function(m){
+      var found=null, via=null;
+      // 1. Direct name match
+      for(var i=0;i<roster.length;i++){
+        if(namesMatch(m.name,roster[i].name)){ found=roster[i]; via='name'; break; }
+      }
+      // 2. Alias reverse-lookup
+      if(!found){
+        var keys=Object.keys(aliases);
+        for(var j=0;j<keys.length;j++){
+          var av=(aliases[keys[j]]||'').trim();
+          if(av&&namesMatch(m.name,av)){
+            var r2=roster.find(function(r){ return normalizeName(r.name)===keys[j]; });
+            if(r2){ found=r2; via='alias'; break; }
+          }
+        }
+      }
+      m.tlgmKey  = found ? normalizeName(found.name) : null;
+      m.tlgmName = found ? found.name : null;
+      m.matchedVia = via;
+      if(found) m.role = found.role;
+    });
+  });
+  return parties;
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(id==='wars'){ renderWarsList(); document.querySelectorAll('.nav-tab')[0].classList.add('active'); }
+  if(id==='settings'){ initSettingsPage(); }
+  if(id==='new-war'){ document.getElementById('new-war-tab').classList.add('active'); }
+}
+
+function startNewWar(){
+  state = {step:1, partyImg:null,
+           parties: JSON.parse(JSON.stringify(DEFAULT_PARTIES)),
+           opponent:'', date:''};
+  document.getElementById('opponent-input').value='';
+  document.getElementById('date-input').value='';
+  document.getElementById('party-upload-zone').style.display='';
+  document.getElementById('party-split-view').style.display='none';
+  document.getElementById('party-img-input').value='';
+  document.getElementById('step1-btns').style.display='none';
+  document.getElementById('party-confirm-display').innerHTML='';
+  document.getElementById('step1-confirm-btns').innerHTML='';
+  var pme = document.getElementById('party-manual-editor');
+  pme.innerHTML=''; pme.style.display='';
+  showPage('new-war');
+}
+
+// ── STEP NAV (single-step wizard — no-op) ─────────────────────────────────
+function goStep(n){ /* single-step wizard */ }
+
+// ── SAVE WAR (simplified) ─────────────────────────────────────────────────
+async function saveWarSimple(){
+  var opp = (document.getElementById('opponent-input').value||'').trim() || 'Unknown';
+  var dt  = document.getElementById('date-input').value || new Date().toLocaleDateString('ro-RO');
+  var war = {id:Date.now(), opponent:opp, date:dt, parties:state.parties};
+  try{
+    var r = await fetch('/api/wars',{method:'POST',headers:apiHeaders(true),body:JSON.stringify(war)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(_warsCache!==null) _warsCache.unshift(war);
+    showPage('wars');
+  } catch(e){ alert('Eroare la salvare: '+e.message); }
+}
+
+// ── STEP 1: PARTY UPLOAD ──────────────────────────────────────────────────
+function handlePartyUpload(e){
+  var file = e.target.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    state.partyImg = ev.target.result;
+    document.getElementById('party-preview-img').src = ev.target.result;
+    document.getElementById('party-upload-zone').style.display='none';
+    document.getElementById('party-split-view').style.display='';
+    renderPartyEditor();
+    document.getElementById('step1-btns').style.display='flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Default parties extracted from the standard TL screenshot format
+// User edits these to match what they see in the image
+var DEFAULT_PARTIES = [
+  {name:'Party 1', label:'Main', members:[
+    {name:'PaoloBrosio',role:'TANK'},{name:'Enelyye',role:'HEALER'},{name:'Ricki',role:'HEALER'},
+    {name:'Skarrgan',role:'HEALER'},{name:'ilenia',role:'DPS'},{name:'Ricchan',role:'DPS'}]},
+  {name:'Party 2', label:'Main', members:[
+    {name:'wattsOn',role:'TANK'},{name:'Selene',role:'HEALER'},{name:'Flawless',role:'HEALER'},
+    {name:'gogurm',role:'HEALER'},{name:'Nyx',role:'DPS'},{name:'McQuay',role:'DPS'}]},
+  {name:'Party 3', label:'Portal Camp', members:[
+    {name:'Orianae',role:'TANK'},{name:'Stormyial',role:'HEALER'},{name:'Shimunbg',role:'HEALER'},
+    {name:'Valkeryn',role:'HEALER'},{name:'Krithh',role:'DPS'},{name:'Reeane',role:'DPS'}]},
+  {name:'Party 4', label:'Spin', members:[
+    {name:'Xin9 Nova',role:'TANK'},{name:'LazyLello',role:'TANK'},{name:'MiniMoSk',role:'HEALER'},
+    {name:'shinrage',role:'HEALER'},{name:'Starshiptrooper',role:'HEALER'},{name:'Zhorkiven',role:'DPS'}]},
+  {name:'Party 5', label:'Main/Cap', members:[
+    {name:'HenryTurker',role:'TANK'},{name:'DOug1as',role:'TANK'},{name:'Mezzy',role:'HEALER'},
+    {name:'LuvEv3',role:'HEALER'},{name:'Potaat',role:'DPS'},{name:'Sinbian',role:'DPS'}]},
+  {name:'Party 6', label:'Main', members:[
+    {name:'FastKiller01',role:'TANK'},{name:'AirMouz',role:'TANK'},{name:'TinySpark',role:'HEALER'},
+    {name:'Buldoza',role:'HEALER'},{name:'Freesk',role:'DPS'},{name:'alkais',role:'DPS'}]},
+  {name:'Party 7', label:'Main', members:[
+    {name:'Oggy',role:'TANK'},{name:'Alembicated',role:'TANK'},{name:'Yacoob',role:'HEALER'},
+    {name:'Exowinargo',role:'HEALER'},{name:'nas',role:'DPS'},{name:'Igris',role:'DPS'}]},
+];
+
+function renderPartyEditor(){
+  state.parties = matchPartiesAgainstRoster(JSON.parse(JSON.stringify(DEFAULT_PARTIES)));
+  var html = '<div style="margin-top:16px;">';
+  html += '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Editează dacă party-urile din poză sunt diferite față de cele de mai jos:</div>';
+  html += '<div class="parties-confirm" id="party-editor-cards">';
+  state.parties.forEach(function(p,pi){
+    html += '<div class="party-card">';
+    html += '<div class="party-card-hdr">';
+    html += '<input type="text" value="'+p.name+'" style="background:transparent;border:none;color:#fff;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;width:80px;outline:none;" onchange="updatePartyName('+pi+',this.value)">';
+    html += '<input type="text" value="'+p.label+'" style="background:rgba(255,255,255,.08);border:none;color:#9080cc;font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
+    html += '</div>';
+    p.members.forEach(function(m,mi){
+      var roleColors = {TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'};
+      var matchDot = m.tlgmKey
+        ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
+        : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
+      html += '<div class="party-member">';
+      html += '<div class="role-dot dot-'+m.role+'"></div>';
+      html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:#ddd;font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
+      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColors[m.role]+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
+      ['TANK','HEALER','DPS'].forEach(function(r){
+        html += '<option value="'+r+'"'+(r===m.role?' selected':'')+'>'+r+'</option>';
+      });
+      html += '</select>'+matchDot+'</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div></div>';
+  document.getElementById('party-manual-editor').innerHTML = html;
+}
+
+function updatePartyName(pi,v){ state.parties[pi].name=v; }
+function updatePartyLabel(pi,v){ state.parties[pi].label=v; }
+function updateMemberName(pi,mi,v){ state.parties[pi].members[mi].name=v; }
+function updateMemberRole(pi,mi,v){ state.parties[pi].members[mi].role=v; updateRoleDot(pi,mi,v); }
+function updateRoleDot(pi,mi,v){
+  var dots = document.querySelectorAll('.party-member .role-dot');
+  // rebuild is simpler — re-render confirm display
+}
+
+function confirmParties(){
+  // show confirmed view
+  var html='';
+  state.parties.forEach(function(p){
+    html += '<div class="party-card"><div class="party-card-hdr"><span>'+p.name+'</span><span class="ptag">'+p.label+'</span></div>';
+    p.members.forEach(function(m){
+      html += '<div class="party-member"><div class="role-dot dot-'+m.role+'"></div><span class="role-pill role-'+m.role+'">'+m.role+'</span><span class="member-name">'+m.name+'</span></div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('party-confirm-display').innerHTML = html;
+  document.getElementById('party-manual-editor').style.display='none';
+  document.getElementById('step1-btns').style.display='none';
+  var total    = state.parties.reduce(function(a,p){return a+p.members.length;},0);
+  var matched  = state.parties.reduce(function(a,p){return a+p.members.filter(function(m){return !!m.tlgmKey;}).length;},0);
+  var unmatched= total-matched;
+  var summary  = '<span style="color:var(--heal);">✓ '+matched+' identificați</span>'
+               + (unmatched ? ' · <span style="color:var(--muted);">'+unmatched+' neidentificați</span>' : '')
+               + ' · '+total+' total';
+  document.getElementById('step1-confirm-btns').innerHTML =
+    '<div class="btn-row" style="margin-top:16px;"><div style="font-size:12px;margin-right:auto;">'+summary+'</div><button class="btn btn-primary" onclick="saveWarSimple()">💾 Salvează War</button></div>';
+}
+
+// ── STEP 2: SCOREBOARD UPLOAD ─────────────────────────────────────────────
+function handleScoreUpload(e){
+  var files = Array.from(e.target.files);
+  files.forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var idx = state.scoreImgs.length;
+      state.scoreImgs.push({dataUrl:ev.target.result, name:file.name});
+      renderScoreGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderScoreGrid(){
+  var grid = document.getElementById('score-grid');
+  var html = '';
+  state.scoreImgs.forEach(function(img,i){
+    html += '<div class="score-thumb"><img src="'+img.dataUrl+'"><button class="rm" onclick="removeScore('+i+')">×</button></div>';
+  });
+  html += '<div class="score-add" onclick="document.getElementById(\'score-add-input\').click()"><input type="file" accept="image/*" multiple id="score-add-input" onchange="handleScoreUpload(event)" style="display:none;"><div class="score-add-icon">+</div><div class="score-add-txt">Adaugă</div></div>';
+  grid.innerHTML = html;
+  document.getElementById('step2-next').disabled = state.scoreImgs.length === 0;
+}
+
+function removeScore(i){
+  state.scoreImgs.splice(i,1);
+  renderScoreGrid();
+}
+
+// ── STEP 2: EXCEL UPLOAD ──────────────────────────────────────────────────
+function handleExcelUpload(e){
+  var file = e.target.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      var wb = XLSX.read(ev.target.result, {type:'binary'});
+      var sheet = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      if(!rows.length) throw new Error('Fișierul e gol sau formatat greșit');
+
+      var headers = Object.keys(rows[0]);
+      function findCol(variants){
+        return headers.find(function(h){
+          var lh = h.toLowerCase().replace(/[_\s]/g,'');
+          return variants.some(function(v){ return lh.indexOf(v.replace(/[_\s]/g,''))!==-1; });
+        });
+      }
+      var colName   = findCol(['name','player','username','jucator']);
+      var colDefeat = findCol(['defeat','kill','def']);
+      var colAssist = findCol(['assist','ast']);
+      var colDealt  = findCol(['dmgdealt','damagedealt','damage','dealt']);
+      var colTaken  = findCol(['dmgtaken','damagetaken','taken']);
+      var colHealed = findCol(['healed','heal','healing','amounthealed']);
+
+      if(!colName) throw new Error('Nu am găsit coloana cu numele jucătorilor. Headers găsite: '+headers.join(', '));
+
+      state.excelData = rows.map(function(r){
+        return {
+          name:      String(r[colName]||'').trim(),
+          defeat:    parseInt(String(r[colDefeat]||'0').replace(/[^0-9]/g,''))||0,
+          assist:    parseInt(String(r[colAssist]||'0').replace(/[^0-9]/g,''))||0,
+          dmg_dealt: parseInt(String(r[colDealt] ||'0').replace(/[^0-9]/g,''))||0,
+          dmg_taken: parseInt(String(r[colTaken] ||'0').replace(/[^0-9]/g,''))||0,
+          healed:    parseInt(String(r[colHealed] ||'0').replace(/[^0-9]/g,''))||0,
+        };
+      }).filter(function(r){ return r.name; });
+
+      if(!state.excelData.length) throw new Error('Nu am găsit niciun jucător în fișier');
+
+      var prev = document.getElementById('excel-preview');
+      prev.style.display='block';
+      prev.innerHTML =
+        '<div style="background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);border-radius:8px;padding:10px 14px;">'
+        +'<span style="color:var(--heal);font-size:13px;font-weight:600;">✓ '+state.excelData.length+' jucători încărcați</span>'
+        +'<span style="font-size:11px;color:var(--muted);margin-left:12px;">Coloane: '
+        +[colName,colDefeat,colAssist,colDealt,colTaken,colHealed].filter(Boolean).join(' · ')
+        +'</span></div>';
+      document.getElementById('step2-next').disabled = false;
+    } catch(err){
+      state.excelData = null;
+      document.getElementById('step2-next').disabled = true;
+      document.getElementById('excel-preview').style.display='block';
+      document.getElementById('excel-preview').innerHTML =
+        '<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.2);border-radius:8px;padding:10px 14px;color:#e84040;font-size:12px;">✗ '+err.message+'</div>';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── STEP 3: FROM EXCEL ────────────────────────────────────────────────────
+function goStep3FromExcel(){
+  goStep(3);
+  var allMembers = [];
+  state.parties.forEach(function(p){
+    p.members.forEach(function(m){
+      if(!allMembers.find(function(x){return x.name===m.name;})){
+        allMembers.push({name:m.name,party:p.name,role:m.role,
+          defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0,checked:true});
+      }
+    });
+  });
+  state.novaPlayers = allMembers;
+
+  if(!state.excelData || !state.excelData.length){
+    var s3 = document.getElementById('step3-status');
+    s3.innerHTML = '⚠ Niciun fișier Excel încărcat. '
+      +'<button onclick="goStep(2)" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Înapoi la Step 2</button>';
+    s3.style.display='block';
+    s3.style.background='rgba(240,192,64,.08)';
+    s3.style.borderColor='rgba(240,192,64,.2)';
+    s3.style.color='var(--gold)';
+    renderNovaList();
+    return;
+  }
+
+  // Merge cu fuzzy matching + alias
+  var aliases = loadAliases();
+  var matchedKeys = {};
+  state.novaPlayers.forEach(function(p){
+    var alias = aliases[normalizeName(p.name)];
+    var found = state.excelData.find(function(r){
+      return namesMatch(p.name, r.name) || (alias && namesMatch(alias, r.name));
+    });
+    if(found){
+      p.defeat    = found.defeat;
+      p.assist    = found.assist;
+      p.dmg_dealt = found.dmg_dealt;
+      p.dmg_taken = found.dmg_taken;
+      p.healed    = found.healed;
+      matchedKeys[found.name.toLowerCase().trim()] = true;
+    }
+  });
+
+  // Jucători extra — în Excel dar fără party
+  state.excelData.forEach(function(r){
+    var key = r.name.toLowerCase().trim();
+    if(!matchedKeys[key] && r.name){
+      state.novaPlayers.push({
+        name:r.name, party:'?', role:'DPS',
+        defeat:r.defeat, assist:r.assist,
+        dmg_dealt:r.dmg_dealt, dmg_taken:r.dmg_taken, healed:r.healed,
+        checked:false, extra:true
+      });
+    }
+  });
+
+  // Status
+  state.novaPlayers.forEach(function(p){
+    if(p.extra) p.status='extra';
+    else if(p.defeat===0&&p.assist===0&&p.dmg_dealt===0) p.status='missing';
+    else p.status='confirmed';
+  });
+
+  var cC = state.novaPlayers.filter(function(p){return p.status==='confirmed';}).length;
+  var mC = state.novaPlayers.filter(function(p){return p.status==='missing';}).length;
+  var eC = state.novaPlayers.filter(function(p){return p.status==='extra';}).length;
+  var statusEl = document.getElementById('step3-status');
+  statusEl.style.display='block';
+  statusEl.innerHTML =
+    '<span style="color:var(--heal);">✅ '+cC+' confirmați</span>'
+    +'  <span style="color:#e8a030;">⚠ '+mC+' lipsă</span>'
+    +'  <span style="color:var(--gold);">➕ '+eC+' extra</span>'
+    +'  <button onclick="goStep(2)" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Schimbă fișier</button>';
+  statusEl.style.background='rgba(10,16,32,.6)';
+  statusEl.style.borderColor='rgba(255,255,255,.08)';
+  statusEl.style.color='var(--text)';
+  renderNovaList();
+}
+
+// ── STEP 3: NOVA PLAYERS ──────────────────────────────────────────────────
+function renderNovaRow(p, i){
+  var dot = {TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[p.role]||'#888';
+  var status = p.status || (p.extra ? 'extra' : 'missing');
+
+  var rowStyle = '';
+  var statusBadge = '';
+  if(status === 'confirmed'){
+    rowStyle = '';
+    statusBadge = '<span style="font-size:10px;color:var(--heal);">✅</span>';
+  } else if(status === 'missing'){
+    rowStyle = 'background:rgba(232,160,48,.05);border-left:2px solid rgba(232,160,48,.35);';
+    statusBadge = '<span style="font-size:10px;color:#e8a030;">⚠ lipsă</span>';
+  } else { // extra
+    rowStyle = 'background:rgba(240,192,64,.05);border-left:2px solid rgba(240,192,64,.3);';
+    statusBadge = '<span style="font-size:10px;color:var(--gold);">➕ extra</span>';
+  }
+
+  // Party cell: dropdown pentru extra, text pentru ceilalți
+  var partyCell = '';
+  if(status === 'extra'){
+    var opts = '<option value="">— fără party —</option>';
+    state.parties.forEach(function(pt){
+      opts += '<option value="'+pt.name+'"'+(p.party===pt.name?' selected':'')+'>'+pt.name+'</option>';
+    });
+    partyCell = '<select onchange="assignExtraToParty('+i+',this.value)" style="background:var(--bg3);border:1px solid var(--border2);color:var(--gold);font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;max-width:90px;">'+opts+'</select>';
+  } else {
+    partyCell = '<span style="font-size:10px;color:var(--muted);">'+p.party+'</span>';
+  }
+
+  var html = '<div class="nova-row" style="'+rowStyle+'">';
+  html += '<div class="nova-row-name" style="display:flex;align-items:center;gap:5px;">';
+  html += '<div class="role-dot" style="background:'+dot+'"></div>';
+  html += '<input type="checkbox" class="nova-check" '+(p.checked?'checked':'')+' onchange="toggleNova('+i+',this.checked)">';
+  html += '<span style="font-size:12px;font-weight:600;color:#ddd;">'+p.name+'</span>';
+  html += partyCell;
+  html += statusBadge;
+  html += '</div>';
+  html += '<div class="nova-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#ffcc44;font-size:12px;text-align:center;padding:3px;" onchange="setNovaStat('+i+',\'defeat\',+this.value)"></div>';
+  html += '<div class="nova-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#aaa;font-size:12px;text-align:center;padding:3px;" onchange="setNovaStat('+i+',\'assist\',+this.value)"></div>';
+  html += '<div class="nova-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#c8782a;font-size:12px;text-align:right;padding:3px;" onchange="setNovaStat('+i+',\'dmg_dealt\',+this.value)"></div>';
+  html += '<div class="nova-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#884444;font-size:12px;text-align:right;padding:3px;" onchange="setNovaStat('+i+',\'dmg_taken\',+this.value)"></div>';
+  html += '<div class="nova-num"><input type="number" min="0" value="'+p.healed+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--heal);font-size:12px;text-align:right;padding:3px;" onchange="setNovaStat('+i+',\'healed\',+this.value)"></div>';
+  html += '</div>';
+  return html;
+}
+
+function renderNovaList(){
+  var hdr = '<div class="nova-list-hdr"><span>Player</span><span style="text-align:center;">Defeat</span><span style="text-align:center;">Assist</span><span style="text-align:right;">Dmg Dealt</span><span style="text-align:right;">Dmg Taken</span><span style="text-align:right;">Healed</span></div>';
+
+  // Sortare: confirmed first (by defeat desc), missing, extra last
+  var sorted = state.novaPlayers.slice().sort(function(a, b){
+    var order = {confirmed:0, missing:1, extra:2};
+    var sa = order[a.status||'missing'];
+    var sb = order[b.status||'missing'];
+    if(sa !== sb) return sa - sb;
+    return (b.defeat||0) - (a.defeat||0);
+  });
+
+  var html = '<div class="nova-list">'+hdr;
+  sorted.forEach(function(p){
+    html += renderNovaRow(p, state.novaPlayers.indexOf(p));
+  });
+  html += '</div>';
+  html += '<div style="margin-top:10px;font-size:11px;color:var(--muted);">✅ în party + date corecte &nbsp;·&nbsp; ⚠ în party fără date (nu a jucat sau eroare) &nbsp;·&nbsp; ➕ în scoreboard fără party (asignează sau bifează)</div>';
+  document.getElementById('nova-list-wrap').innerHTML = html;
+}
+
+function assignExtraToParty(i, partyName){
+  if(!partyName) return;
+  state.novaPlayers[i].party   = partyName;
+  state.novaPlayers[i].extra   = false;
+  state.novaPlayers[i].status  = 'confirmed';
+  state.novaPlayers[i].checked = true;
+  renderNovaList();
+}
+
+function toggleNova(i,v){ state.novaPlayers[i].checked=v; }
+function setNovaStat(i,key,v){ state.novaPlayers[i][key]=v; }
+
+function confirmNovaPlayers(){
+  state.confirmed = state.novaPlayers.filter(function(p){return p.checked;});
+  goStep(4);
+}
+
+// ── STEP 4: MATCH PREVIEW ─────────────────────────────────────────────────
+function renderMatchPreview(){
+  var html='';
+  state.parties.forEach(function(p){
+    var matched = p.members.map(function(m){
+      var stats = state.confirmed.find(function(c){return c.name.toLowerCase().trim()===m.name.toLowerCase().trim();});
+      return Object.assign({},m,stats||{defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0});
+    });
+    var tot_def = matched.reduce(function(a,m){return a+m.defeat;},0);
+    html += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">';
+    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#fff;min-width:80px;">'+p.name+'</div>';
+    html += '<div style="font-size:11px;color:var(--muted);">'+p.label+'</div>';
+    html += '<div style="margin-left:auto;display:flex;gap:16px;align-items:center;">';
+    p.members.forEach(function(m){
+      var dot={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[m.role];
+      var has = state.confirmed.find(function(c){return c.name.toLowerCase().trim()===m.name.toLowerCase().trim();});
+      html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'#ddd':'var(--muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
+    });
+    html += '</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--gold);min-width:60px;text-align:right;">'+tot_def+' kills</div>';
+    html += '</div>';
+  });
+  document.getElementById('match-preview').innerHTML = html;
+}
+
+// ── STEP 5: PREVIEW ───────────────────────────────────────────────────────
+function fmtN(n){
+  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if(n>=1000) return (n/1000).toFixed(0)+'K';
+  return n?String(n):'—';
+}
+function fmtF(n){ return n?n.toLocaleString():'—'; }
+
+function renderPreview(){
+  var totalDef = state.confirmed.reduce(function(a,p){return a+p.defeat;},0);
+  var html='';
+  state.parties.forEach(function(p){
+    var members = p.members.map(function(m){
+      var s = state.confirmed.find(function(c){return c.name.toLowerCase().trim()===m.name.toLowerCase().trim();});
+      return Object.assign({},m,s||{defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0});
+    });
+    var td=members.reduce(function(a,m){return a+m.defeat;},0);
+    var ta=members.reduce(function(a,m){return a+m.assist;},0);
+    var tdd=members.reduce(function(a,m){return a+m.dmg_dealt;},0);
+    var tdt=members.reduce(function(a,m){return a+m.dmg_taken;},0);
+    var th=members.reduce(function(a,m){return a+m.healed;},0);
+    html += '<div class="result-party">';
+    html += '<div class="result-party-hdr"><span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;">'+p.name+'</span><span style="font-size:10px;color:#9080cc;background:rgba(255,255,255,.08);padding:1px 8px;border-radius:99px;">'+p.label+'</span></div>';
+    html += '<table class="result-tbl"><thead><tr><th style="text-align:left;">Name</th><th>Def</th><th>Ast</th><th>Dmg Dealt</th><th>Dmg Taken</th><th>Healed</th><th style="color:var(--gold);">Kill Part.</th></tr></thead><tbody>';
+    members.forEach(function(m){
+      var dot={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[m.role];
+      var kpv = totalDef>0&&m.defeat>0 ? (m.defeat/totalDef*100) : 0;
+      var bw = Math.min(100,kpv*6).toFixed(0);
+      var dc = m.defeat>=20?'#ffcc44':(m.defeat>0?'#bbb':'#444');
+      var hc = m.healed>500000?'var(--heal)':'#555';
+      var kc = m.defeat>0?'var(--gold)':'#444';
+      html += '<tr>';
+      html += '<td><div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></div><span style="font-size:12px;font-weight:600;color:#ddd;">'+m.name+'</span></div></td>';
+      html += '<td style="color:'+dc+';font-weight:700;">'+fmtF(m.defeat)+'</td>';
+      html += '<td style="color:#777;">'+fmtF(m.assist)+'</td>';
+      html += '<td style="color:#c8782a;">'+fmtF(m.dmg_dealt)+'</td>';
+      html += '<td style="color:#884444;">'+fmtF(m.dmg_taken)+'</td>';
+      html += '<td style="color:'+hc+';">'+fmtF(m.healed)+'</td>';
+      html += '<td><div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;"><div class="kp-bar-wrap"><div class="kp-bar-fill" style="width:'+bw+'%"></div></div><span style="font-size:11px;font-weight:700;color:'+kc+';min-width:36px;text-align:right;">'+(kpv>0?kpv.toFixed(1)+'%':'—')+'</span></div></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div class="result-footer">';
+    html += '<div class="rf-item"><div class="rf-label">Defeats</div><div class="rf-val" style="color:#ffcc44;">'+td+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Assists</div><div class="rf-val" style="color:#999;">'+ta+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Dmg Dealt</div><div class="rf-val" style="color:#e8a030;">'+fmtN(tdd)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Dmg Taken</div><div class="rf-val" style="color:#cc4444;">'+fmtN(tdt)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Healed</div><div class="rf-val" style="color:var(--heal);">'+fmtN(th)+'</div></div>';
+    html += '</div></div>';
+  });
+  document.getElementById('preview-content').innerHTML = html;
+}
+
+// ── WARS LIST ─────────────────────────────────────────────────────────────
+function renderWarsList(){
+  var wars = loadWars();
+  var el = document.getElementById('wars-list');
+  if(!wars.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚔</div><div class="empty-state-txt">Nu există wars înregistrate. Apasă "New War" pentru a adăuga primul.</div></div>';
+    return;
+  }
+  el.innerHTML = wars.map(function(w,i){
+    return '<div class="war-item" id="war-item-'+i+'" onclick="viewWar('+w.id+')">'
+      +'<div class="war-item-date">'+w.date+'</div>'
+      +'<div style="flex:1;"><div class="war-item-title">Nova vs '+w.opponent+'</div></div>'
+      +'<button class="btn-view" onclick="event.stopPropagation();viewWar('+w.id+')">View</button>'
+      +'<button class="btn-del" id="del-btn-'+i+'" onclick="event.stopPropagation();showDeleteConfirm('+i+')">Delete</button>'
+      +'<div id="del-confirm-'+i+'" style="display:none;align-items:center;gap:6px;" onclick="event.stopPropagation()">'
+        +'<span style="font-size:11px;color:#e84040;">Sigur ștergi?</span>'
+        +'<button style="background:#e84040;border:none;color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;" onclick="event.stopPropagation();confirmDeleteWar('+w.id+')">Da</button>'
+        +'<button style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;" onclick="event.stopPropagation();cancelDelete('+i+')">Nu</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function showDeleteConfirm(i){
+  document.getElementById('del-btn-'+i).style.display='none';
+  var c = document.getElementById('del-confirm-'+i);
+  c.style.display='flex';
+}
+
+function cancelDelete(i){
+  document.getElementById('del-btn-'+i).style.display='';
+  document.getElementById('del-confirm-'+i).style.display='none';
+}
+
+async function confirmDeleteWar(warId){
+  try{
+    var r = await fetch('/api/wars/'+warId,{method:'DELETE',headers:apiHeaders(true)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(_warsCache!==null) _warsCache = _warsCache.filter(function(w){ return w.id!==warId; });
+  } catch(e){ alert('Eroare la ștergere: '+e.message); return; }
+  renderWarsList();
+}
+
+var vwOpen = true;
+function toggleVwSidebar(){
+  var sb=document.getElementById('vw-sidebar');
+  var main=document.getElementById('vw-main');
+  var btn=document.getElementById('vw-toggle');
+  var ct=document.getElementById('vw-collapsed-title');
+  vwOpen=!vwOpen;
+  if(vwOpen){
+    sb.style.transform=''; main.style.marginLeft='';
+    btn.style.left='244px';
+    btn.querySelector('svg path').setAttribute('d','M10 3L5 8L10 13');
+    ct.style.display='none'; ct.style.opacity='0';
+  } else {
+    sb.style.transform='translateX(-230px)'; main.style.marginLeft='-230px';
+    btn.style.left='14px';
+    btn.querySelector('svg path').setAttribute('d','M6 3L11 8L6 13');
+    setTimeout(function(){ ct.style.display='flex'; ct.style.opacity='1'; },220);
+  }
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function viewWar(warId){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+
+  // Populate sidebar (basic info only)
+  document.getElementById('vw-opponent').textContent = '· '+w.opponent+' ·';
+  document.getElementById('vw-date').textContent     = w.date;
+  document.getElementById('vw-defeats').textContent  = '—';
+  document.getElementById('vw-assists').textContent  = '—';
+  document.getElementById('vw-dmg').textContent      = '—';
+  document.getElementById('vw-taken').textContent    = '—';
+  document.getElementById('vw-healed').textContent   = '—';
+  document.getElementById('vw-topkills').innerHTML   = '';
+  document.getElementById('vw-kp-note').textContent  = '';
+  document.getElementById('vw-ct-text').textContent  = 'Nova vs '+w.opponent+' · '+w.date;
+
+  // Reset sidebar toggle state
+  vwOpen=true;
+  document.getElementById('vw-sidebar').style.transform='';
+  document.getElementById('vw-main').style.marginLeft='';
+  document.getElementById('vw-toggle').style.left='244px';
+  document.getElementById('vw-collapsed-title').style.display='none';
+  document.getElementById('vw-collapsed-title').style.opacity='0';
+
+  // Edit form + party cards
+  var html = '<div style="grid-column:1/-1;">';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">';
+  html += '<div style="flex:1;min-width:180px;"><label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Adversar</label>';
+  html += '<input id="edit-opponent" value="'+escHtml(w.opponent)+'" style="display:block;width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;font-family:\'Exo 2\',sans-serif;"></div>';
+  html += '<div style="flex:1;min-width:160px;"><label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Data</label>';
+  html += '<input id="edit-date" type="date" value="'+escHtml(w.date)+'" style="display:block;width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;font-family:\'Exo 2\',sans-serif;"></div>';
+  html += '</div>';
+  html += '<button class="btn btn-primary" style="margin-bottom:20px;" onclick="saveWarEdits('+w.id+')">💾 Salvează modificări</button>';
+  html += '</div>';
+
+  // Party cards grid
+  w.parties.forEach(function(p, pi){
+    html += '<div class="party-card"><div class="party-card-hdr"><span>'+escHtml(p.name)+'</span><span class="ptag">'+escHtml(p.label||'')+'</span></div>';
+    p.members.forEach(function(m, mi){
+      html += '<div class="party-member">';
+      html += '<div class="role-dot dot-'+m.role+'"></div>';
+      html += '<input data-pi="'+pi+'" data-mi="'+mi+'" value="'+escHtml(m.name)+'" style="flex:1;background:transparent;border:none;border-bottom:1px solid transparent;color:#ddd;font-size:12px;font-weight:600;outline:none;padding:1px 0;font-family:\'Exo 2\',sans-serif;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
+      if(m.tlgmName && m.tlgmName.toLowerCase()!==m.name.toLowerCase())
+        html += '<span style="font-size:10px;color:var(--muted);margin-left:4px;flex-shrink:0;">'+escHtml(m.tlgmName)+'</span>';
+      html += '<span class="role-pill role-'+m.role+'">'+m.role+'</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('view-war-content').innerHTML = html;
+  showPage('view-war');
+}
+
+async function saveWarEdits(warId){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  var opp = document.getElementById('edit-opponent').value.trim() || w.opponent;
+  var dt  = document.getElementById('edit-date').value || w.date;
+  w.opponent = opp; w.date = dt;
+  document.querySelectorAll('#view-war-content input[data-pi]').forEach(function(inp){
+    var pi=+inp.dataset.pi, mi=+inp.dataset.mi;
+    var v = inp.value.trim();
+    if(v) w.parties[pi].members[mi].name = v;
+  });
+  try{
+    var r = await fetch('/api/wars/'+warId,{method:'PUT',headers:apiHeaders(true),
+      body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+  } catch(e){ alert('Eroare la salvare: '+e.message); return; }
+  document.getElementById('vw-opponent').textContent = '· '+w.opponent+' ·';
+  document.getElementById('vw-date').textContent = w.date;
+  document.getElementById('vw-ct-text').textContent = 'Nova vs '+w.opponent+' · '+w.date;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+async function initApp(){
+  try{
+    var results = await Promise.all([
+      fetch('/api/wars').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
+      fetch('/api/aliases/war').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
+      fetch('/api/roster').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
+      fetch('/api/aliases/member').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; })
+    ]);
+    if(results[0]) _warsCache   = results[0];
+    if(results[1]) _aliasCache  = results[1];
+    if(results[2]) _rosterCache = results[2];
+    if(results[3]) _mAliasCache = results[3];
+  } catch(e){ console.warn('API init failed, using localStorage fallback',e); }
+  renderWarsList();
+}
+initApp();
+
+
+
+function exportData(){
+  var keys=['nova_wars','nova_membri_roster','nova_membri_aliases','nova_aliases','nova_api_key','nova_membri_screenshots_meta'];
+  var data={};
+  keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) data[k]=v; });
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='nova-data-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(input){
+  var file=input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      Object.keys(data).forEach(function(k){ localStorage.setItem(k,data[k]); });
+      var s=document.getElementById('import-status');
+      if(s){ s.style.display='block'; s.style.background='rgba(62,207,110,.1)'; s.style.color='var(--heal)'; s.textContent='✓ Date importate — reîncărcare...'; }
+      setTimeout(function(){ location.reload(); },1000);
+    } catch(err){
+      var s=document.getElementById('import-status');
+      if(s){ s.style.display='block'; s.style.background='rgba(232,64,64,.1)'; s.style.color='#e84040'; s.textContent='Fișier invalid.'; }
+    }
+  };
+  reader.readAsText(file);
+}
+
+function saveApiKey(){
+  var key = document.getElementById('api-key-input').value.trim();
+  if(!key.startsWith('sk-ant-')){ showApiStatus('Key invalid — trebuie să înceapă cu sk-ant-','#e84040'); return; }
+  localStorage.setItem('nova_api_key', key);
+  showApiStatus('✓ API key salvat','var(--heal)');
+}
+function loadApiKey(){ return localStorage.getItem('nova_api_key')||''; }
+function checkApiKey(){
+  var k = document.getElementById('api-key-input').value.trim();
+  if(k) showApiStatus('','');
+}
+function showApiStatus(msg,color){
+  var el=document.getElementById('api-key-status');
+  el.style.display=msg?'block':'none';
+  el.style.color=color;
+  el.textContent=msg;
+}
+// ── ALIAS JUCĂTORI ────────────────────────────────────────────────────────
+function renderAliasTable(){
+  var aliases = loadAliases();
+  var keys = Object.keys(aliases);
+  var html = '';
+  if(!keys.length){
+    html = '<div style="font-size:11px;color:var(--muted);padding:6px 0;">Niciun alias definit.</div>';
+  } else {
+    html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+    keys.forEach(function(k){
+      var safeK = k.replace(/'/g,"\\'");
+      html += '<div style="display:flex;gap:8px;align-items:center;">'
+        +'<input type="text" value="'+k+'" placeholder="Nume Guild Manager" '
+        +'style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px;" '
+        +'onchange="renameAliasKey(\''+safeK+'\',this.value)">'
+        +'<span style="color:var(--muted);font-size:14px;">→</span>'
+        +'<input type="text" value="'+aliases[k]+'" placeholder="Nume în joc" '
+        +'style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--gold);font-size:12px;padding:5px 8px;" '
+        +'onchange="updateAliasValue(\''+safeK+'\',this.value)">'
+        +'<button onclick="removeAlias(\''+safeK+'\')" style="background:transparent;border:none;color:#e84040;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>'
+        +'</div>';
+    });
+    html += '</div>';
+  }
+  var el = document.getElementById('alias-table');
+  if(el) el.innerHTML = html;
+}
+
+function addAlias(){
+  var aliases = loadAliases();
+  var newKey = 'jucator'+(Object.keys(aliases).length+1);
+  while(aliases[newKey]) newKey += '_';
+  aliases[newKey] = '';
+  saveAliases(aliases);
+  renderAliasTable();
+}
+
+function removeAlias(key){
+  var aliases = loadAliases();
+  delete aliases[key];
+  saveAliases(aliases);
+  renderAliasTable();
+}
+
+function renameAliasKey(oldKey, newRaw){
+  var newKey = newRaw.trim().toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+  if(!newKey || newKey === oldKey) return;
+  var aliases = loadAliases();
+  var val = aliases[oldKey];
+  delete aliases[oldKey];
+  aliases[newKey] = val;
+  saveAliases(aliases);
+  renderAliasTable();
+}
+
+function updateAliasValue(key, val){
+  var aliases = loadAliases();
+  aliases[key] = val.trim();
+  saveAliases(aliases);
+}
+
+function initSettingsPage(){
+  var k = loadApiKey();
+  if(k){
+    document.getElementById('api-key-input').value = k;
+    document.getElementById('api-key-current').textContent = 'Key salvat: '+k.substring(0,20)+'...'+k.substring(k.length-6);
+    showApiStatus('✓ API key configurat','var(--heal)');
+  } else {
+    document.getElementById('api-key-current').textContent = 'Niciun key salvat';
+  }
+  var sec = localStorage.getItem('nova_admin_secret')||'';
+  var secEl = document.getElementById('admin-secret-input');
+  if(secEl) secEl.value = sec;
+  renderAliasTable();
+}
+
+function saveAdminSecret(){
+  var sec = (document.getElementById('admin-secret-input').value||'').trim();
+  if(sec) localStorage.setItem('nova_admin_secret', sec);
+  else localStorage.removeItem('nova_admin_secret');
+  var el = document.getElementById('backend-status');
+  if(el){ el.style.display='block'; el.style.color='var(--heal)'; el.textContent='✓ Admin Secret salvat.'; }
+}
+
+async function testApiKey(){
+  var key = loadApiKey();
+  if(!key){ 
+    document.getElementById('api-test-result').style.display='block';
+    document.getElementById('api-test-result').textContent='Salvează un key mai întâi';
+    document.getElementById('api-test-result').style.color='#e84040';
+    return;
+  }
+  var btn = document.getElementById('test-api-btn');
+  btn.textContent='Se testează...'; btn.disabled=true;
+  var res = document.getElementById('api-test-result');
+  res.style.display='block';
+  res.textContent='Trimit request de test...';
+  res.style.color='var(--gold)';
+  try{
+    var resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:10,
+        messages:[{role:'user',content:'Say OK'}]
+      })
+    });
+    var data = await resp.json();
+    if(resp.ok){
+      res.textContent='✓ API key funcționează! Răspuns: '+data.content[0].text;
+      res.style.color='var(--heal)';
+      res.style.background='rgba(62,207,110,.08)';
+    } else {
+      res.textContent='✗ Eroare '+resp.status+': '+JSON.stringify(data.error);
+      res.style.color='#e84040';
+      res.style.background='rgba(232,64,64,.08)';
+    }
+  } catch(e){
+    res.textContent='✗ Network error: '+e.message;
+    res.style.color='#e84040';
+  }
+  btn.textContent='🔍 Testează API key'; btn.disabled=false;
+}
+
+// ── IMAGE COMPRESSION ─────────────────────────────────────────────────────
+function compressImage(dataUrl, maxWidth, quality){
+  maxWidth = maxWidth || 1600;
+  quality  = quality  || 0.82;
+  return new Promise(function(resolve){
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height;
+      if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+// ── CLAUDE API CALL ────────────────────────────────────────────────────────
+async function callClaude(prompt, imageDataUrl){
+  var key = loadApiKey();
+  if(!key) throw new Error('API key lipsă — mergi la Settings');
+  var compressed = await compressImage(imageDataUrl);
+  var b64 = compressed.split(',')[1];
+  var mime = 'image/jpeg';
+  var body = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4096,
+    messages:[{
+      role:'user',
+      content:[
+        {type:'image', source:{type:'base64', media_type:mime, data:b64}},
+        {type:'text', text:prompt}
+      ]
+    }]
+  };
+  var resp = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body: JSON.stringify(body)
+  });
+  if(!resp.ok){
+    var err = await resp.text();
+    throw new Error('API error '+resp.status+': '+err);
+  }
+  var data = await resp.json();
+  return data.content[0].text;
+}
+
+// ── STEP 1: VISION PARTY EXTRACT ──────────────────────────────────────────
+async function extractPartiesFromImage(dataUrl){
+  var prompt = `You are analyzing a screenshot from TL Guild Manager (Throne & Liberty game).
+
+The image shows party cards in a 4-column grid. Each card has:
+- A header: "Party N (Label)" e.g. "Party 1 (Main)" or "Party 5 (Main/Cap)"
+- 5-6 player rows, each with a colored background
+
+CRITICAL - ROLE DETECTION BY ROW BACKGROUND COLOR:
+The row background colors are VERY specific - look carefully at each row:
+- DARK PURPLE / VIOLET rows (like #3a2060 or #2d1d55) → role: "TANK"
+- DARK GREEN rows (like #1a4020 or #1e3d1e) → role: "HEALER"  
+- DARK RED / MAROON rows (like #4a1515 or #3d1a1a) → role: "DPS"
+
+In each row you can see: [dots] [avatar] [PlayerName] [number in circle] [icons] [...]
+Read the PlayerName exactly — may include: letters, numbers, dots, ✗, ✦, ·, ↗, ✦, Japanese chars
+
+IMPORTANT RULES:
+- Skip any "Not Assigned" players (they appear below a "Not Assigned:" label)
+- The party label is in parentheses: "Party 3 (Portal Camp)" → label = "Portal Camp"
+- Usually 6 players per party (first row = TANK most often, then HEALERs, then DPS at bottom)
+- Return ALL parties visible in the image
+
+Respond with ONLY a JSON array, nothing else:
+[
+  {"name":"Party 1","label":"Main","members":[
+    {"name":"PaoloBrosio","role":"TANK"},
+    {"name":"Enelyye","role":"HEALER"},
+    {"name":"ilenia","role":"DPS"}
+  ]},
+  {"name":"Party 2","label":"Main","members":[...]}
+]`;
+
+  var raw = await callClaude(prompt, dataUrl);
+  var clean = raw.replace(/```json\n?|```/g,'').trim();
+  var match = clean.match(/\[[\s\S]*\]/);
+  if(match) clean = match[0];
+  return JSON.parse(clean);
+}
+
+// ── STEP 2: VISION SCOREBOARD EXTRACT ────────────────────────────────────
+async function extractScoreboardFromImage(dataUrl, novaNames){
+  var prompt = `This image shows a war scoreboard from Throne & Liberty.
+
+Extract ALL visible player rows — do not filter by guild. Include every row you can see.
+
+Columns in order (left to right):
+1. Ranking number
+2. Weapon icons (ignore)
+3. Guild name/badge text (e.g. "カNova ミ" or "Faith メ" or "TheExpendables")
+4. Player name (column after guild)
+5. Team color: Yellow or Red
+6. Defeat (integer)
+7. Assist (integer)
+8. Damage Dealt (integer)
+9. Damage Taken (integer)
+10. Amount Healed (integer)
+
+Rules:
+- Extract EVERY row visible on screen, regardless of guild
+- Copy player names EXACTLY as shown — preserve decorative chars like ✗ • ↗ ↙ メ
+- Numbers use comma separators (e.g. "1,234,567") — return as pure integer 1234567
+- If a cell shows 0 or is empty, return 0
+- Guild text: copy exactly what is shown next to the guild icon (e.g. "カNova ミ", "Faith メ")
+
+Return ONLY valid JSON array, no markdown, no explanation:
+[
+  {"name":"Reeane","guild":"カNova ミ","defeat":29,"assist":26,"dmg_dealt":1326360,"dmg_taken":1714579,"healed":48124},
+  {"name":"DomFusionTV","guild":"Faith メ","defeat":21,"assist":70,"dmg_dealt":2064986,"dmg_taken":1423682,"healed":28219}
+]`;
+
+  var raw = await callClaude(prompt, dataUrl);
+  var clean = raw.replace(/```json\n?|```/g,'').trim();
+  var match = clean.match(/\[[\s\S]*\]/);
+  if(match) clean = match[0];
+  return JSON.parse(clean);
+}
+
+// ── UPDATED PARTY UPLOAD HANDLER ──────────────────────────────────────────
+async function handlePartyUploadWithVision(e){
+  var file = e.target.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(ev){
+    state.partyImg = ev.target.result;
+    document.getElementById('party-preview-img').src = ev.target.result;
+    document.getElementById('party-upload-zone').style.display='none';
+    document.getElementById('party-split-view').style.display='';
+    var sb = document.getElementById('step1-btns');
+    sb.style.display='flex';
+    sb.style.gap='8px';
+    document.getElementById('step1-btns').querySelector('.btn-primary').disabled=true;
+    document.getElementById('step1-btns').querySelector('.btn-primary').textContent='Se procesează...';
+
+    var hasKey = !!loadApiKey();
+    if(hasKey){
+      document.getElementById('party-manual-editor').innerHTML =
+        '<div class="processing"><span class="spin">◌</span> Claude analizează culorile și extrage party-urile...</div>';
+      try{
+        var extracted = await extractPartiesFromImage(ev.target.result);
+        state.parties = matchPartiesAgainstRoster(extracted);
+        renderPartyEditorFromData(state.parties);
+      } catch(err){
+        document.getElementById('party-manual-editor').innerHTML =
+          '<div style="color:#e84040;font-size:12px;padding:10px;background:rgba(232,64,64,.08);border-radius:8px;margin-bottom:10px;">Vision eroare: '+err.message+'<br>Se folosesc party-urile default — editează manual.</div>';
+        state.parties = matchPartiesAgainstRoster(JSON.parse(JSON.stringify(DEFAULT_PARTIES)));
+        renderPartyEditorFromData(state.parties);
+      }
+    } else {
+      document.getElementById('party-manual-editor').innerHTML =
+        '<div style="color:var(--gold);font-size:11px;padding:8px 10px;background:rgba(240,192,64,.06);border-radius:6px;margin-bottom:10px;">Fără API key — party-uri default. <a href="#" onclick="showPage(\'settings\')" style="color:var(--gold);">Settings →</a></div>';
+      state.parties = matchPartiesAgainstRoster(JSON.parse(JSON.stringify(DEFAULT_PARTIES)));
+      renderPartyEditorFromData(state.parties);
+    }
+    document.getElementById('step1-btns').querySelector('.btn-primary').disabled=false;
+    document.getElementById('step1-btns').querySelector('.btn-primary').textContent='Confirm Parties →';
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPartyEditorFromData(parties){
+  var html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+  parties.forEach(function(p,pi){
+    html += '<div class="party-card"><div class="party-card-hdr">';
+    html += '<input type="text" value="'+p.name+'" style="background:transparent;border:none;color:#fff;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;width:72px;outline:none;" onchange="updatePartyName('+pi+',this.value)">';
+    html += '<input type="text" value="'+(p.label||'')+'" style="background:rgba(255,255,255,.08);border:none;color:#9080cc;font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
+    html += '</div>';
+    p.members.forEach(function(m,mi){
+      var roleColors={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'};
+      var role = m.role||'DPS';
+      var matchDot = m.tlgmKey
+        ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
+        : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
+      html += '<div class="party-member" style="padding:5px 10px;">';
+      html += '<div class="role-dot dot-'+role+'" id="dot-'+pi+'-'+mi+'"></div>';
+      html += '<input type="text" value="'+(m.name||'')+'" style="flex:1;background:transparent;border:none;color:#ddd;font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
+      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value);this.style.color=({TANK:\'var(--tank)\',HEALER:\'var(--heal)\',DPS:\'var(--dps)\'})[this.value];document.getElementById(\'dot-'+pi+'-'+mi+'\').className=\'role-dot dot-\'+this.value;" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColors[role]+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
+      ['TANK','HEALER','DPS'].forEach(function(r){
+        html += '<option value="'+r+'"'+(r===role?' selected':'')+'>'+r+'</option>';
+      });
+      html += '</select>'+matchDot+'</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById('party-manual-editor').innerHTML = html;
+}
+
+// ── NAME NORMALIZATION ────────────────────────────────────────────────────
+function normalizeName(n){
+  return (n||'').toLowerCase()
+    .replace(/[^\w\s]/g,'')   // șterge ✗ • ↗ ↙ ✦ · メ și orice char special
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function namesMatch(a, b){
+  var na = normalizeName(a);
+  var nb = normalizeName(b);
+  if(!na || !nb) return false;
+  if(na === nb) return true;
+  var shorter = na.length <= nb.length ? na : nb;
+  var longer  = na.length <= nb.length ? nb : na;
+  // "Xin9 Nova" ↔ "Xin9"  sau  "Yacoob" ↔ "yacoobb"
+  if(longer.startsWith(shorter+' ') || longer.startsWith(shorter)) return true;
+  return false;
+}
+
+// ── UPDATED STEP 3: VISION SCOREBOARD ────────────────────────────────────
+async function goStep3WithVision(){
+  goStep(3);
+  var allMembers = [];
+  state.parties.forEach(function(p){
+    p.members.forEach(function(m){
+      if(!allMembers.find(function(x){return x.name===m.name;})){
+        allMembers.push({name:m.name,party:p.name,role:m.role,defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0,checked:true});
+      }
+    });
+  });
+  state.novaPlayers = allMembers;
+
+  var hasKey = !!loadApiKey();
+  if(!hasKey){
+    var s3 = document.getElementById('step3-status');
+    s3.innerHTML = '⚠ Fără API key — <b>introdu manual statisticile în tabelul de mai jos</b>. '
+      +'<a href="#" onclick="showPage(\'settings\')" style="color:var(--gold);">Configurează API →</a>';
+    s3.style.display='block';
+    s3.style.background='rgba(240,192,64,.08)';
+    s3.style.borderColor='rgba(240,192,64,.2)';
+    s3.style.color='var(--gold)';
+    renderNovaList();
+    return;
+  }
+  if(state.scoreImgs.length===0){
+    document.getElementById('step3-status').textContent = '⚠ Nicio poză de scoreboard încărcată la Step 2.';
+    document.getElementById('step3-status').style.display='block';
+    renderNovaList();
+    return;
+  }
+
+  var novaNames = allMembers.map(function(m){return m.name;});
+  var allExtracted = {};
+  var log = [];
+
+  for(var i=0;i<state.scoreImgs.length;i++){
+    document.getElementById('nova-list-wrap').innerHTML =
+      '<div class="processing"><span class="spin">◌</span> Procesez poza '+(i+1)+' din '+state.scoreImgs.length+'...'
+      +(log.length?'<br><small style="color:#888;">'+log.join(' | ')+'</small>':'')
+      +'</div>';
+    try{
+      var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, novaNames);
+      if(!Array.isArray(players)) throw new Error('Răspuns invalid — nu e array');
+
+      // Filtrare JS: păstrează doar jucătorii Nova (guild sau nume match)
+      var novaPlayers = players.filter(function(p){
+        var g = (p.guild||'').toLowerCase();
+        var guildIsNova = g.indexOf('nova') !== -1 || (p.guild||'').indexOf('カ') !== -1 || (p.guild||'').indexOf('ミ') !== -1;
+        var nameMatchesParty = novaNames.some(function(n){ return namesMatch(n, p.name); });
+        return guildIsNova || nameMatchesParty;
+      });
+
+      log.push('P'+(i+1)+': '+novaPlayers.length+'/'+players.length+' Nova');
+      novaPlayers.forEach(function(p){
+        if(!p.name) return;
+        var key = p.name.toLowerCase().trim();
+        if(!allExtracted[key]) allExtracted[key] = p;
+        else {
+          allExtracted[key].defeat    = Math.max(allExtracted[key].defeat,    +p.defeat||0);
+          allExtracted[key].assist    = Math.max(allExtracted[key].assist,    +p.assist||0);
+          allExtracted[key].dmg_dealt = Math.max(allExtracted[key].dmg_dealt, +p.dmg_dealt||0);
+          allExtracted[key].dmg_taken = Math.max(allExtracted[key].dmg_taken, +p.dmg_taken||0);
+          allExtracted[key].healed    = Math.max(allExtracted[key].healed,    +p.healed||0);
+        }
+      });
+    } catch(err){
+      log.push('P'+(i+1)+': ERR '+err.message.substring(0,120));
+    }
+  }
+
+  // ── Merge cu fuzzy matching ─────────────────────────────────────────────
+  var extractedKeys = Object.keys(allExtracted);
+  var matchedKeys = {};
+
+  state.novaPlayers.forEach(function(p){
+    for(var k=0;k<extractedKeys.length;k++){
+      if(namesMatch(p.name, extractedKeys[k])){
+        var found = allExtracted[extractedKeys[k]];
+        p.defeat    = +found.defeat||0;
+        p.assist    = +found.assist||0;
+        p.dmg_dealt = +found.dmg_dealt||0;
+        p.dmg_taken = +found.dmg_taken||0;
+        p.healed    = +found.healed||0;
+        matchedKeys[extractedKeys[k]] = true;
+        break;
+      }
+    }
+  });
+
+  // Jucători Nova extra — în scoreboard dar fără party
+  extractedKeys.forEach(function(k){
+    if(!matchedKeys[k]){
+      var ep = allExtracted[k];
+      state.novaPlayers.push({
+        name: ep.name || k,
+        party: '?',
+        role: 'DPS',
+        defeat:    +ep.defeat||0,
+        assist:    +ep.assist||0,
+        dmg_dealt: +ep.dmg_dealt||0,
+        dmg_taken: +ep.dmg_taken||0,
+        healed:    +ep.healed||0,
+        checked: false,
+        extra: true
+      });
+    }
+  });
+
+  // ── Setează status pe fiecare player ────────────────────────────────────
+  state.novaPlayers.forEach(function(p){
+    if(p.extra) p.status = 'extra';
+    else if(p.defeat===0 && p.assist===0 && p.dmg_dealt===0) p.status = 'missing';
+    else p.status = 'confirmed';
+  });
+
+  // ── Status message sumar ─────────────────────────────────────────────────
+  var confirmedCount = state.novaPlayers.filter(function(p){return p.status==='confirmed';}).length;
+  var missingCount   = state.novaPlayers.filter(function(p){return p.status==='missing';}).length;
+  var extraCount     = state.novaPlayers.filter(function(p){return p.status==='extra';}).length;
+  var statusEl = document.getElementById('step3-status');
+  statusEl.style.display='block';
+  var retryBtn = ' <button onclick="goStep3WithVision()" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">↺ Reîncearcă</button>';
+
+  var totalFound = confirmedCount + extraCount;
+  if(totalFound > 0){
+    var hadErrors = log.some(function(l){ return l.indexOf('ERR') !== -1; });
+    statusEl.innerHTML =
+      '<span style="color:var(--heal);">✅ '+confirmedCount+' confirmați</span>'
+      +'  <span style="color:#e8a030;">⚠ '+missingCount+' lipsă</span>'
+      +'  <span style="color:var(--gold);">➕ '+extraCount+' extra Nova</span>'
+      +'  <small style="color:#666;">'+log.join(' | ')+'</small>'
+      +retryBtn;
+    statusEl.style.background='rgba(10,16,32,.6)';
+    statusEl.style.borderColor='rgba(255,255,255,.08)';
+    statusEl.style.color='var(--text)';
+  } else {
+    statusEl.innerHTML = '✗ 0 jucători găsiți în scoreboard. <small>'+log.join(' | ')+'</small>'+retryBtn;
+    statusEl.style.background='rgba(232,64,64,.08)';
+    statusEl.style.borderColor='rgba(232,64,64,.2)';
+    statusEl.style.color='#e84040';
+  }
+  renderNovaList();
+}
+
+</script>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+  <div class="section-title">Settings</div>
+  <div class="section-sub">Configurare API și preferințe</div>
+  <div style="max-width:500px;">
+
+    <!-- Admin Secret (Dokploy) -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Admin Secret</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Secretul setat în Dokploy (ADMIN_SECRET). Necesar pentru a putea salva/șterge date. Membrii fără secret pot doar citi.</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;">ADMIN_SECRET <span style="color:#444;">(nu îl împărtăși)</span></div>
+        <input type="password" id="admin-secret-input" placeholder="secretul din env vars Dokploy" style="width:100%;">
+      </div>
+      <button class="btn btn-primary" onclick="saveAdminSecret()" style="padding:8px 16px;font-size:13px;">Salvează</button>
+      <div id="backend-status" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);"></div>
+    </div>
+
+    <!-- Anthropic API Key -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Anthropic API Key</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Pentru extragere automată party-uri și scoreboard din poze.</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="flex:1;" oninput="checkApiKey()">
+        <button class="btn btn-primary" onclick="saveApiKey()" style="padding:8px 16px;font-size:13px;">Salvează</button>
+      </div>
+      <div id="api-key-status" style="margin-top:8px;font-size:11px;display:none;"></div>
+      <div id="api-key-current" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
+      <button onclick="testApiKey()" style="margin-top:10px;background:transparent;border:1px solid var(--border2);color:var(--text);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;" id="test-api-btn">🔍 Testează API key</button>
+      <div id="api-test-result" style="margin-top:8px;font-size:11px;display:none;padding:8px 10px;border-radius:6px;"></div>
+    </div>
+
+
+    <!-- Alias Jucători -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Alias Jucători</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Dacă un jucător are alt nume în joc față de Guild Manager, adaugă un alias. Se aplică automat la toate war-urile.</div>
+      <div id="alias-table" style="margin-bottom:10px;"></div>
+      <button onclick="addAlias()" style="background:transparent;border:1px solid var(--border2);color:var(--text);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;">+ Adaugă alias</button>
+    </div>
+
+    <!-- Data Transfer -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Transfer Date</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Exportă datele (wars, roster, alias-uri) într-un fișier JSON pentru backup sau transfer între dispozitive/domenii.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="exportData()" class="btn-transfer-data">⬇ Export Date</button>
+        <label class="btn-transfer-data" style="cursor:pointer;">
+          ⬆ Import Date
+          <input type="file" accept=".json" onchange="importData(this)" style="display:none;">
+        </label>
+      </div>
+      <div id="import-status" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;"></div>
+    </div>
+
+    <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.15);border-radius:8px;padding:12px 14px;font-size:11px;color:#a08020;line-height:1.7;">
+      <b>Cum funcționează:</b><br>
+      • Datele se salvează direct în baza de date pe Dokploy<br>
+      • Colegii accesează același URL — văd datele în timp real<br>
+      • Tu ești singurul cu Admin Secret — doar tu poți modifica<br>
+      • Cost Vision AI: ~$0.02-0.05 per war · Dokploy: planul tău existent
+    </div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-secondary" onclick="showPage('wars')">← Înapoi</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
