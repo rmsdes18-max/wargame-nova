@@ -176,14 +176,14 @@ input[type=text]:focus{border-color:var(--gold);}
   <div class="nav-right">
     <button onclick="toggleLang()" id="lang-btn" style="background:transparent;border:1px solid rgba(255,255,255,.08);color:#666;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;margin-right:6px;font-weight:700;letter-spacing:.04em;">EN</button>
     <button class="btn-settings" onclick="promptPin()" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:#888;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-right:6px;">⚙ Settings</button>
-    <button class="btn-new-war" onclick="startNewWar()">+ New War</button>
+    <button class="btn-new-war" onclick="startNewWar()" data-t="newWarBtn">+ New War</button>
   </div>
 </nav>
 
 <!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
 <div class="page active" id="page-wars">
-  <div class="section-title">War History</div>
-  <div class="section-sub">All recorded wars — click to view results</div>
+  <div class="section-title" data-t="warHistory">War History</div>
+  <div class="section-sub" data-t="warHistorySub">All recorded wars — click to view results</div>
   <div class="wars-list" id="wars-list"></div>
 </div>
 
@@ -195,8 +195,8 @@ input[type=text]:focus{border-color:var(--gold);}
 
   <div class="wizard">
     <div class="wizard-steps" id="wizard-steps">
-      <div class="wstep active" id="ws-1"><span class="wstep-num">1</span>Party Setup</div>
-      <div class="wstep" id="ws-2"><span class="wstep-num">2</span>Scoreboard</div>
+      <div class="wstep active" id="ws-1"><span class="wstep-num">1</span><span data-t="partySetup">Party Setup</span></div>
+      <div class="wstep" id="ws-2"><span class="wstep-num">2</span><span data-t="scoreboard">Scoreboard</span></div>
     </div>
     <div class="wizard-body">
 
@@ -204,11 +204,11 @@ input[type=text]:focus{border-color:var(--gold);}
       <div id="step-1">
         <div style="display:flex;gap:12px;margin-bottom:16px;">
           <div style="flex:1;">
-            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Adversar</label>
-            <input id="opponent-input" type="text" placeholder="Nume gilda adversara" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
+            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;" data-t="opponent">Adversar</label>
+            <input id="opponent-input" type="text" placeholder="Nume gilda adversara" data-tp="opponentPh" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
           </div>
           <div style="flex:1;">
-            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Data</label>
+            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;" data-t="date">Data</label>
             <input id="date-input" type="date" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
           </div>
         </div>
@@ -224,8 +224,8 @@ input[type=text]:focus{border-color:var(--gold);}
         <div class="upload-zone" id="party-upload-zone">
           <input type="file" accept="image/*" id="party-img-input" onchange="handlePartyUploadWithVision(event)">
           <div class="upload-icon">⬆</div>
-          <div class="upload-title">Drop party screenshot here</div>
-          <div class="upload-sub">sau click să selectezi fișierul</div>
+          <div class="upload-title" data-t="dropHere">Drop party screenshot here</div>
+          <div class="upload-sub" data-t="orClick">sau click să selectezi fișierul</div>
         </div>
 
         <div id="party-split-view" style="display:none;">
@@ -255,23 +255,23 @@ input[type=text]:focus{border-color:var(--gold);}
 
       <!-- STEP 2: Scoreboard upload + extraction -->
       <div id="step-2" style="display:none;">
-        <div class="section-title" style="font-size:16px;margin-bottom:4px;">Upload scoreboard screenshots</div>
-        <div class="section-sub" style="margin-bottom:12px;">Încarcă pozele de scoreboard din joc (câte una per pagină). Vision AI va extrage statisticile automat.</div>
+        <div class="section-title" style="font-size:16px;margin-bottom:4px;" data-t="uploadScore">Upload scoreboard screenshots</div>
+        <div class="section-sub" style="margin-bottom:12px;" data-t="uploadScoreSub">Încarcă pozele de scoreboard din joc.</div>
 
         <div class="score-upload-grid" id="score-grid"></div>
         <div class="score-add" style="display:inline-flex;min-width:160px;margin-top:10px;position:relative;">
           <input type="file" accept="image/*" multiple onchange="handleScoreUpload(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
           <div class="score-add-icon">📷</div>
-          <div class="score-add-txt">Adaugă poze scoreboard</div>
+          <div class="score-add-txt" data-t="addPhotos">Adaugă poze scoreboard</div>
         </div>
 
         <div id="score-extract-status" style="margin-top:16px;"></div>
         <div id="score-results" style="margin-top:16px;"></div>
 
         <div class="btn-row" style="margin-top:20px;gap:10px;">
-          <button class="btn btn-secondary" onclick="goBackToStep1()">← Înapoi la Party</button>
-          <button class="btn btn-primary" id="score-extract-btn" onclick="extractAllScoreboards()" disabled>🔍 Extrage statisticile</button>
-          <button class="btn btn-primary" id="score-save-btn" onclick="saveWarWithStats()" style="display:none;">💾 Salvează War</button>
+          <button class="btn btn-secondary" onclick="goBackToStep1()" data-t="backToParty">← Înapoi la Party</button>
+          <button class="btn btn-primary" id="score-extract-btn" onclick="extractAllScoreboards()" disabled data-t="extractStats">Extrage statisticile</button>
+          <button class="btn btn-primary" id="score-save-btn" onclick="saveWarWithStats()" style="display:none;" data-t="saveWar">Salvează War</button>
         </div>
       </div>
 
@@ -342,51 +342,155 @@ input[type=text]:focus{border-color:var(--gold);}
 var _lang = localStorage.getItem('nova_lang') || 'ro';
 var _t = {
   ro: {
-    allWars:'Toate War-urile', newWar:'New War', members:'Membrii', settings:'Setări',
-    opponent:'Adversar', date:'Data', save:'Salvează', saveChanges:'Salvează modificări',
-    partySetup:'Party Setup', scoreboard:'Scoreboard', uploadParty:'Upload party screenshot',
-    uploadScore:'Upload scoreboard screenshots', extractStats:'Extrage statisticile',
-    extractAgain:'Extrage din nou', saveWar:'Salvează War', saveNoStats:'Salvează fără stats',
-    scoreboardNext:'Scoreboard →', confirmParties:'Confirm Parties →',
-    backToParty:'Înapoi la Party', addMember:'Adaugă membru', player:'Jucător',
-    kills:'Kills', assists:'Assists', dmgDealt:'Dmg Dealt', dmgTaken:'Dmg Taken',
-    healing:'Healing', total:'TOTAL', status:'Status', party:'Party',
+    // Nav
+    allWars:'Toate War-urile', newWar:'War Nou', members:'Membrii', settings:'Setări',
+    newWarBtn:'+ War Nou',
+    // Wizard
+    partySetup:'Configurare Party', scoreboard:'Scoreboard',
+    opponent:'Adversar', date:'Data', opponentPh:'Nume gildă adversară',
+    uploadParty:'Upload screenshot party',
+    uploadPartySub:'Screenshot din TL cu toate party-urile (mov=Tank, verde=Healer, roșu=DPS)',
+    changePhoto:'Schimbă poza', confirmParties:'Confirmă Party-uri →',
+    dropHere:'Trage poza aici', orClick:'sau click pentru a selecta',
+    checkRoles:'Verifică rolurile — editează dacă e necesar:',
+    movTank:'Mov = Tank', greenHealer:'Verde = Healer', redDps:'Roșu = DPS',
+    // Step 2
+    uploadScore:'Upload screenshot-uri scoreboard',
+    uploadScoreSub:'Încarcă pozele de scoreboard din joc (câte una per pagină). Vision AI va extrage statisticile automat.',
+    addPhotos:'Adaugă poze scoreboard', extractStats:'Extrage statisticile',
+    extractAgain:'Extrage din nou', backToParty:'← Înapoi la Party',
+    saveWar:'Salvează War', saveNoStats:'Salvează fără stats',
+    scoreboardNext:'Scoreboard →',
+    // Results
+    player:'Jucător', kills:'Kills', assists:'Assists',
+    dmgDealt:'Dmg Dealt', dmgTaken:'Dmg Taken', healing:'Healing',
+    total:'TOTAL', status:'Status', party:'Party',
     withStats:'cu stats', noStats:'fără stats', extra:'extra', errors:'erori',
     suggestions:'Sugestii matching — acești playeri par a fi aceeași persoană:',
     apply:'Aplică', ignore:'Ignoră', applyAll:'Aplică toate sugestiile',
     extractComplete:'Extragere completă! Verifică și corectează valorile, apoi salvează.',
+    noStatsSection:'Fără statistici', extraSection:'Extra din scoreboard',
+    noParty:'(fără party)',
+    // View War
+    save:'Salvează', saveChanges:'Salvează modificări', addMember:'+ Adaugă membru',
+    selectMember:'Selectează membru', search:'Caută...', inWar:'în war',
+    noResult:'Niciun rezultat',
+    // Wars list
+    warHistory:'Istoric War-uri', warHistorySub:'Toate war-urile înregistrate — click pentru rezultate',
+    view:'Vizualizează', delete:'Șterge', deleteConfirm:'Sigur ștergi?', yes:'Da', no:'Nu',
+    noWars:'Nu există war-uri înregistrate. Apasă "War Nou" pentru a adăuga primul.',
+    // Sidebar
+    warInfo:'Info war', guildTotals:'Totaluri gildă', defeats:'Defeats',
+    topKills:'Top kills', roles:'Roluri', allWarsLink:'← Toate War-urile',
+    // PIN
     enterPin:'Introdu PIN-ul', wrongPin:'PIN incorect', cancel:'Anulează',
-    noWars:'Nu există wars înregistrate.', deleteConfirm:'Sigur ștergi?', yes:'Da', no:'Nu',
-    processing:'Se procesează...', back:'Înapoi'
+    // Settings
+    settingsTitle:'Setări', settingsSub:'Configurare API și preferințe',
+    adminSecret:'Admin Secret',
+    adminSecretDesc:'Secretul setat în Dokploy (ADMIN_SECRET). Necesar pentru a salva/șterge date. Membrii fără secret pot doar citi.',
+    adminSecretLabel:'ADMIN_SECRET (nu îl împărtăși)',
+    adminSecretPh:'secretul din env vars Dokploy',
+    apiKey:'Anthropic API Key',
+    apiKeyDesc:'Pentru extragere automată party-uri și scoreboard din poze.',
+    testApiKey:'Testează API key',
+    aliasTitle:'Alias Jucători',
+    aliasDesc:'Dacă un jucător are alt nume în joc față de Guild Manager, adaugă un alias.',
+    addAlias:'+ Adaugă alias',
+    transferTitle:'Transfer Date',
+    transferDesc:'Exportă datele (wars, roster, alias-uri) într-un fișier JSON pentru backup.',
+    exportData:'Export Date', importData:'Import Date',
+    howItWorks:'Cum funcționează:',
+    howLine1:'Datele se salvează direct în baza de date pe Dokploy',
+    howLine2:'Colegii accesează același URL — văd datele în timp real',
+    howLine3:'Tu ești singurul cu Admin Secret — doar tu poți modifica',
+    howLine4:'Cost Vision AI: ~$0.02-0.05 per war · Dokploy: planul tău existent',
+    backBtn:'← Înapoi',
+    // Misc
+    processing:'Se procesează...',
+    identified:'identificați', unidentified:'neidentificați'
   },
   en: {
+    // Nav
     allWars:'All Wars', newWar:'New War', members:'Members', settings:'Settings',
-    opponent:'Opponent', date:'Date', save:'Save', saveChanges:'Save Changes',
-    partySetup:'Party Setup', scoreboard:'Scoreboard', uploadParty:'Upload party screenshot',
-    uploadScore:'Upload scoreboard screenshots', extractStats:'Extract Stats',
-    extractAgain:'Extract Again', saveWar:'Save War', saveNoStats:'Save without stats',
-    scoreboardNext:'Scoreboard →', confirmParties:'Confirm Parties →',
-    backToParty:'Back to Party', addMember:'Add member', player:'Player',
-    kills:'Kills', assists:'Assists', dmgDealt:'Dmg Dealt', dmgTaken:'Dmg Taken',
-    healing:'Healing', total:'TOTAL', status:'Status', party:'Party',
+    newWarBtn:'+ New War',
+    // Wizard
+    partySetup:'Party Setup', scoreboard:'Scoreboard',
+    opponent:'Opponent', date:'Date', opponentPh:'Enemy guild name',
+    uploadParty:'Upload party screenshot',
+    uploadPartySub:'Screenshot from TL with all parties (purple=Tank, green=Healer, red=DPS)',
+    changePhoto:'Change photo', confirmParties:'Confirm Parties →',
+    dropHere:'Drop screenshot here', orClick:'or click to select',
+    checkRoles:'Check roles — edit if needed:',
+    movTank:'Purple = Tank', greenHealer:'Green = Healer', redDps:'Red = DPS',
+    // Step 2
+    uploadScore:'Upload scoreboard screenshots',
+    uploadScoreSub:'Upload scoreboard screenshots from the game (one per page). Vision AI will extract stats automatically.',
+    addPhotos:'Add scoreboard photos', extractStats:'Extract Stats',
+    extractAgain:'Extract Again', backToParty:'← Back to Party',
+    saveWar:'Save War', saveNoStats:'Save without stats',
+    scoreboardNext:'Scoreboard →',
+    // Results
+    player:'Player', kills:'Kills', assists:'Assists',
+    dmgDealt:'Dmg Dealt', dmgTaken:'Dmg Taken', healing:'Healing',
+    total:'TOTAL', status:'Status', party:'Party',
     withStats:'with stats', noStats:'no stats', extra:'extra', errors:'errors',
     suggestions:'Match suggestions — these players might be the same person:',
     apply:'Apply', ignore:'Ignore', applyAll:'Apply all suggestions',
     extractComplete:'Extraction complete! Review values and save.',
+    noStatsSection:'Missing stats', extraSection:'Extra from scoreboard',
+    noParty:'(no party)',
+    // View War
+    save:'Save', saveChanges:'Save Changes', addMember:'+ Add member',
+    selectMember:'Select member', search:'Search...', inWar:'in war',
+    noResult:'No results',
+    // Wars list
+    warHistory:'War History', warHistorySub:'All recorded wars — click to view results',
+    view:'View', delete:'Delete', deleteConfirm:'Delete?', yes:'Yes', no:'No',
+    noWars:'No wars recorded yet. Click "New War" to add the first one.',
+    // Sidebar
+    warInfo:'War info', guildTotals:'Guild totals', defeats:'Defeats',
+    topKills:'Top kills', roles:'Roles', allWarsLink:'← All Wars',
+    // PIN
     enterPin:'Enter PIN', wrongPin:'Wrong PIN', cancel:'Cancel',
-    noWars:'No wars recorded yet.', deleteConfirm:'Delete?', yes:'Yes', no:'No',
-    processing:'Processing...', back:'Back'
+    // Settings
+    settingsTitle:'Settings', settingsSub:'API configuration & preferences',
+    adminSecret:'Admin Secret',
+    adminSecretDesc:'The secret set in Dokploy (ADMIN_SECRET). Required to save/delete data. Members without it can only read.',
+    adminSecretLabel:'ADMIN_SECRET (do not share)',
+    adminSecretPh:'secret from Dokploy env vars',
+    apiKey:'Anthropic API Key',
+    apiKeyDesc:'For automatic party and scoreboard extraction from screenshots.',
+    testApiKey:'Test API key',
+    aliasTitle:'Player Aliases',
+    aliasDesc:'If a player has a different name in-game vs Guild Manager, add an alias.',
+    addAlias:'+ Add alias',
+    transferTitle:'Data Transfer',
+    transferDesc:'Export data (wars, roster, aliases) to a JSON file for backup.',
+    exportData:'Export Data', importData:'Import Data',
+    howItWorks:'How it works:',
+    howLine1:'Data saves directly to the database on Dokploy',
+    howLine2:'Guild members access the same URL — see data in real time',
+    howLine3:'Only you have the Admin Secret — only you can modify',
+    howLine4:'Vision AI cost: ~$0.02-0.05 per war · Dokploy: your existing plan',
+    backBtn:'← Back',
+    // Misc
+    processing:'Processing...',
+    identified:'identified', unidentified:'unidentified'
   }
 };
 function t(key){ return (_t[_lang] && _t[_lang][key]) || key; }
 function toggleLang(){
   _lang = _lang==='ro' ? 'en' : 'ro';
   localStorage.setItem('nova_lang', _lang);
-  document.getElementById('lang-btn').textContent = _lang==='ro' ? 'EN' : 'RO';
-  // Reload page to apply
   location.reload();
 }
-(function(){ document.getElementById('lang-btn').textContent = _lang==='ro' ? 'EN' : 'RO'; })();
+// Init lang button
+(function(){
+  var btn = document.getElementById('lang-btn');
+  if(btn) btn.innerHTML = (_lang==='ro'
+    ? '<span style="color:var(--gold);font-weight:800;">RO</span> <span style="opacity:.4;">EN</span>'
+    : '<span style="opacity:.4;">RO</span> <span style="color:var(--gold);font-weight:800;">EN</span>');
+})();
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 var state = {
@@ -561,6 +665,10 @@ async function saveWarSimple(){
         }
       });
     });
+  }
+  // Add unassigned extras as a special party "_Extras"
+  if(state._unassignedExtras && state._unassignedExtras.length){
+    state.parties.push({name:'_Extras', label:'', members:state._unassignedExtras, _isExtras:true});
   }
   var war = {id:Date.now(), opponent:opp, date:dt, parties:state.parties};
   try{
@@ -1083,7 +1191,7 @@ function viewWar(warId){
   // Compute aggregates from parties
   var totalDefeats=0, totalAssists=0, totalDmg=0, totalTaken=0, totalHealed=0;
   var allMembers = [];
-  w.parties.forEach(function(p){ p.members.forEach(function(m){
+  w.parties.forEach(function(p){ if(p._isExtras||p.name==='_Extras') return; p.members.forEach(function(m){
     totalDefeats += m.defeat||0;
     totalAssists += m.assist||0;
     totalDmg     += m.dmg_dealt||0;
@@ -1145,6 +1253,7 @@ function viewWar(warId){
   html += '<div id="vw-parties-grid" style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">';
 
   w.parties.forEach(function(p, pi){
+    if(p._isExtras || p.name==='_Extras') return; // skip extras — rendered separately below
     var pKills=0, pAssists=0, pDmg=0, pTaken=0, pHealed=0;
     p.members.forEach(function(m){ pKills+=m.defeat||0; pAssists+=m.assist||0; pDmg+=m.dmg_dealt||0; pTaken+=m.dmg_taken||0; pHealed+=m.healed||0; });
     var pColor = p.color || partyColors[0].bg;
@@ -1188,7 +1297,13 @@ function viewWar(warId){
         +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_dealt" value="'+(m.dmg_dealt||0)+'" style="'+inputStyle+'"></td>'
         +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_taken" value="'+(m.dmg_taken||0)+'" style="'+inputStyle+'"></td>'
         +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="healed" value="'+(m.healed||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:6px 3px;text-align:center;"><button onclick="removeWarMember('+w.id+','+pi+','+mi+')" style="background:transparent;border:none;color:#e84040;font-size:15px;cursor:pointer;padding:0 3px;">×</button></td>'
+        +'<td style="padding:4px 2px;text-align:center;white-space:nowrap;">'
+          +'<select onchange="movePlayerToParty('+w.id+','+pi+','+mi+',this.value);this.selectedIndex=0" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--muted);font-size:9px;padding:1px 2px;cursor:pointer;width:18px;appearance:none;text-align:center;" title="Mută în alt party">'
+            +'<option>→</option>'
+            +w.parties.filter(function(pp){return !pp._isExtras && pp.name!=='_Extras' && pp.name!==p.name;}).map(function(pp){return '<option value="'+escHtml(pp.name)+'">'+escHtml(pp.name)+'</option>';}).join('')
+          +'</select>'
+          +'<button onclick="removeWarMember('+w.id+','+pi+','+mi+')" style="background:transparent;border:none;color:#e84040;font-size:14px;cursor:pointer;padding:0 2px;margin-left:2px;">×</button>'
+        +'</td>'
         +'</tr>';
     });
 
@@ -1211,6 +1326,41 @@ function viewWar(warId){
 
     html += '</div>';
   });
+
+  // Extras section (from _Extras special party)
+  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extrasMembers = extrasParty ? extrasParty.members : (w.extras||[]);
+  if(extrasMembers && extrasMembers.length){
+    var inpSt2 = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:4px 6px;font-size:12px;font-family:Share Tech Mono,monospace;width:100%;';
+    html += '<div style="grid-column: span 2;background:var(--bg2);border:1px solid rgba(240,192,64,.2);border-radius:10px;overflow:hidden;">';
+    html += '<div style="background:rgba(240,192,64,.12);padding:10px 14px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:var(--gold);">'+t('extraSection')+' ('+extrasMembers.length+')</div>';
+    html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">';
+    html += '<thead><tr style="background:var(--bg3);">'
+      +'<th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;">'+t('player')+'</th>'
+      +'<th style="text-align:center;padding:8px 6px;color:var(--muted);font-size:10px;">'+t('party')+'</th>'
+      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;">K</th>'
+      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;">A</th>'
+      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">DMG</th>'
+      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">TAKEN</th>'
+      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">HEAL</th>'
+      +'<th style="width:70px;"></th>'
+      +'</tr></thead><tbody>';
+    extrasMembers.forEach(function(ex, ei){
+      html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);">'
+        +'<td style="padding:8px 10px;color:#ddd;font-weight:600;">'+escHtml(ex.name)+'</td>'
+        +'<td style="padding:6px;text-align:center;"><select id="extra-party-'+ei+'" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;padding:2px 4px;">';
+      w.parties.forEach(function(pt){ html += '<option>'+escHtml(pt.name)+'</option>'; });
+      html += '</select></td>'
+        +'<td style="padding:6px 3px;"><input type="number" id="extra-k-'+ei+'" value="'+(ex.defeat||0)+'" style="'+inpSt2+'width:50px;"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" id="extra-a-'+ei+'" value="'+(ex.assist||0)+'" style="'+inpSt2+'width:50px;"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" id="extra-d-'+ei+'" value="'+(ex.dmg_dealt||0)+'" style="'+inpSt2+'"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" id="extra-t-'+ei+'" value="'+(ex.dmg_taken||0)+'" style="'+inpSt2+'"></td>'
+        +'<td style="padding:6px 3px;"><input type="number" id="extra-h-'+ei+'" value="'+(ex.healed||0)+'" style="'+inpSt2+'"></td>'
+        +'<td style="padding:6px 4px;"><button onclick="moveExtraToParty('+w.id+','+ei+')" style="background:var(--gold);border:none;color:#000;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;cursor:pointer;">Mută</button></td>'
+        +'</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
 
   html += '</div>'; // close grid
 
@@ -1313,11 +1463,59 @@ function pickMember(name, role){
   viewWar(_pickerWarId);
 }
 
+function movePlayerToParty(warId, fromPi, mi, targetPartyName){
+  if(!targetPartyName || targetPartyName==='→') return;
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  var targetParty = w.parties.find(function(p){ return p.name===targetPartyName; });
+  if(!targetParty) return;
+  // Collect current stats from inputs before moving
+  var member = JSON.parse(JSON.stringify(w.parties[fromPi].members[mi]));
+  var inputs = document.querySelectorAll('input[data-pi="'+fromPi+'"][data-mi="'+mi+'"]');
+  inputs.forEach(function(inp){
+    var f = inp.getAttribute('data-field');
+    if(f && f!=='name') member[f] = +inp.value||0;
+  });
+  targetParty.members.push(member);
+  w.parties[fromPi].members.splice(mi, 1);
+  viewWar(warId);
+}
+
 function removeWarMember(warId, pi, mi){
   var wars = loadWars();
   var w = wars.find(function(x){ return x.id===warId; });
   if(!w) return;
   w.parties[pi].members.splice(mi, 1);
+  viewWar(warId);
+}
+
+function moveExtraToParty(warId, extraIdx){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+
+  // Find _Extras party
+  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  if(!extrasParty || !extrasParty.members[extraIdx]) return;
+
+  var partyName = document.getElementById('extra-party-'+extraIdx).value;
+  var targetParty = w.parties.find(function(p){ return p.name===partyName && !p._isExtras; });
+  if(!targetParty) return;
+
+  var ex = extrasParty.members[extraIdx];
+  // Read possibly edited values from inputs
+  ex.defeat    = +(document.getElementById('extra-k-'+extraIdx).value)||0;
+  ex.assist    = +(document.getElementById('extra-a-'+extraIdx).value)||0;
+  ex.dmg_dealt = +(document.getElementById('extra-d-'+extraIdx).value)||0;
+  ex.dmg_taken = +(document.getElementById('extra-t-'+extraIdx).value)||0;
+  ex.healed    = +(document.getElementById('extra-h-'+extraIdx).value)||0;
+
+  targetParty.members.push(ex);
+  extrasParty.members.splice(extraIdx, 1);
+  if(!extrasParty.members.length){
+    w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
+  }
   viewWar(warId);
 }
 
@@ -1347,7 +1545,7 @@ async function saveWarEdits(warId){
   });
   try{
     var r = await fetch('/api/wars/'+warId,{method:'PUT',headers:apiHeaders(true),
-      body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties})});
+      body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties,extras:w.extras||[]})});
     if(!r.ok) throw new Error('HTTP '+r.status);
   } catch(e){ alert('Eroare la salvare: '+e.message); return; }
   document.getElementById('vw-opponent').textContent = '· '+w.opponent+' ·';
@@ -1372,8 +1570,18 @@ async function initApp(){
   renderWarsList();
 }
 initApp();
-// Apply translations to data-t elements
-document.querySelectorAll('[data-t]').forEach(function(el){ var k=el.getAttribute('data-t'); if(_t[_lang][k]) el.textContent=_t[_lang][k]; });
+// Apply translations to ALL data-t elements (text) and data-tp elements (placeholders)
+function applyTranslations(){
+  document.querySelectorAll('[data-t]').forEach(function(el){
+    var k=el.getAttribute('data-t');
+    if(_t[_lang][k]) el.textContent=_t[_lang][k];
+  });
+  document.querySelectorAll('[data-tp]').forEach(function(el){
+    var k=el.getAttribute('data-tp');
+    if(_t[_lang][k]) el.placeholder=_t[_lang][k];
+  });
+}
+applyTranslations();
 
 
 
@@ -2044,16 +2252,24 @@ function applyAllSuggestions(){
 
 function saveWarWithStats(){
   // Add extra players with assigned party to their respective parties
+  var unassigned = [];
   state.novaPlayers.forEach(function(p){
     if(p.status==='extra' && p.party && p.party!=='?'){
       var targetParty = state.parties.find(function(pt){ return pt.name===p.party; });
       if(targetParty){
         targetParty.members.push({name:p.name, role:p.role||'DPS', defeat:p.defeat||0, assist:p.assist||0, dmg_dealt:p.dmg_dealt||0, dmg_taken:p.dmg_taken||0, healed:p.healed||0});
-        p.status = 'confirmed'; // mark as confirmed so it gets included
+        p.status = 'confirmed';
+      }
+    } else if(p.status==='extra' && (!p.party || p.party==='?')){
+      // Save unassigned extras with stats
+      if(p.defeat||p.assist||p.dmg_dealt||p.dmg_taken||p.healed){
+        unassigned.push({name:p.name, role:p.role||'DPS', defeat:p.defeat||0, assist:p.assist||0, dmg_dealt:p.dmg_dealt||0, dmg_taken:p.dmg_taken||0, healed:p.healed||0});
       }
     }
   });
   state.confirmed = state.novaPlayers.filter(function(p){ return p.status==='confirmed'; });
+  // Store unassigned extras on state so saveWarSimple can include them
+  state._unassignedExtras = unassigned;
   saveWarSimple();
 }
 
@@ -2294,26 +2510,26 @@ async function goStep3WithVision(){
 
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
-  <div class="section-title">Settings</div>
-  <div class="section-sub">Configurare API și preferințe</div>
+  <div class="section-title" data-t="settingsTitle">Settings</div>
+  <div class="section-sub" data-t="settingsSub">Configurare API și preferințe</div>
   <div style="max-width:500px;">
 
     <!-- Admin Secret (Dokploy) -->
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Admin Secret</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Secretul setat în Dokploy (ADMIN_SECRET). Necesar pentru a putea salva/șterge date. Membrii fără secret pot doar citi.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="adminSecret">Admin Secret</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" data-t="adminSecretDesc">Secretul setat în Dokploy.</div>
       <div style="margin-bottom:14px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;">ADMIN_SECRET <span style="color:#444;">(nu îl împărtăși)</span></div>
-        <input type="password" id="admin-secret-input" placeholder="secretul din env vars Dokploy" style="width:100%;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;" data-t="adminSecretLabel">ADMIN_SECRET (nu îl împărtăși)</div>
+        <input type="password" id="admin-secret-input" placeholder="secretul din env vars Dokploy" data-tp="adminSecretPh" style="width:100%;">
       </div>
-      <button class="btn btn-primary" onclick="saveAdminSecret()" style="padding:8px 16px;font-size:13px;">Salvează</button>
+      <button class="btn btn-primary" onclick="saveAdminSecret()" style="padding:8px 16px;font-size:13px;" data-t="save">Salvează</button>
       <div id="backend-status" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);"></div>
     </div>
 
     <!-- Anthropic API Key -->
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Anthropic API Key</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Pentru extragere automată party-uri și scoreboard din poze.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="apiKey">Anthropic API Key</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" data-t="apiKeyDesc">Pentru extragere automată party-uri și scoreboard din poze.</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="flex:1;" oninput="checkApiKey()">
         <button class="btn btn-primary" onclick="saveApiKey()" style="padding:8px 16px;font-size:13px;">Salvează</button>
@@ -2327,20 +2543,20 @@ async function goStep3WithVision(){
 
     <!-- Alias Jucători -->
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Alias Jucători</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Dacă un jucător are alt nume în joc față de Guild Manager, adaugă un alias. Se aplică automat la toate war-urile.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="aliasTitle">Alias Jucători</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" data-t="aliasDesc">Dacă un jucător are alt nume în joc.</div>
       <div id="alias-table" style="margin-bottom:10px;"></div>
-      <button onclick="addAlias()" style="background:transparent;border:1px solid var(--border2);color:var(--text);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;">+ Adaugă alias</button>
+      <button onclick="addAlias()" style="background:transparent;border:1px solid var(--border2);color:var(--text);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;" data-t="addAlias">+ Adaugă alias</button>
     </div>
 
     <!-- Data Transfer -->
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Transfer Date</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Exportă datele (wars, roster, alias-uri) într-un fișier JSON pentru backup sau transfer între dispozitive/domenii.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="transferTitle">Transfer Date</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;" data-t="transferDesc">Exportă datele într-un fișier JSON pentru backup.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button onclick="exportData()" class="btn-transfer-data">⬇ Export Date</button>
+        <button onclick="exportData()" class="btn-transfer-data" data-t="exportData">⬇ Export Date</button>
         <label class="btn-transfer-data" style="cursor:pointer;">
-          ⬆ Import Date
+          <span data-t="importData">⬆ Import Date</span>
           <input type="file" accept=".json" onchange="importData(this)" style="display:none;">
         </label>
       </div>
@@ -2348,11 +2564,11 @@ async function goStep3WithVision(){
     </div>
 
     <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.15);border-radius:8px;padding:12px 14px;font-size:11px;color:#a08020;line-height:1.7;">
-      <b>Cum funcționează:</b><br>
-      • Datele se salvează direct în baza de date pe Dokploy<br>
-      • Colegii accesează același URL — văd datele în timp real<br>
-      • Tu ești singurul cu Admin Secret — doar tu poți modifica<br>
-      • Cost Vision AI: ~$0.02-0.05 per war · Dokploy: planul tău existent
+      <b data-t="howItWorks">Cum funcționează:</b><br>
+      • <span data-t="howLine1">Datele se salvează direct în baza de date pe Dokploy</span><br>
+      • <span data-t="howLine2">Colegii accesează același URL — văd datele în timp real</span><br>
+      • <span data-t="howLine3">Tu ești singurul cu Admin Secret — doar tu poți modifica</span><br>
+      • <span data-t="howLine4">Cost Vision AI: ~$0.02-0.05 per war</span>
     </div>
     <div class="btn-row" style="margin-top:16px;">
       <button class="btn btn-secondary" onclick="showPage('wars')">← Înapoi</button>
