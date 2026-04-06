@@ -349,7 +349,7 @@ input[type=text]:focus{border-color:var(--gold);}
   <div style="display:flex;min-height:calc(100vh - 52px);">
 
     <!-- sidebar -->
-    <div id="vw-sidebar" style="width:230px;flex-shrink:0;background:#0a0f1e;border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1);">
+    <div id="vw-sidebar" class="hidden lg:block" style="width:230px;flex-shrink:0;background:#0a0f1e;border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1);">
       <div style="padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
         <div style="font-size:19px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:.05em;">カ Nova ミ</div>
         <div style="font-size:10px;color:#444;margin-top:2px;">War Games</div>
@@ -1333,7 +1333,7 @@ function viewWar(warId){
 
   // Party tables grid — 3 per rând + member picker panel
   html += '<div style="display:flex;gap:16px;grid-column:1/-1;">';
-  html += '<div id="vw-parties-grid" style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">';
+  html += '<div id="vw-parties-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" style="flex:1;">';
 
   w.parties.forEach(function(p, pi){
     if(p._isExtras || p.name==='_Extras') return; // skip extras — rendered separately below
@@ -1415,7 +1415,7 @@ function viewWar(warId){
   var extrasMembers = extrasParty ? extrasParty.members : (w.extras||[]);
   if(extrasMembers && extrasMembers.length){
     var inpSt2 = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:4px 6px;font-size:12px;font-family:Share Tech Mono,monospace;width:100%;';
-    html += '<div style="grid-column: span 2;background:var(--bg2);border:1px solid rgba(240,192,64,.2);border-radius:10px;overflow:hidden;">';
+    html += '<div class="col-span-1 md:col-span-2 xl:col-span-3" style="background:var(--bg2);border:1px solid rgba(240,192,64,.2);border-radius:10px;overflow:hidden;">';
     html += '<div style="background:rgba(240,192,64,.12);padding:10px 14px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:var(--gold);">'+t('extraSection')+' ('+extrasMembers.length+')</div>';
     html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">';
     html += '<thead><tr style="background:var(--bg3);">'
@@ -1448,7 +1448,7 @@ function viewWar(warId){
   html += '</div>'; // close grid
 
   // Member picker panel (hidden by default)
-  html += '<div id="member-picker" style="display:none;width:260px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:sticky;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;">'
+  html += '<div id="member-picker" class="hidden" style="width:260px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:fixed;right:16px;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;z-index:40;">'
     +'<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;">'
       +'<span style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);flex:1;">Selectează membru</span>'
       +'<button onclick="closeMemberPicker()" style="background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;">×</button>'
@@ -1477,9 +1477,8 @@ var _pickerWarId = null, _pickerPi = null, _pickerMi = null;
 function openMemberPicker(warId, pi, mi){
   _pickerWarId = warId; _pickerPi = pi; _pickerMi = mi;
 
-  // Show panel, collapse grid to 2 columns
-  document.getElementById('member-picker').style.display = '';
-  document.getElementById('vw-parties-grid').style.gridTemplateColumns = 'repeat(2,1fr)';
+  // Show panel
+  document.getElementById('member-picker').classList.remove('hidden');
 
   renderPickerList();
   document.getElementById('picker-search').value = '';
@@ -1487,8 +1486,7 @@ function openMemberPicker(warId, pi, mi){
 }
 
 function closeMemberPicker(){
-  document.getElementById('member-picker').style.display = 'none';
-  document.getElementById('vw-parties-grid').style.gridTemplateColumns = 'repeat(3,1fr)';
+  document.getElementById('member-picker').classList.add('hidden');
   _pickerWarId = null;
 }
 
