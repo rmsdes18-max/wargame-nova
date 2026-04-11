@@ -39,205 +39,73 @@ tailwind.config = {
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-:root {
-  --bg:       #060b14;
-  --bg2:      #0a1020;
-  --bg3:      #0e1628;
-  --border:   rgba(255,255,255,.06);
-  --border2:  rgba(255,255,255,.12);
-  --gold:     #f0c040;
-  --gold2:    #c8950a;
-  --tank:     #5b8fff;
-  --tank-bg:  rgba(91,143,255,.12);
-  --heal:     #3ecf6e;
-  --heal-bg:  rgba(62,207,110,.12);
-  --dps:      #e84040;
-  --dps-bg:   rgba(232,64,64,.12);
-  --party-hdr:#1e1545;
-  --text:     #d0d8e8;
-  --muted:    #4a5568;
-  --accent:   #f0c040;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden;}
-
-/* ── NAV ── */
-nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:0;height:52px;position:sticky;top:0;z-index:50;}
-.nav-logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:.08em;margin-right:28px;white-space:nowrap;}
-.nav-tabs{display:flex;height:100%;gap:0;}
-.nav-tab{height:100%;padding:0 18px;display:flex;align-items:center;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;letter-spacing:.04em;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
-.nav-tab:hover{color:var(--text);}
-.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
-.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.btn-new-war{background:var(--gold);color:#000;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;transition:opacity .15s;}
-.btn-new-war:hover{opacity:.85;}
-.btn-transfer-data{background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.25);color:var(--gold);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.04em;transition:all .15s;white-space:nowrap;}
-.btn-transfer-data:hover{background:rgba(240,192,64,.2);}
-
-/* ── PAGES ── */
-.page{display:none;padding:28px 24px;max-width:1200px;margin:0 auto;}
-.page.active{display:block;}
-
-/* ── STEP WIZARD ── */
-.wizard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.wizard-steps{display:flex;background:var(--bg3);border-bottom:1px solid var(--border);}
-.wstep{flex:1;padding:12px 8px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--muted);cursor:default;position:relative;transition:all .2s;}
-.wstep.active{color:var(--gold);}
-.wstep.done{color:var(--heal);}
-.wstep.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
-.wstep.done::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--heal);}
-.wstep-num{display:block;font-size:18px;font-family:'Rajdhani',sans-serif;font-weight:700;margin-bottom:2px;}
-.wizard-body{padding:28px;}
-
-/* ── UPLOAD ZONE ── */
-.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(240,192,64,.04);}
-.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.upload-icon{font-size:36px;margin-bottom:12px;color:var(--muted);}
-.upload-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;}
-.upload-sub{font-size:12px;color:var(--muted);}
-.upload-preview{margin-top:16px;max-width:100%;border-radius:8px;border:1px solid var(--border);}
-
-/* ── PARTY DISPLAY ── */
-.parties-confirm{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:20px;}
-.party-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-.party-card-hdr{background:var(--party-hdr);padding:8px 12px;display:flex;align-items:center;gap:8px;}
-.party-card-hdr span:first-child{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:#fff;}
-.party-card-hdr .ptag{font-size:10px;color:#9080cc;background:rgba(255,255,255,.08);padding:1px 7px;border-radius:99px;}
-.party-member{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.03);}
-.party-member:last-child{border-bottom:none;}
-.role-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.role-pill{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;letter-spacing:.04em;}
-.role-TANK{background:var(--tank-bg);color:var(--tank);}
-.role-HEALER{background:var(--heal-bg);color:var(--heal);}
-.role-DPS{background:var(--dps-bg);color:var(--dps);}
-.dot-TANK{background:var(--tank);}
-.dot-HEALER{background:var(--heal);}
-.dot-DPS{background:var(--dps);}
-.member-name{font-size:12px;font-weight:600;color:#ddd;flex:1;}
-
-/* ── SCOREBOARD PAGES ── */
-.score-upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:16px;}
-.score-thumb{position:relative;border:1px solid var(--border);border-radius:8px;overflow:hidden;aspect-ratio:16/9;cursor:pointer;}
-.score-thumb img{width:100%;height:100%;object-fit:cover;}
-.score-thumb .rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.7);border:none;border-radius:4px;color:#e84040;font-size:14px;width:22px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.score-add{border:2px dashed var(--border2);border-radius:8px;aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;position:relative;transition:border-color .15s;}
-.score-add:hover{border-color:var(--gold);}
-.score-add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.score-add-icon{font-size:22px;color:var(--muted);}
-.score-add-txt{font-size:11px;color:var(--muted);}
-.picker-item{padding:7px 10px;cursor:pointer;border-radius:5px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;}
-.picker-item:hover{background:var(--bg3);}
-
-/* ── NOVA LIST ── */
-.nova-list{margin-top:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-.nova-list-hdr{background:var(--bg3);padding:8px 14px;display:grid;grid-template-columns:1fr 80px 80px 120px 120px 110px;gap:8px;}
-.nova-list-hdr span{font-size:9px;color:var(--muted);letter-spacing:.07em;font-weight:600;text-transform:uppercase;}
-.nova-row{padding:7px 14px;display:grid;grid-template-columns:1fr 80px 80px 120px 120px 110px;gap:8px;align-items:center;border-top:1px solid rgba(255,255,255,.03);}
-.nova-row:first-child{border-top:none;}
-.nova-row-name{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#ddd;}
-.nova-num{font-size:12px;text-align:right;}
-.nova-check{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;}
-
-/* ── RESULT TABLE ── */
-.result-party{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;}
-.result-party-hdr{background:var(--party-hdr);padding:8px 14px;display:flex;align-items:center;gap:8px;}
-.result-tbl{width:100%;border-collapse:collapse;}
-.result-tbl th{padding:6px 10px;font-size:9px;color:var(--muted);letter-spacing:.07em;font-weight:600;text-align:right;background:var(--bg3);border-bottom:1px solid var(--border);}
-.result-tbl th:first-child{text-align:left;}
-.result-tbl td{padding:7px 10px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);text-align:right;}
-.result-tbl td:first-child{text-align:left;}
-.result-tbl tr:last-child td{border-bottom:none;}
-.result-footer{background:#070c18;border-top:2px solid rgba(240,192,64,.2);padding:10px 14px;display:flex;gap:0;justify-content:space-around;}
-.rf-item{text-align:center;}
-.rf-label{font-size:8px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;}
-.rf-val{font-size:16px;font-weight:800;}
-
-/* ── WARS LIST ── */
-.wars-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
-.war-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .15s;}
-.war-item:hover{border-color:var(--border2);}
-.war-item-date{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);min-width:100px;}
-.war-item-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--text);flex:1;}
-.war-item-vs{font-size:12px;color:var(--muted);}
-.war-item-kills{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--gold);}
-.war-item-kills-lbl{font-size:10px;color:var(--muted);}
-.btn-del{background:none;border:1px solid rgba(232,64,64,.3);border-radius:6px;color:#e84040;font-size:12px;padding:4px 10px;cursor:pointer;transition:all .15s;}
-.btn-del:hover{background:rgba(232,64,64,.1);}
-.btn-view{background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;padding:4px 10px;cursor:pointer;transition:all .15s;}
-.btn-view:hover{background:rgba(255,255,255,.05);}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;cursor:pointer;border:none;transition:all .15s;}
-.btn-primary{background:var(--gold);color:#000;}
-.btn-primary:hover{opacity:.88;}
-.btn-secondary{background:transparent;border:1px solid var(--border2);color:var(--text);}
-.btn-secondary:hover{background:rgba(255,255,255,.05);}
-.btn-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
-.btn:disabled{opacity:.35;cursor:not-allowed;}
-
-/* ── MISC ── */
-.section-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px;}
-.section-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
-.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:.04em;}
-.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
-.empty-state-icon{font-size:40px;margin-bottom:12px;}
-.empty-state-txt{font-size:14px;}
-.status-bar{background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--heal);margin-bottom:16px;display:none;}
-.status-bar.visible{display:block;}
-.warn-bar{background:rgba(240,192,64,.08);border:1px solid rgba(240,192,64,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--gold);margin-bottom:16px;}
-.processing{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
-.spin{display:inline-block;animation:spin 1s linear infinite;margin-right:8px;}
-@keyframes spin{to{transform:rotate(360deg);}}
-input[type=text]{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'Exo 2',sans-serif;outline:none;transition:border-color .15s;}
-input[type=text]:focus{border-color:var(--gold);}
-.war-header-view{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
-.war-header-view h2{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--gold);}
-.kp-bar-wrap{width:30px;height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:4px;}
-.kp-bar-fill{height:100%;background:var(--gold);border-radius:99px;}
+<link rel="stylesheet" href="css/nova.css">
+<style id="vw-dnd-styles">
+.vw-row{transition:background .15s,opacity .15s;}
+.vw-row:hover{background:rgba(255,255,255,.02);}
+.vw-row.vw-dragging{opacity:.4;cursor:grabbing!important;}
+.vw-row input{cursor:text;}
+.vw-row.vw-drop-above{box-shadow:inset 0 2px 0 0 var(--gold);}
+.vw-row.vw-drop-below{box-shadow:inset 0 -2px 0 0 var(--gold);}
+.vw-dropzone-end{transition:background .15s,border-color .15s;}
+.vw-dropzone-end.vw-drop-target button{border-color:var(--gold)!important;background:rgba(240,192,64,.06)!important;color:var(--gold)!important;}
 </style>
 </head>
 <body>
 
-<!-- ═══ NAVBAR ═══ -->
-<nav class="fixed top-0 left-0 right-0 z-50 bg-nova-bg/80 backdrop-blur-xl border-b border-white/5">
-  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center gap-2">
-    <!-- Logo -->
-    <div class="font-display text-xl font-bold text-nova-gold tracking-wider mr-6 shrink-0">カ NOVA ミ</div>
+<!-- ═══ APP SHELL ═══ -->
+<div class="app-shell">
 
-    <!-- Tabs (hidden on mobile) -->
-    <div class="hidden sm:flex items-center h-full gap-1">
-      <div class="nav-tab active h-full px-4 flex items-center text-sm font-semibold cursor-pointer border-b-2 border-transparent hover:text-white transition-colors" onclick="showPage('wars')" data-t="allWars">All Wars</div>
-      <div class="nav-tab h-full px-4 flex items-center text-sm font-semibold cursor-pointer border-b-2 border-transparent text-gray-500 hover:text-white transition-colors" onclick="showPage('new-war')" id="new-war-tab" data-t="newWar">New War</div>
-      <a class="nav-tab h-full px-4 flex items-center text-sm font-semibold cursor-pointer border-b-2 border-transparent text-gray-500 hover:text-white transition-colors no-underline" href="members.html" data-t="members">Members</a>
-    </div>
-
-    <!-- Spacer -->
-    <div class="flex-1"></div>
-
-    <!-- Actions -->
-    <div class="flex items-center gap-2">
-      <button onclick="toggleLang()" id="lang-btn" class="px-3 py-1.5 text-xs font-bold tracking-wide rounded border border-white/10 text-gray-500 hover:text-white hover:border-white/20 transition-all">EN</button>
-      <button onclick="promptPin()" class="px-3 py-1.5 text-xs font-medium rounded border border-white/10 text-gray-500 hover:text-white hover:border-white/20 transition-all">⚙ Settings</button>
-      <button onclick="startNewWar()" class="px-4 py-1.5 bg-nova-gold text-black font-display font-bold text-sm rounded-lg hover:opacity-90 transition-opacity tracking-wide" data-t="newWarBtn">+ New War</button>
-
-      <!-- Mobile hamburger -->
-      <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="sm:hidden p-2 text-gray-400 hover:text-white">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar" id="sidebar">
+    <a class="sidebar-logo" href="#" onclick="showPage('wars');closeSidebar();return false;">
+      <span class="sidebar-logo-mark">カ NOVA ミ</span>
+      <span class="sidebar-logo-sub">War Games</span>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <a class="sidebar-item nav-tab active" onclick="showPage('wars');closeSidebar()" data-t="allWars">
+        <span class="sidebar-item-icon">⚔</span>
+        <span class="sidebar-item-label">All Wars</span>
+      </a>
+      <a class="sidebar-item nav-tab" id="new-war-tab" onclick="showPage('new-war');closeSidebar()" data-t="newWar">
+        <span class="sidebar-item-icon">+</span>
+        <span class="sidebar-item-label">New War</span>
+      </a>
+      <a class="sidebar-item" href="members.html" data-t="members">
+        <span class="sidebar-item-icon">◆</span>
+        <span class="sidebar-item-label">Members</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="lang-btn" class="sidebar-footer-btn" onclick="toggleLang()">
+        <span class="sidebar-item-icon">⚐</span><span>EN</span>
       </button>
+      <button class="sidebar-footer-btn" onclick="promptPin();closeSidebar()">
+        <span class="sidebar-item-icon">⚙</span><span data-t="settings">Settings</span>
+      </button>
+      <div class="sidebar-version">v1.0</div>
     </div>
-  </div>
+  </aside>
 
-  <!-- Mobile menu -->
-  <div id="mobile-menu" class="hidden sm:hidden border-t border-white/5 bg-nova-bg/95 backdrop-blur-xl px-4 py-3 space-y-2">
-    <div class="nav-tab active px-3 py-2 rounded text-sm font-semibold cursor-pointer" onclick="showPage('wars');document.getElementById('mobile-menu').classList.add('hidden')" data-t="allWars">All Wars</div>
-    <div class="nav-tab px-3 py-2 rounded text-sm font-semibold text-gray-500 cursor-pointer" onclick="showPage('new-war');document.getElementById('mobile-menu').classList.add('hidden')" data-t="newWar">New War</div>
-    <a class="block px-3 py-2 rounded text-sm font-semibold text-gray-500 no-underline" href="members.html" data-t="members">Members</a>
-  </div>
-</nav>
-<div class="h-14"></div> <!-- spacer for fixed navbar -->
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="breadcrumb">
+        <span class="breadcrumb-root">Dashboard</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current" id="breadcrumb-current" data-t="allWars">All Wars</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button onclick="startNewWar()" class="btn btn-primary btn-sm" data-t="newWarBtn">+ New War</button>
+      </div>
+    </div>
+
+    <div class="page-container">
 
 <!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
 <div class="page active" id="page-wars">
@@ -346,7 +214,7 @@ input[type=text]:focus{border-color:var(--gold);}
 
 <!-- ═══════════════ VIEW WAR PAGE ═══════════════ -->
 <div class="page" id="page-view-war" style="max-width:100%;padding:0;">
-  <div style="display:flex;min-height:calc(100vh - 52px);">
+  <div style="display:flex;min-height:calc(100vh - 56px);position:relative;">
 
     <!-- sidebar -->
     <div id="vw-sidebar" class="hidden lg:block" style="width:230px;flex-shrink:0;background:#0a0f1e;border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1);">
@@ -386,16 +254,16 @@ input[type=text]:focus{border-color:var(--gold);}
     </div>
 
     <!-- toggle btn -->
-    <button id="vw-toggle" onclick="toggleVwSidebar()" style="position:fixed;top:66px;left:244px;z-index:200;background:#0f1628;border:1px solid rgba(255,255,255,.1);border-radius:7px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left .25s cubic-bezier(.4,0,.2,1);">
+    <button id="vw-toggle" onclick="toggleVwSidebar()" style="position:absolute;top:14px;left:250px;z-index:20;background:#0f1628;border:1px solid rgba(255,255,255,.1);border-radius:7px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left .25s cubic-bezier(.4,0,.2,1);">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <!-- collapsed title -->
-    <div id="vw-collapsed-title" style="position:fixed;top:66px;left:58px;z-index:200;display:none;align-items:center;gap:6px;opacity:0;transition:opacity .2s;">
+    <div id="vw-collapsed-title" style="position:absolute;top:20px;left:70px;z-index:20;display:none;align-items:center;gap:6px;opacity:0;transition:opacity .2s;">
       <span style="font-size:14px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;" id="vw-ct-text"></span>
     </div>
 
     <!-- main content -->
-    <div id="vw-main" style="flex:1;padding:20px;min-width:0;transition:margin-left .25s;">
+    <div id="vw-main" style="flex:1;padding:56px 20px 20px 20px;min-width:0;transition:margin-left .25s;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="view-war-content"></div>
     </div>
 
@@ -1253,12 +1121,12 @@ function toggleVwSidebar(){
   vwOpen=!vwOpen;
   if(vwOpen){
     sb.style.transform=''; main.style.marginLeft='';
-    btn.style.left='244px';
+    btn.style.left='250px';
     btn.querySelector('svg path').setAttribute('d','M10 3L5 8L10 13');
     ct.style.display='none'; ct.style.opacity='0';
   } else {
     sb.style.transform='translateX(-230px)'; main.style.marginLeft='-230px';
-    btn.style.left='14px';
+    btn.style.left='20px';
     btn.querySelector('svg path').setAttribute('d','M6 3L11 8L6 13');
     setTimeout(function(){ ct.style.display='flex'; ct.style.opacity='1'; },220);
   }
@@ -1305,7 +1173,7 @@ function viewWar(warId){
   vwOpen=true;
   document.getElementById('vw-sidebar').style.transform='';
   document.getElementById('vw-main').style.marginLeft='';
-  document.getElementById('vw-toggle').style.left='244px';
+  document.getElementById('vw-toggle').style.left='250px';
   document.getElementById('vw-collapsed-title').style.display='none';
   document.getElementById('vw-collapsed-title').style.opacity='0';
 
@@ -1333,7 +1201,7 @@ function viewWar(warId){
 
   // Party tables grid — 3 per rând + member picker panel
   html += '<div style="display:flex;gap:16px;grid-column:1/-1;">';
-  html += '<div id="vw-parties-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" style="flex:1;">';
+  html += '<div id="vw-parties-grid" style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:16px;">';
 
   w.parties.forEach(function(p, pi){
     if(p._isExtras || p.name==='_Extras') return; // skip extras — rendered separately below
@@ -1355,55 +1223,60 @@ function viewWar(warId){
     html += '</select></div>';
 
     // Table
-    var inputStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:4px 6px;font-size:12px;width:100%;font-family:Share Tech Mono,monospace;';
-    html += '<div class="overflow-x-auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:500px;">';
+    var inputStyle = 'background:transparent;border:none;border-radius:0;color:var(--text);text-align:left;padding:3px 4px;font-size:11px;width:100%;min-width:0;font-family:Share Tech Mono,monospace;outline:none;';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">';
+    html += '<colgroup>'
+      +'<col style="width:32%;">'
+      +'<col style="width:12%;">'
+      +'<col style="width:12%;">'
+      +'<col style="width:16%;">'
+      +'<col style="width:16%;">'
+      +'<col style="width:14%;">'
+      +'<col style="width:18px;">'
+      +'</colgroup>';
     html += '<thead><tr style="background:var(--bg3);">'
-      +'<th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.06em;">PLAYER</th>'
-      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;width:50px;">K</th>'
-      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;width:50px;">A</th>'
-      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">DMG</th>'
-      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">TAKEN</th>'
-      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">HEAL</th>'
-      +'<th style="width:26px;"></th>'
-      +'</tr></thead><tbody>';
+      +'<th style="text-align:left;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.06em;">PLAYER</th>'
+      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">K</th>'
+      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">A</th>'
+      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">DMG</th>'
+      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">TAKEN</th>'
+      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">HEAL</th>'
+      +'<th></th>'
+      +'</tr></thead><tbody data-pi="'+pi+'" class="vw-party-body">';
 
     p.members.forEach(function(m, mi){
       var dotColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
-      html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);">'
-        +'<td style="padding:8px 10px;cursor:pointer;" onclick="openMemberPicker('+w.id+','+pi+','+mi+')">'
-          +'<div style="display:flex;align-items:center;gap:7px;">'
+      html += '<tr class="vw-row" draggable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="border-bottom:1px solid rgba(255,255,255,.04);cursor:grab;">'
+        +'<td style="padding:6px 8px;cursor:pointer;overflow:hidden;" onclick="openMemberPicker('+w.id+','+pi+','+mi+')">'
+          +'<div style="display:flex;align-items:center;gap:6px;min-width:0;">'
           +'<span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';flex-shrink:0;"></span>'
-          +'<span data-pi="'+pi+'" data-mi="'+mi+'" data-field="name" style="color:#ddd;font-size:13px;font-weight:600;font-family:Exo 2,sans-serif;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.15);">'+escHtml(m.name)+'</span>'
+          +'<span data-pi="'+pi+'" data-mi="'+mi+'" data-field="name" style="color:#ddd;font-size:12px;font-weight:600;font-family:Exo 2,sans-serif;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.15);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escHtml(m.name)+'</span>'
         +'</div></td>'
-        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="defeat" value="'+(m.defeat||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="assist" value="'+(m.assist||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_dealt" value="'+(m.dmg_dealt||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_taken" value="'+(m.dmg_taken||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="healed" value="'+(m.healed||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="defeat" value="'+(m.defeat||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="assist" value="'+(m.assist||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_dealt" value="'+(m.dmg_dealt||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_taken" value="'+(m.dmg_taken||0)+'" style="'+inputStyle+'"></td>'
+        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="healed" value="'+(m.healed||0)+'" style="'+inputStyle+'"></td>'
         +'<td style="padding:4px 2px;text-align:center;white-space:nowrap;">'
-          +'<select onchange="movePlayerToParty('+w.id+','+pi+','+mi+',this.value);this.selectedIndex=0" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--muted);font-size:9px;padding:1px 2px;cursor:pointer;width:18px;appearance:none;text-align:center;" title="Mută în alt party">'
-            +'<option>→</option>'
-            +w.parties.filter(function(pp){return !pp._isExtras && pp.name!=='_Extras' && pp.name!==p.name;}).map(function(pp){return '<option value="'+escHtml(pp.name)+'">'+escHtml(pp.name)+'</option>';}).join('')
-          +'</select>'
-          +'<button onclick="removeWarMember('+w.id+','+pi+','+mi+')" style="background:transparent;border:none;color:#e84040;font-size:14px;cursor:pointer;padding:0 2px;margin-left:2px;">×</button>'
+          +'<button onclick="removeWarMember('+w.id+','+pi+','+mi+')" style="background:transparent;border:none;color:#e84040;font-size:14px;cursor:pointer;padding:0 2px;" title="Elimină">×</button>'
         +'</td>'
         +'</tr>';
     });
 
     // Total row
     html += '<tr style="background:rgba(240,192,64,.06);border-top:2px solid var(--gold);">'
-      +'<td style="padding:8px 10px;font-weight:700;color:var(--gold);font-size:12px;">TOTAL</td>'
-      +'<td style="text-align:right;padding:8px 6px;font-weight:700;color:var(--gold);font-size:12px;">'+pKills+'</td>'
-      +'<td style="text-align:right;padding:8px 6px;font-weight:700;color:var(--gold);font-size:12px;">'+pAssists+'</td>'
-      +'<td style="text-align:right;padding:8px 8px;font-weight:700;color:var(--gold);font-size:12px;">'+pDmg.toLocaleString()+'</td>'
-      +'<td style="text-align:right;padding:8px 8px;font-weight:700;color:var(--gold);font-size:12px;">'+pTaken.toLocaleString()+'</td>'
-      +'<td style="text-align:right;padding:8px 8px;font-weight:700;color:var(--gold);font-size:12px;">'+pHealed.toLocaleString()+'</td>'
+      +'<td style="padding:6px 8px;font-weight:700;color:var(--gold);font-size:11px;">TOTAL</td>'
+      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pKills+'</td>'
+      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pAssists+'</td>'
+      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pDmg.toLocaleString()+'</td>'
+      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pTaken.toLocaleString()+'</td>'
+      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pHealed.toLocaleString()+'</td>'
       +'<td></td></tr>';
 
-    html += '</tbody></table></div>'; // close overflow-x-auto
+    html += '</tbody></table>';
 
-    // Add member button
-    html += '<div style="padding:8px 10px;border-top:1px solid var(--border);">'
+    // Add member button + dropzone
+    html += '<div class="vw-dropzone-end" data-pi="'+pi+'" style="padding:8px 10px;border-top:1px solid var(--border);">'
       +'<button onclick="openMemberPicker('+w.id+','+pi+',-1)" style="background:transparent;border:1px dashed var(--border2);color:var(--muted);font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;width:100%;">+ Adaugă membru</button>'
       +'</div>';
 
@@ -1468,6 +1341,7 @@ function viewWar(warId){
     var item = e.target.closest('[data-name]');
     if(item) pickMember(item.getAttribute('data-name'), item.getAttribute('data-role'));
   });
+  bindWarDragDrop(warId);
   showPage('view-war');
 }
 
@@ -1552,23 +1426,120 @@ function pickMember(name, role){
   viewWar(_pickerWarId);
 }
 
+// ── VIEW WAR: Drag & Drop helpers ────────────────────────────────────────
+var _vwDrag = null; // { warId, fromPi, fromMi }
+
+function captureAllLiveInputs(warId){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  w.parties.forEach(function(p, pi){
+    p.members.forEach(function(m, mi){
+      var inputs = document.querySelectorAll('input[data-pi="'+pi+'"][data-mi="'+mi+'"]');
+      inputs.forEach(function(inp){
+        var f = inp.getAttribute('data-field');
+        if(f && f!=='name') m[f] = +inp.value || 0;
+      });
+    });
+  });
+}
+
+function clearAllDropIndicators(){
+  document.querySelectorAll('.vw-drop-above,.vw-drop-below,.vw-drop-target').forEach(function(el){
+    el.classList.remove('vw-drop-above','vw-drop-below','vw-drop-target');
+  });
+}
+
+function performDragMove(warId, fromPi, fromMi, toPi, toIndex){
+  // No-op: dropping onto self (same index, or just-after-self)
+  if(fromPi===toPi && (fromMi===toIndex || fromMi+1===toIndex)) return;
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  // Preserve live edits in all inputs before re-render wipes DOM
+  captureAllLiveInputs(warId);
+  var member = w.parties[fromPi].members[fromMi];
+  if(!member) return;
+  w.parties[fromPi].members.splice(fromMi, 1);
+  // Adjust target index when removing earlier in the same party
+  if(fromPi===toPi && fromMi < toIndex) toIndex--;
+  w.parties[toPi].members.splice(toIndex, 0, member);
+  viewWar(warId);
+}
+
+function bindWarDragDrop(warId){
+  var grid = document.getElementById('vw-parties-grid');
+  if(!grid) return;
+
+  grid.querySelectorAll('.vw-row').forEach(function(row){
+    row.addEventListener('dragstart', function(e){
+      var pi = +row.getAttribute('data-pi');
+      var mi = +row.getAttribute('data-mi');
+      _vwDrag = { warId: warId, fromPi: pi, fromMi: mi };
+      row.classList.add('vw-dragging');
+      try {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', pi+':'+mi);
+      } catch(_){}
+    });
+    row.addEventListener('dragend', function(){
+      row.classList.remove('vw-dragging');
+      clearAllDropIndicators();
+      _vwDrag = null;
+    });
+    row.addEventListener('dragover', function(e){
+      if(!_vwDrag) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      var rect = row.getBoundingClientRect();
+      var above = (e.clientY - rect.top) < rect.height/2;
+      clearAllDropIndicators();
+      row.classList.add(above ? 'vw-drop-above' : 'vw-drop-below');
+    });
+    row.addEventListener('drop', function(e){
+      if(!_vwDrag) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var toPi = +row.getAttribute('data-pi');
+      var toMi = +row.getAttribute('data-mi');
+      var rect = row.getBoundingClientRect();
+      var above = (e.clientY - rect.top) < rect.height/2;
+      var insertAt = above ? toMi : toMi + 1;
+      performDragMove(warId, _vwDrag.fromPi, _vwDrag.fromMi, toPi, insertAt);
+    });
+  });
+
+  grid.querySelectorAll('.vw-dropzone-end').forEach(function(zone){
+    zone.addEventListener('dragover', function(e){
+      if(!_vwDrag) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      clearAllDropIndicators();
+      zone.classList.add('vw-drop-target');
+    });
+    zone.addEventListener('drop', function(e){
+      if(!_vwDrag) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var toPi = +zone.getAttribute('data-pi');
+      var wars = loadWars();
+      var w = wars.find(function(x){ return x.id===warId; });
+      if(!w) return;
+      var insertAt = w.parties[toPi].members.length;
+      performDragMove(warId, _vwDrag.fromPi, _vwDrag.fromMi, toPi, insertAt);
+    });
+  });
+}
+
 function movePlayerToParty(warId, fromPi, mi, targetPartyName){
   if(!targetPartyName || targetPartyName==='→') return;
   var wars = loadWars();
   var w = wars.find(function(x){ return x.id===warId; });
   if(!w) return;
-  var targetParty = w.parties.find(function(p){ return p.name===targetPartyName; });
-  if(!targetParty) return;
-  // Collect current stats from inputs before moving
-  var member = JSON.parse(JSON.stringify(w.parties[fromPi].members[mi]));
-  var inputs = document.querySelectorAll('input[data-pi="'+fromPi+'"][data-mi="'+mi+'"]');
-  inputs.forEach(function(inp){
-    var f = inp.getAttribute('data-field');
-    if(f && f!=='name') member[f] = +inp.value||0;
-  });
-  targetParty.members.push(member);
-  w.parties[fromPi].members.splice(mi, 1);
-  viewWar(warId);
+  var toPi = w.parties.findIndex(function(p){ return p.name===targetPartyName; });
+  if(toPi<0) return;
+  var toIndex = w.parties[toPi].members.length;
+  performDragMove(warId, fromPi, mi, toPi, toIndex);
 }
 
 function removeWarMember(warId, pi, mi){
@@ -2664,6 +2635,57 @@ async function goStep3WithVision(){
     </div>
   </div>
 </div>
+
+    </div><!-- /.page-container -->
+  </main>
+</div><!-- /.app-shell -->
+
+<script>
+// ── Sidebar toggle (mobile) ─────────────────────────────────────────────
+function toggleSidebar(){
+  if(window.innerWidth <= 900){
+    document.getElementById('sidebar').classList.toggle('open');
+  } else {
+    var hidden = document.body.classList.toggle('sidebar-hidden');
+    try { localStorage.setItem('nova_sidebar_hidden', hidden ? '1' : '0'); } catch(_){}
+  }
+}
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); }
+// Restore collapsed state on load (desktop only)
+(function(){
+  try {
+    if(window.innerWidth > 900 && localStorage.getItem('nova_sidebar_hidden')==='1'){
+      document.body.classList.add('sidebar-hidden');
+    }
+  } catch(_){}
+})();
+
+// ── Breadcrumb sync with showPage() ─────────────────────────────────────
+(function(){
+  var origShowPage = window.showPage;
+  if(typeof origShowPage !== 'function') return;
+  var labels = { 'wars':'allWars', 'new-war':'newWar', 'view-war':'view', 'settings':'settings' };
+  window.showPage = function(id){
+    origShowPage(id);
+    var bc = document.getElementById('breadcrumb-current');
+    if(bc){
+      var key = labels[id] || id;
+      var fallback = { wars:'All Wars', 'new-war':'New War', 'view-war':'View War', settings:'Settings' }[id] || id;
+      bc.setAttribute('data-t', key);
+      if(typeof _t !== 'undefined' && _lang && _t[_lang] && _t[_lang][key]){
+        bc.textContent = _t[_lang][key];
+      } else {
+        bc.textContent = fallback;
+      }
+    }
+    // Re-apply active state for sidebar item aliases
+    if(id === 'wars'){
+      var first = document.querySelector('.sidebar-item.nav-tab');
+      if(first) first.classList.add('active');
+    }
+  };
+})();
+</script>
 
 </body>
 </html>
