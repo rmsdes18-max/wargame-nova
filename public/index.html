@@ -113,9 +113,7 @@ input[type=number]{-moz-appearance:textfield;}
 <!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
 <div class="page active" id="page-wars">
   <div style="max-width:1400px;margin:0 auto;">
-    <div class="war-header">
-      <h2 style="font-size:20px;font-weight:700;color:#fff;" data-t="warHistory">War History</h2>
-    </div>
+    <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:24px;" data-t="warHistory">War History</h2>
     <div id="wars-list" class="wars-grid"></div>
   </div>
 </div>
@@ -1050,14 +1048,6 @@ function renderWarsList(){
         +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtStat(totalHeal)+'</span></div>'
       +'</div>'
       +partyDotsHtml
-      +'<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;" class="war-card-actions" onclick="event.stopPropagation()">'
-        +'<button id="del-btn-'+i+'" onclick="event.stopPropagation();showDeleteConfirm('+i+')" style="padding:2px 8px;font-size:10px;background:rgba(232,64,64,.1);color:#e84040;border:1px solid rgba(232,64,64,.2);border-radius:4px;cursor:pointer;">'+t('delete')+'</button>'
-        +'<div id="del-confirm-'+i+'" style="display:none;align-items:center;gap:4px;">'
-          +'<span style="font-size:10px;color:#e84040;">'+t('deleteConfirm')+'</span>'
-          +'<button onclick="event.stopPropagation();confirmDeleteWar('+w.id+')" style="padding:2px 8px;font-size:10px;background:#e84040;color:#fff;border:none;border-radius:4px;cursor:pointer;">'+t('yes')+'</button>'
-          +'<button onclick="event.stopPropagation();cancelDelete('+i+')" style="padding:2px 8px;font-size:10px;border:1px solid rgba(255,255,255,.1);color:#949ba4;background:transparent;border-radius:4px;cursor:pointer;">'+t('no')+'</button>'
-        +'</div>'
-      +'</div>'
       +'</div>';
   }).join('');
 }
