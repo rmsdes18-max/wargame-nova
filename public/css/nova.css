@@ -337,6 +337,19 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
 .btn-icon{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;border-radius:4px;font-size:16px;transition:all .15s;}
 .btn-icon:hover{background:rgba(232,64,64,.1);color:var(--dps);}
 
+/* Dimmed missing players */
+.player-dimmed{opacity:0.4;transition:opacity .15s;}
+.player-dimmed:hover{opacity:0.7;}
+.player-dimmed.vw-drop-above{opacity:1;background:rgba(240,192,64,.08) !important;box-shadow:inset 0 0 0 1px var(--accent-primary) !important;}
+
+/* Extras panel */
+.extras-panel{background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;align-self:start;position:sticky;top:60px;}
+.extras-panel-header{padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-subtle);}
+.extra-player-card{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);cursor:grab;transition:background .15s;}
+.extra-player-card:hover{background:var(--bg-hover);}
+.extra-player-card:last-child{border-bottom:none;}
+.extra-player-card.dragging{opacity:0.4;}
+
 /* War Title */
 .war-title{display:flex;align-items:center;gap:14px;}
 .war-title h2{font-size:22px;font-weight:700;color:#fff;}
@@ -794,6 +807,10 @@ input[type=text]:focus{border-color:var(--gold);}
   .war-item{flex-wrap:wrap;gap:8px;}
   .war-item-date{min-width:0;font-size:11px;}
   .war-item-title{font-size:15px;min-width:0;}
+
+  /* Extras panel stacks below on mobile */
+  #vw-tab-parties{grid-template-columns:1fr !important;}
+  .extras-panel{position:static;}
 }
 
 /* Extra-narrow (phones) — pull in a bit more */

@@ -1134,9 +1134,13 @@ function viewWar(warId){
 
   var partyDotColorsVw = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
 
+  // ── Extras data ──
+  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extrasMembers = extrasParty ? extrasParty.members : [];
+
   // ── Parties tab ──
-  html += '<div id="vw-tab-parties" class="parties-grid">';
-  html += '<div id="vw-parties-grid" style="display:contents;">';
+  html += '<div id="vw-tab-parties" style="display:grid;grid-template-columns:1fr 280px;gap:16px;">';
+  html += '<div class="parties-grid"><div id="vw-parties-grid" style="display:contents;">';
 
   w.parties.forEach(function(p, pi){
     if(p._isExtras || p.name==='_Extras') return;
@@ -1162,7 +1166,8 @@ function viewWar(warId){
     p.members.forEach(function(m, mi){
       var roleColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
       var nameClass = m.role==='TANK'?'name-tank':m.role==='HEALER'?'name-heal':'name-dps';
-      html += '<tr class="vw-row" draggable="true" data-pi="'+pi+'" data-mi="'+mi+'">'
+      var isDimmed = !(m.defeat||m.assist||m.dmg_dealt);
+      html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="true" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">'
         +'<td onclick="openMemberPicker('+w.id+','+pi+','+mi+')" style="cursor:pointer;">'
           +'<div class="player-cell">'
           +'<span class="role-dot" style="background:'+roleColor+';"></span>'
@@ -1198,6 +1203,33 @@ function viewWar(warId){
   });
 
   html += '</div>'; // vw-parties-grid
+  html += '</div>'; // parties-grid
+
+  // ── Extras panel ──
+  html += '<div class="extras-panel">';
+  html += '<div class="extras-panel-header">Extra Players'+(extrasMembers.length?' ('+extrasMembers.length+')':'')+'</div>';
+  if(extrasMembers.length){
+    extrasMembers.forEach(function(ex, ei){
+      var roleColor = ex.role==='TANK'?'var(--tank)':ex.role==='HEALER'?'var(--heal)':'var(--dps)';
+      html += '<div class="extra-player-card" draggable="true" data-extra-idx="'+ei+'">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+          +'<span class="role-dot" style="background:'+roleColor+';"></span>'
+          +'<span style="font-weight:600;color:#fff;font-size:13px;">'+escHtml(ex.name)+'</span>'
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
+          +'<div><span style="color:var(--text-muted);">K</span> <span style="color:#cf4444;">'+(ex.defeat||0)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">A</span> <span>'+(ex.assist||0)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">'+(ex.dmg_dealt?(ex.dmg_dealt).toLocaleString():'0')+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:#a08090;">'+(ex.dmg_taken?(ex.dmg_taken).toLocaleString():'0')+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:#5eb882;">'+(ex.healed?(ex.healed).toLocaleString():'0')+'</span></div>'
+        +'</div>'
+        +'</div>';
+    });
+  } else {
+    html += '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">No extra players</div>';
+  }
+  html += '</div>'; // extras-panel
+
   html += '</div>'; // vw-tab-parties
 
   // ── Leaderboard tab (hidden) ──
@@ -1247,6 +1279,7 @@ function viewWar(warId){
     if(item) pickMember(item.getAttribute('data-name'), item.getAttribute('data-role'));
   });
   bindWarDragDrop(warId);
+  bindExtrasDragDrop(warId);
   showPage('view-war');
 }
 
@@ -1444,6 +1477,77 @@ function bindWarDragDrop(warId){
       performDragMove(warId, _vwDrag.fromPi, _vwDrag.fromMi, toPi, insertAt);
     });
   });
+}
+
+function bindExtrasDragDrop(warId){
+  var extras = document.querySelectorAll('.extra-player-card[draggable]');
+  var _extraDrag = null;
+
+  extras.forEach(function(card){
+    card.addEventListener('dragstart', function(e){
+      _extraDrag = +card.getAttribute('data-extra-idx');
+      card.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'extra:'+_extraDrag);
+    });
+    card.addEventListener('dragend', function(){
+      card.style.opacity = '';
+      _extraDrag = null;
+      document.querySelectorAll('.vw-drop-above,.vw-drop-below').forEach(function(el){
+        el.classList.remove('vw-drop-above','vw-drop-below');
+      });
+    });
+  });
+
+  // Make dimmed (missing) rows accept extra drops
+  document.querySelectorAll('.vw-row[data-is-missing="1"]').forEach(function(row){
+    row.addEventListener('dragover', function(e){
+      var data = e.dataTransfer.types.length ? '' : '';
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      row.classList.add('vw-drop-above');
+    });
+    row.addEventListener('dragleave', function(){
+      row.classList.remove('vw-drop-above');
+    });
+    row.addEventListener('drop', function(e){
+      e.preventDefault();
+      row.classList.remove('vw-drop-above');
+      var data = e.dataTransfer.getData('text/plain');
+      if(!data.startsWith('extra:')) return;
+      var extraIdx = +data.split(':')[1];
+      var toPi = +row.getAttribute('data-pi');
+      var toMi = +row.getAttribute('data-mi');
+      replaceWithExtra(warId, extraIdx, toPi, toMi);
+    });
+  });
+}
+
+function replaceWithExtra(warId, extraIdx, toPi, toMi){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  if(!extrasParty || !extrasParty.members[extraIdx]) return;
+  var extra = extrasParty.members[extraIdx];
+  // Replace the missing player with the extra
+  if(w.parties[toPi] && w.parties[toPi].members[toMi]){
+    w.parties[toPi].members[toMi] = {
+      name: extra.name,
+      role: extra.role || w.parties[toPi].members[toMi].role,
+      defeat: extra.defeat||0,
+      assist: extra.assist||0,
+      dmg_dealt: extra.dmg_dealt||0,
+      dmg_taken: extra.dmg_taken||0,
+      healed: extra.healed||0
+    };
+  }
+  // Remove from extras
+  extrasParty.members.splice(extraIdx, 1);
+  if(!extrasParty.members.length){
+    w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
+  }
+  viewWar(warId);
 }
 
 function movePlayerToParty(warId, fromPi, mi, targetPartyName){
@@ -2025,31 +2129,10 @@ async function extractAllScoreboards(){
     });
   });
 
-  // ── Smart matching: sugerează perechi missing ↔ extra ──
-  var missingPlayers = state.novaPlayers.filter(function(p){ return p.status==='missing'; });
-  var extraPlayers   = state.novaPlayers.filter(function(p){ return p.status==='extra'; });
-  state._suggestions = []; // store for apply/ignore buttons
-
-  if(missingPlayers.length && extraPlayers.length){
-    var usedExtras = {};
-    missingPlayers.forEach(function(mp){
-      var bestScore = 0, bestExtra = null;
-      extraPlayers.forEach(function(ep){
-        if(usedExtras[ep.name]) return;
-        var score = nameSimilarity(mp.name, ep.name);
-        if(score > bestScore){ bestScore = score; bestExtra = ep; }
-      });
-      if(bestExtra && bestScore >= 0.3){
-        state._suggestions.push({missing:mp, extra:bestExtra, score:bestScore});
-        usedExtras[bestExtra.name] = true;
-      }
-    });
-  }
-
-  // Render suggestions + results table
+  // Render results table
   var confirmed = state.novaPlayers.filter(function(p){ return p.status==='confirmed'; }).length;
-  var missing   = missingPlayers.length;
-  var extra     = extraPlayers.length;
+  var missing   = state.novaPlayers.filter(function(p){ return p.status==='missing'; }).length;
+  var extra     = state.novaPlayers.filter(function(p){ return p.status==='extra'; }).length;
 
   var summaryHtml = '<div style="margin-bottom:12px;font-size:12px;">'
     +'<span style="color:var(--heal);">✓ '+confirmed+' cu stats</span>'
@@ -2057,29 +2140,6 @@ async function extractAllScoreboards(){
     +(extra ? ' · <span style="color:var(--muted);">+ '+extra+' extra</span>' : '')
     +(errors.length ? ' · <span style="color:#e84040;">'+errors.length+' erori</span>' : '')
     +'</div>';
-
-  // Suggestions panel
-  var suggestHtml = '';
-  if(state._suggestions.length){
-    suggestHtml = '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:8px;padding:14px;margin-bottom:16px;">';
-    suggestHtml += '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;">Sugestii matching — acești playeri par a fi aceeași persoană:</div>';
-    state._suggestions.forEach(function(s, si){
-      suggestHtml += '<div id="suggest-'+si+'" style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:6px;margin-bottom:6px;">'
-        +'<span style="color:var(--gold);font-size:12px;">⚠</span>'
-        +'<span style="color:#ddd;font-weight:600;font-size:13px;">'+escHtml(s.missing.name)+'</span>'
-        +'<span style="color:var(--muted);font-size:11px;">('+s.missing.party+')</span>'
-        +'<span style="color:var(--gold);font-size:14px;">→</span>'
-        +'<span style="color:var(--heal);font-weight:600;font-size:13px;">'+escHtml(s.extra.name)+'</span>'
-        +'<span style="color:var(--muted);font-size:10px;">'+(Math.round(s.score*100))+'% match</span>'
-        +'<span style="margin-left:auto;display:flex;gap:6px;">'
-          +'<button onclick="applySuggestion('+si+')" style="background:var(--heal);border:none;color:#000;font-size:11px;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;">Aplică</button>'
-          +'<button onclick="ignoreSuggestion('+si+')" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">Ignoră</button>'
-        +'</span>'
-        +'</div>';
-    });
-    suggestHtml += '<button onclick="applyAllSuggestions()" style="background:rgba(240,192,64,.15);border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;cursor:pointer;margin-top:4px;">Aplică toate sugestiile</button>';
-    suggestHtml += '</div>';
-  }
 
   // Results table — grouped by party, missing/extra at bottom
   var inpStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:3px 6px;font-size:12px;font-family:Share Tech Mono,monospace;';
@@ -2169,8 +2229,8 @@ async function extractAllScoreboards(){
 
   tableHtml += '</div>';
 
-  resultsEl.innerHTML = summaryHtml + suggestHtml + tableHtml;
-  statusEl.innerHTML = '<span style="color:var(--heal);font-weight:600;">Extragere completă! Verifică sugestiile și corectează valorile, apoi salvează.</span>';
+  resultsEl.innerHTML = summaryHtml + tableHtml;
+  statusEl.innerHTML = '<span style="color:var(--heal);font-weight:600;">Extragere completă! Verifică și corectează valorile, apoi salvează.</span>';
 
   btn.textContent = '🔍 Extrage din nou';
   btn.disabled = false;
@@ -2190,37 +2250,6 @@ function nameSimilarity(a, b){
     if(long.indexOf(short[i]) !== -1) common++;
   }
   return common / Math.max(na.length, nb.length);
-}
-
-function applySuggestion(si){
-  var s = state._suggestions[si];
-  if(!s) return;
-  // Copy stats from extra to missing
-  var mp = state.novaPlayers.find(function(p){ return p===s.missing; });
-  var ep = state.novaPlayers.find(function(p){ return p===s.extra; });
-  if(mp && ep){
-    mp.defeat=ep.defeat; mp.assist=ep.assist; mp.dmg_dealt=ep.dmg_dealt;
-    mp.dmg_taken=ep.dmg_taken; mp.healed=ep.healed; mp.status='confirmed';
-    // Remove extra
-    var idx = state.novaPlayers.indexOf(ep);
-    if(idx>=0) state.novaPlayers.splice(idx,1);
-  }
-  // Hide suggestion row
-  var el = document.getElementById('suggest-'+si);
-  if(el) el.style.display='none';
-  state._suggestions[si] = null;
-}
-
-function ignoreSuggestion(si){
-  var el = document.getElementById('suggest-'+si);
-  if(el) el.style.display='none';
-  state._suggestions[si] = null;
-}
-
-function applyAllSuggestions(){
-  for(var i=0; i<state._suggestions.length; i++){
-    if(state._suggestions[i]) applySuggestion(i);
-  }
 }
 
 function saveWarWithStats(){

@@ -384,25 +384,62 @@ function renderMemberProfile() {
     + '</div>'
     + '</div>';
 
+  // War stats table
   if (!warRows.length) {
-    html += '<div class="profile-empty">Nu a participat la niciun wargame încă.</div>';
+    html += '<div class="profile-empty">No war participation found</div>';
   } else {
-    html += '<div class="profile-wars-header">War History</div>';
-    html += '<div class="profile-wars-list">';
-    warRows.forEach(function(r) {
-      var roleInWar = (r.memberEntry && r.memberEntry.role) ? r.memberEntry.role : m.role;
-      html += '<div class="profile-war-row">'
-        + '<div class="profile-war-main">'
-        +   '<span class="profile-war-vs">Nova vs <strong>' + escHtml(r.war.opponent) + '</strong></span>'
-        +   '<span class="profile-war-date">' + escHtml(r.war.date) + '</span>'
-        + '</div>'
-        + '<div class="profile-war-sub">'
-        +   (r.party ? escHtml(r.party.name || r.party.label || 'Party') : '')
-        +   ' · <span class="role-pill role-' + roleInWar + '">' + roleInWar + '</span>'
-        + '</div>'
-        + '</div>';
+    // Sort by date descending
+    warRows.sort(function(a,b){ return (b.war.date||'').localeCompare(a.war.date||''); });
+
+    html += '<div style="padding:10px 16px 6px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">War Performance</div>';
+    html += '<div style="padding:0 10px 16px;overflow-x:auto;">';
+    html += '<table class="data-table" style="font-size:12px;">';
+    html += '<thead><tr><th style="text-align:left;">War</th><th style="text-align:left;">Date</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th><th class="num">TAKEN</th><th class="num">HEAL</th><th style="width:30px;"></th></tr></thead>';
+    html += '<tbody>';
+
+    var totK=0, totA=0, totD=0, totT=0, totH=0;
+    warRows.forEach(function(r, idx){
+      var me = r.memberEntry || {};
+      var k = me.defeat||0, a = me.assist||0, d = me.dmg_dealt||0, t = me.dmg_taken||0, h = me.healed||0;
+      totK+=k; totA+=a; totD+=d; totT+=t; totH+=h;
+
+      // Trend: compare with previous war (next in array = older)
+      var trend = '';
+      if(idx < warRows.length - 1){
+        var prev = warRows[idx+1].memberEntry || {};
+        var curPerf = k + a;
+        var prevPerf = (prev.defeat||0) + (prev.assist||0);
+        if(curPerf > prevPerf) trend = '<span style="color:var(--heal);font-weight:700;">↑</span>';
+        else if(curPerf < prevPerf) trend = '<span style="color:var(--dps);font-weight:700;">↓</span>';
+        else trend = '<span style="color:var(--muted);">—</span>';
+      } else {
+        trend = '<span style="color:var(--muted);">—</span>';
+      }
+
+      html += '<tr>'
+        +'<td style="font-weight:600;color:var(--text);white-space:nowrap;">vs '+escHtml(r.war.opponent)+'</td>'
+        +'<td style="color:var(--muted);font-size:11px;white-space:nowrap;">'+escHtml(r.war.date)+'</td>'
+        +'<td class="num num-k">'+k+'</td>'
+        +'<td class="num">'+a+'</td>'
+        +'<td class="num num-dmg">'+(d?d.toLocaleString():'0')+'</td>'
+        +'<td class="num num-taken">'+(t?t.toLocaleString():'0')+'</td>'
+        +'<td class="num num-heal">'+(h?h.toLocaleString():'0')+'</td>'
+        +'<td style="text-align:center;">'+trend+'</td>'
+        +'</tr>';
     });
-    html += '</div>';
+
+    // Totals row
+    html += '</tbody><tbody><tr class="total-row">'
+      +'<td colspan="2">Total ('+warRows.length+' wars)</td>'
+      +'<td class="num num-k">'+totK+'</td>'
+      +'<td class="num">'+totA+'</td>'
+      +'<td class="num num-dmg">'+totD.toLocaleString()+'</td>'
+      +'<td class="num num-taken">'+totT.toLocaleString()+'</td>'
+      +'<td class="num num-heal">'+totH.toLocaleString()+'</td>'
+      +'<td></td>'
+      +'</tr></tbody>';
+
+    html += '</table></div>';
   }
 
   var panel = document.getElementById('member-profile-panel');
