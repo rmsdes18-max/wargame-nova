@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nova War Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -13,26 +13,26 @@ tailwind.config = {
     extend: {
       fontFamily: {
         'display': ['Rajdhani', 'sans-serif'],
-        'mono': ['Share Tech Mono', 'monospace'],
-        'body': ['Inter', 'Exo 2', 'sans-serif'],
+        'mono': ['JetBrains Mono', 'monospace'],
+        'body': ['Plus Jakarta Sans', 'sans-serif'],
       },
       colors: {
         nova: {
-          bg: '#060b14',
-          card: '#0a1020',
-          surface: '#0e1628',
-          border: 'rgba(255,255,255,0.06)',
+          bg: '#1e1f22',
+          card: '#2b2d31',
+          surface: '#313338',
+          border: '#3f4147',
           gold: '#f0c040',
           'gold-dim': '#c8950a',
           tank: '#5b8fff',
           heal: '#3ecf6e',
           dps: '#e84040',
-          purple: '#1e1545',
+          purple: '#2b2d31',
         }
       },
       boxShadow: {
         'glow-gold': '0 0 20px rgba(240,192,64,0.15)',
-        'glow-purple': '0 0 30px rgba(30,21,69,0.5)',
+        'glow-purple': '0 0 30px rgba(43,45,49,0.5)',
       }
     }
   }
@@ -49,6 +49,9 @@ tailwind.config = {
 .vw-row.vw-drop-below{box-shadow:inset 0 -2px 0 0 var(--gold);}
 .vw-dropzone-end{transition:background .15s,border-color .15s;}
 .vw-dropzone-end.vw-drop-target button{border-color:var(--gold)!important;background:rgba(240,192,64,.06)!important;color:var(--gold)!important;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
 </style>
 </head>
 <body>
@@ -109,74 +112,70 @@ tailwind.config = {
 
 <!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
 <div class="page active" id="page-wars">
-  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
-    <div class="flex items-end justify-between mb-8">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-nova-gold tracking-wide" data-t="warHistory">War History</h1>
-        <p class="text-gray-500 text-sm mt-1" data-t="warHistorySub">All recorded wars — click to view results</p>
-      </div>
+  <div style="max-width:1400px;margin:0 auto;">
+    <div class="war-header">
+      <h2 style="font-size:20px;font-weight:700;color:#fff;" data-t="warHistory">War History</h2>
     </div>
-    <div id="wars-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <div id="wars-list" class="wars-grid"></div>
   </div>
 </div>
 
 <!-- ═══════════════ NEW WAR WIZARD ═══════════════ -->
 <div class="page" id="page-new-war">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-    <div class="section-title">New War</div>
+  <div class="war-header" style="margin-bottom:20px;">
+    <h2 style="font-size:20px;font-weight:700;color:#fff;">New War</h2>
+    <div id="step1-btns" style="display:none;gap:8px;flex-shrink:0;" class="war-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('party-upload-zone').style.display='';document.getElementById('party-split-view').style.display='none';document.getElementById('party-img-input').value='';document.getElementById('step1-btns').style.display='none';">↺ Change Screenshot</button>
+      <button class="btn btn-primary" onclick="confirmAndGoStep2()">Confirm Parties →</button>
+    </div>
   </div>
 
-  <div class="wizard">
-    <div class="wizard-steps" id="wizard-steps">
-      <div class="wstep active" id="ws-1"><span class="wstep-num">1</span><span data-t="partySetup">Party Setup</span></div>
-      <div class="wstep" id="ws-2"><span class="wstep-num">2</span><span data-t="scoreboard">Scoreboard</span></div>
-    </div>
-    <div class="wizard-body">
+  <div class="wizard-steps" id="wizard-steps">
+    <div class="wstep active" id="ws-1"><span class="wstep-num">1</span><span data-t="partySetup">Party Setup</span></div>
+    <div class="wstep" id="ws-2"><span class="wstep-num">2</span><span data-t="scoreboard">Scoreboard</span></div>
+  </div>
 
       <!-- STEP 1: Party upload -->
       <div id="step-1">
-        <div style="display:flex;gap:12px;margin-bottom:16px;">
-          <div style="flex:1;">
-            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;" data-t="opponent">Adversar</label>
-            <input id="opponent-input" type="text" placeholder="Nume gilda adversara" data-tp="opponentPh" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+          <div class="form-group">
+            <label class="form-label" data-t="opponent">Opponent</label>
+            <input id="opponent-input" class="form-input" type="text" placeholder="Guild name..." data-tp="opponentPh">
           </div>
-          <div style="flex:1;">
-            <label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;" data-t="date">Data</label>
-            <input id="date-input" type="date" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;margin-top:4px;outline:none;">
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <div class="section-title" style="font-size:16px;">Upload party screenshot</div>
-          <div id="step1-btns" style="display:none;gap:8px;flex-shrink:0;">
-            <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="document.getElementById('party-upload-zone').style.display='';document.getElementById('party-split-view').style.display='none';document.getElementById('party-img-input').value='';document.getElementById('step1-btns').style.display='none';">↺ Schimbă poza</button>
-            <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="confirmAndGoStep2()">Confirm Parties →</button>
+          <div class="form-group">
+            <label class="form-label" data-t="date">Date</label>
+            <input id="date-input" class="form-input" type="date">
           </div>
         </div>
-        <div class="section-sub" style="margin-bottom:12px;">Screenshot din TL cu toate party-urile (mov=Tank, verde=Healer, roșu=DPS)</div>
+
+        <div style="margin-bottom:8px;font-size:14px;font-weight:600;color:var(--text);">Upload party screenshot</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Screenshot from TL with all parties (purple=Tank, green=Healer, red=DPS)</div>
 
         <div class="upload-zone" id="party-upload-zone">
           <input type="file" accept="image/*" id="party-img-input" onchange="handlePartyUploadWithVision(event)">
-          <div class="upload-icon">⬆</div>
+          <div class="upload-icon">📸</div>
           <div class="upload-title" data-t="dropHere">Drop party screenshot here</div>
-          <div class="upload-sub" data-t="orClick">sau click să selectezi fișierul</div>
+          <div class="upload-sub" data-t="orClick">or click to select file</div>
         </div>
 
         <div id="party-split-view" style="display:none;">
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Vision AI detected parties. Verify roles — edit if needed:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
 
             <!-- LEFT: scrollable parties -->
             <div style="max-height:70vh;overflow-y:auto;padding-right:6px;">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Verifică rolurile — editează dacă e necesar:</div>
               <div id="party-manual-editor"></div>
             </div>
 
             <!-- RIGHT: fixed image -->
-            <div style="position:sticky;top:70px;">
-              <img id="party-preview-img" style="width:100%;border-radius:8px;border:1px solid var(--border);display:block;">
-              <div style="margin-top:8px;display:flex;gap:12px;font-size:11px;flex-wrap:wrap;">
-                <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--tank);display:inline-block;"></span>Mov = Tank</span>
-                <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--heal);display:inline-block;"></span>Verde = Healer</span>
-                <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--dps);display:inline-block;"></span>Roșu = DPS</span>
+            <div style="position:sticky;top:20px;">
+              <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                <img id="party-preview-img" style="width:100%;display:block;">
+              </div>
+              <div style="margin-top:10px;display:flex;gap:14px;font-size:11px;color:var(--text-muted);">
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--tank);"></span>Tank</span>
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--heal);"></span>Healer</span>
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--dps);"></span>DPS</span>
               </div>
             </div>
           </div>
@@ -188,86 +187,31 @@ tailwind.config = {
 
       <!-- STEP 2: Scoreboard upload + extraction -->
       <div id="step-2" style="display:none;">
-        <div class="section-title" style="font-size:16px;margin-bottom:4px;" data-t="uploadScore">Upload scoreboard screenshots</div>
-        <div class="section-sub" style="margin-bottom:12px;" data-t="uploadScoreSub">Încarcă pozele de scoreboard din joc.</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="uploadScore">Upload scoreboard screenshots</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;" data-t="uploadScoreSub">Upload scoreboard screenshots from the game. Vision AI will extract stats automatically.</div>
 
         <div class="score-upload-grid" id="score-grid"></div>
         <div class="score-add" style="display:inline-flex;min-width:160px;margin-top:10px;position:relative;">
           <input type="file" accept="image/*" multiple onchange="handleScoreUpload(event)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
           <div class="score-add-icon">📷</div>
-          <div class="score-add-txt" data-t="addPhotos">Adaugă poze scoreboard</div>
+          <div class="score-add-txt" data-t="addPhotos">Add scoreboard photos</div>
         </div>
 
         <div id="score-extract-status" style="margin-top:16px;"></div>
         <div id="score-results" style="margin-top:16px;"></div>
 
-        <div class="btn-row" style="margin-top:20px;gap:10px;">
-          <button class="btn btn-secondary" onclick="goBackToStep1()" data-t="backToParty">← Înapoi la Party</button>
-          <button class="btn btn-primary" id="score-extract-btn" onclick="extractAllScoreboards()" disabled data-t="extractStats">Extrage statisticile</button>
-          <button class="btn btn-primary" id="score-save-btn" onclick="saveWarWithStats()" style="display:none;" data-t="saveWar">Salvează War</button>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn btn-secondary" onclick="goBackToStep1()" data-t="backToParty">← Back to Parties</button>
+          <button class="btn btn-primary" id="score-extract-btn" onclick="extractAllScoreboards()" disabled data-t="extractStats">Extract Stats</button>
+          <button class="btn btn-primary" id="score-save-btn" onclick="saveWarWithStats()" style="display:none;" data-t="saveWar">Save War</button>
         </div>
       </div>
 
-    </div>
-  </div>
 </div>
 
 <!-- ═══════════════ VIEW WAR PAGE ═══════════════ -->
-<div class="page" id="page-view-war" style="max-width:100%;padding:0;">
-  <div style="display:flex;min-height:calc(100vh - 56px);position:relative;">
-
-    <!-- sidebar -->
-    <div id="vw-sidebar" class="hidden lg:block" style="width:230px;flex-shrink:0;background:#0a0f1e;border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1);">
-      <div style="padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
-        <div style="font-size:19px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;letter-spacing:.05em;">カ Nova ミ</div>
-        <div style="font-size:10px;color:#444;margin-top:2px;">War Games</div>
-      </div>
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
-        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">War info</div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Opponent</span><span style="font-size:12px;font-weight:700;color:#ccc;" id="vw-opponent"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Date</span><span style="font-size:12px;font-weight:700;color:#ccc;" id="vw-date"></span></div>
-      </div>
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
-        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">Guild totals</div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Defeats</span><span style="font-size:12px;font-weight:700;color:#ffcc44;" id="vw-defeats"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Assists</span><span style="font-size:12px;font-weight:700;color:#aaa;" id="vw-assists"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Dmg Dealt</span><span style="font-size:12px;font-weight:700;color:#e8a030;" id="vw-dmg"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Dmg Taken</span><span style="font-size:12px;font-weight:700;color:#cc5555;" id="vw-taken"></span></div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:11px;color:#555;">Healed</span><span style="font-size:12px;font-weight:700;color:#4fcf70;" id="vw-healed"></span></div>
-      </div>
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
-        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">Top kills</div>
-        <div id="vw-topkills"></div>
-      </div>
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
-        <div style="font-size:9px;color:#3a3a5a;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px;">Roles</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--tank);"></div><span style="font-size:11px;color:#555;">Tank</span></div>
-          <div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--heal);"></div><span style="font-size:11px;color:#555;">Healer</span></div>
-          <div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--dps);"></div><span style="font-size:11px;color:#555;">DPS</span></div>
-        </div>
-        <div style="margin-top:10px;font-size:9px;color:#2a2a3a;line-height:1.6;" id="vw-kp-note"></div>
-      </div>
-      <div style="padding:14px 16px;">
-        <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;width:100%;" onclick="showPage('wars')">← All Wars</button>
-      </div>
-    </div>
-
-    <!-- toggle btn -->
-    <button id="vw-toggle" onclick="toggleVwSidebar()" style="position:absolute;top:14px;left:250px;z-index:20;background:#0f1628;border:1px solid rgba(255,255,255,.1);border-radius:7px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left .25s cubic-bezier(.4,0,.2,1);">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <!-- collapsed title -->
-    <div id="vw-collapsed-title" style="position:absolute;top:20px;left:70px;z-index:20;display:none;align-items:center;gap:6px;opacity:0;transition:opacity .2s;">
-      <span style="font-size:14px;font-weight:800;color:var(--gold);font-family:'Rajdhani',sans-serif;" id="vw-ct-text"></span>
-    </div>
-
-    <!-- main content -->
-    <div id="vw-main" style="flex:1;padding:56px 20px 20px 20px;min-width:0;transition:margin-left .25s;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="view-war-content"></div>
-    </div>
-
-  </div>
+<div class="page" id="page-view-war">
+  <div id="view-war-content"></div>
 </div>
 
 <script>
@@ -1062,45 +1006,70 @@ function renderWarsList(){
       +'</div>';
     return;
   }
-  // Count members per war
+  // Count members + stats per war
+  var partyDotColors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
   el.innerHTML = wars.map(function(w,i){
     var totalMembers = 0, totalParties = 0;
-    if(w.parties) w.parties.forEach(function(p){ if(!p._isExtras && p.name!=='_Extras'){ totalParties++; totalMembers += p.members.length; } });
-    var hasStats = w.parties && w.parties.some(function(p){ return p.members && p.members.some(function(m){ return m.defeat||m.dmg_dealt; }); });
+    var totalK=0, totalA=0, totalDmg=0, totalHeal=0;
+    if(w.parties) w.parties.forEach(function(p){
+      if(!p._isExtras && p.name!=='_Extras'){
+        totalParties++;
+        p.members.forEach(function(m){
+          totalMembers++;
+          totalK   += m.defeat||0;
+          totalA   += m.assist||0;
+          totalDmg += m.dmg_dealt||0;
+          totalHeal+= m.healed||0;
+        });
+      }
+    });
+    var fmtStat = function(n){ if(n>=1000000) return (n/1000000).toFixed(2)+'M'; if(n>=1000) return (n/1000).toFixed(0)+'K'; return n?String(n):'0'; };
 
-    return '<div class="group relative bg-nova-card border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:border-nova-gold/30 hover:shadow-glow-gold transition-all duration-300" onclick="viewWar('+w.id+')">'
-      +'<div class="p-5">'
-        +'<div class="flex items-start justify-between mb-3">'
-          +'<div class="text-xs font-mono text-gray-500">'+escHtml(w.date)+'</div>'
-          +(hasStats ? '<div class="w-2 h-2 rounded-full bg-nova-heal animate-pulse" title="Has stats"></div>' : '')
-        +'</div>'
-        +'<div class="font-display text-lg font-bold text-white mb-1 group-hover:text-nova-gold transition-colors">Nova vs '+escHtml(w.opponent)+'</div>'
-        +'<div class="flex items-center gap-3 text-xs text-gray-500 mt-3">'
-          +'<span>'+totalParties+' parties</span>'
-          +'<span>'+totalMembers+' members</span>'
+    var partyDotsHtml = '';
+    if(w.parties){
+      partyDotsHtml = '<div class="war-card-parties">';
+      var dotIdx = 0;
+      w.parties.forEach(function(p){
+        if(!p._isExtras && p.name!=='_Extras'){
+          partyDotsHtml += '<div class="war-card-party-dot" style="background:'+partyDotColors[dotIdx % partyDotColors.length]+';"></div>';
+          dotIdx++;
+        }
+      });
+      partyDotsHtml += '</div>';
+    }
+
+    return '<div class="war-card" onclick="viewWar('+w.id+')">'
+      +'<div class="war-card-header">'
+        +'<span class="war-card-opponent">vs '+escHtml(w.opponent)+'</span>'
+        +'<span class="war-card-date">'+escHtml(w.date)+'</span>'
+      +'</div>'
+      +'<div class="war-card-stats">'
+        +'<div class="war-card-stat"><span class="lbl">Kills</span><span class="val">'+totalK+'</span></div>'
+        +'<div class="war-card-stat"><span class="lbl">Assists</span><span class="val">'+totalA+'</span></div>'
+        +'<div class="war-card-stat"><span class="lbl">Dmg Dealt</span><span class="val">'+fmtStat(totalDmg)+'</span></div>'
+        +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtStat(totalHeal)+'</span></div>'
+      +'</div>'
+      +partyDotsHtml
+      +'<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;" class="war-card-actions" onclick="event.stopPropagation()">'
+        +'<button id="del-btn-'+i+'" onclick="event.stopPropagation();showDeleteConfirm('+i+')" style="padding:2px 8px;font-size:10px;background:rgba(232,64,64,.1);color:#e84040;border:1px solid rgba(232,64,64,.2);border-radius:4px;cursor:pointer;">'+t('delete')+'</button>'
+        +'<div id="del-confirm-'+i+'" style="display:none;align-items:center;gap:4px;">'
+          +'<span style="font-size:10px;color:#e84040;">'+t('deleteConfirm')+'</span>'
+          +'<button onclick="event.stopPropagation();confirmDeleteWar('+w.id+')" style="padding:2px 8px;font-size:10px;background:#e84040;color:#fff;border:none;border-radius:4px;cursor:pointer;">'+t('yes')+'</button>'
+          +'<button onclick="event.stopPropagation();cancelDelete('+i+')" style="padding:2px 8px;font-size:10px;border:1px solid rgba(255,255,255,.1);color:#949ba4;background:transparent;border-radius:4px;cursor:pointer;">'+t('no')+'</button>'
         +'</div>'
       +'</div>'
-      +'<div class="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">'
-        +'<button id="del-btn-'+i+'" onclick="event.stopPropagation();showDeleteConfirm('+i+')" class="px-2 py-1 text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors">'+t('delete')+'</button>'
-        +'<div id="del-confirm-'+i+'" class="hidden flex items-center gap-1.5">'
-          +'<span class="text-[10px] text-red-400">'+t('deleteConfirm')+'</span>'
-          +'<button onclick="event.stopPropagation();confirmDeleteWar('+w.id+')" class="px-2 py-0.5 text-[10px] bg-red-500 text-white rounded">'+t('yes')+'</button>'
-          +'<button onclick="event.stopPropagation();cancelDelete('+i+')" class="px-2 py-0.5 text-[10px] border border-white/10 text-gray-400 rounded">'+t('no')+'</button>'
-        +'</div>'
-      +'</div>'
-      +'<div class="h-0.5 bg-gradient-to-r from-nova-gold/0 via-nova-gold/20 to-nova-gold/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>'
       +'</div>';
   }).join('');
 }
 
 function showDeleteConfirm(i){
-  document.getElementById('del-btn-'+i).classList.add('hidden');
-  document.getElementById('del-confirm-'+i).classList.remove('hidden');
+  document.getElementById('del-btn-'+i).style.display='none';
+  document.getElementById('del-confirm-'+i).style.display='flex';
 }
 
 function cancelDelete(i){
-  document.getElementById('del-btn-'+i).classList.remove('hidden');
-  document.getElementById('del-confirm-'+i).classList.add('hidden');
+  document.getElementById('del-btn-'+i).style.display='';
+  document.getElementById('del-confirm-'+i).style.display='none';
 }
 
 async function confirmDeleteWar(warId){
@@ -1113,24 +1082,7 @@ async function confirmDeleteWar(warId){
 }
 
 var vwOpen = true;
-function toggleVwSidebar(){
-  var sb=document.getElementById('vw-sidebar');
-  var main=document.getElementById('vw-main');
-  var btn=document.getElementById('vw-toggle');
-  var ct=document.getElementById('vw-collapsed-title');
-  vwOpen=!vwOpen;
-  if(vwOpen){
-    sb.style.transform=''; main.style.marginLeft='';
-    btn.style.left='250px';
-    btn.querySelector('svg path').setAttribute('d','M10 3L5 8L10 13');
-    ct.style.display='none'; ct.style.opacity='0';
-  } else {
-    sb.style.transform='translateX(-230px)'; main.style.marginLeft='-230px';
-    btn.style.left='20px';
-    btn.querySelector('svg path').setAttribute('d','M6 3L11 8L6 13');
-    setTimeout(function(){ ct.style.display='flex'; ct.style.opacity='1'; },220);
-  }
-}
+function toggleVwSidebar(){}
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -1150,132 +1102,94 @@ function viewWar(warId){
     totalHealed  += m.healed||0;
     allMembers.push(m);
   }); });
-  var topKillers = allMembers.filter(function(m){ return m.defeat>0; })
-    .sort(function(a,b){ return (b.defeat||0)-(a.defeat||0); }).slice(0,5);
 
-  // Populate sidebar
-  document.getElementById('vw-opponent').textContent = '· '+w.opponent+' ·';
-  document.getElementById('vw-date').textContent     = w.date;
-  document.getElementById('vw-defeats').textContent  = totalDefeats || '—';
-  document.getElementById('vw-assists').textContent  = totalAssists || '—';
-  document.getElementById('vw-dmg').textContent      = totalDmg ? totalDmg.toLocaleString() : '—';
-  document.getElementById('vw-taken').textContent    = totalTaken ? totalTaken.toLocaleString() : '—';
-  document.getElementById('vw-healed').textContent   = totalHealed ? totalHealed.toLocaleString() : '—';
-  document.getElementById('vw-topkills').innerHTML   = topKillers.map(function(m){
-    return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;">'
-      +'<span style="color:#ddd;">'+escHtml(m.name)+'</span>'
-      +'<span style="color:var(--gold);font-weight:700;">'+m.defeat+'</span></div>';
-  }).join('');
-  document.getElementById('vw-kp-note').textContent  = totalDefeats ? allMembers.length+' membri' : '';
-  document.getElementById('vw-ct-text').textContent  = 'Nova vs '+w.opponent+' · '+w.date;
-
-  // Reset sidebar toggle state
-  vwOpen=true;
-  document.getElementById('vw-sidebar').style.transform='';
-  document.getElementById('vw-main').style.marginLeft='';
-  document.getElementById('vw-toggle').style.left='250px';
-  document.getElementById('vw-collapsed-title').style.display='none';
-  document.getElementById('vw-collapsed-title').style.opacity='0';
-
-  // Edit form + party cards
-  var html = '<div style="grid-column:1/-1;">';
-  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">';
-  html += '<div style="flex:1;min-width:180px;"><label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Adversar</label>';
-  html += '<input id="edit-opponent" value="'+escHtml(w.opponent)+'" style="display:block;width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;font-family:\'Exo 2\',sans-serif;"></div>';
-  html += '<div style="flex:1;min-width:160px;"><label style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Data</label>';
-  html += '<input id="edit-date" type="date" value="'+escHtml(w.date)+'" style="display:block;width:100%;margin-top:4px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;font-family:\'Exo 2\',sans-serif;"></div>';
+  // ── War header ──
+  var html = '<div class="war-header">';
+  html += '<div class="war-title">';
+  html += '<h2>Nova vs '+escHtml(w.opponent)+'</h2>';
+  html += '<span class="date">'+escHtml(w.date)+'</span>';
   html += '</div>';
-  html += '<button class="btn btn-primary" style="margin-bottom:20px;" onclick="saveWarEdits('+w.id+')">💾 Salvează modificări</button>';
+  html += '<div class="war-actions">';
+  html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
+  html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
+  html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete War</button>';
+  html += '<button class="btn btn-secondary" onclick="saveWarEdits('+w.id+')">Save</button>';
+  html += '</div>';
   html += '</div>';
 
-  // Color options for party headers
-  var partyColors = [
-    {name:'Mov',       bg:'#1e1545', border:'#3a2a7a'},
-    {name:'Roșu',      bg:'#3a1020', border:'#7a2040'},
-    {name:'Galben',    bg:'#3a3010', border:'#7a6820'},
-    {name:'Albastru',  bg:'#102040', border:'#204080'},
-    {name:'Verde',     bg:'#103020', border:'#207040'},
-    {name:'Portocaliu',bg:'#3a2010', border:'#7a4020'},
-    {name:'Alb',       bg:'#2a2a2a', border:'#555'}
-  ];
+  // ── Stat cards ──
+  html += '<div class="stats-row">';
+  html += '<div class="stat-card gold"><div class="label">Kills</div><div class="value">'+(totalDefeats||'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Assists</div><div class="value">'+(totalAssists||'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Dmg Dealt</div><div class="value">'+(totalDmg?totalDmg.toLocaleString():'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Dmg Taken</div><div class="value">'+(totalTaken?totalTaken.toLocaleString():'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Healed</div><div class="value" style="color:var(--heal);">'+(totalHealed?totalHealed.toLocaleString():'—')+'</div></div>';
+  html += '</div>';
 
-  // Party tables grid — 3 per rând + member picker panel
-  html += '<div style="display:flex;gap:16px;grid-column:1/-1;">';
-  html += '<div id="vw-parties-grid" style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:16px;">';
+  // ── Tabs ──
+  html += '<div class="tabs">';
+  html += '<div class="tab active" onclick="showVwTab(\'parties\',this)">Parties</div>';
+  html += '<div class="tab" onclick="showVwTab(\'leaderboard\',this)">Leaderboard</div>';
+  html += '</div>';
+
+  var partyDotColorsVw = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
+
+  // ── Parties tab ──
+  html += '<div id="vw-tab-parties" class="parties-grid">';
+  html += '<div id="vw-parties-grid" style="display:contents;">';
 
   w.parties.forEach(function(p, pi){
-    if(p._isExtras || p.name==='_Extras') return; // skip extras — rendered separately below
+    if(p._isExtras || p.name==='_Extras') return;
     var pKills=0, pAssists=0, pDmg=0, pTaken=0, pHealed=0;
     p.members.forEach(function(m){ pKills+=m.defeat||0; pAssists+=m.assist||0; pDmg+=m.dmg_dealt||0; pTaken+=m.dmg_taken||0; pHealed+=m.healed||0; });
-    var pColor = p.color || partyColors[0].bg;
-    var pBorder = partyColors.find(function(c){ return c.bg===pColor; });
-    var borderColor = pBorder ? pBorder.border : 'var(--border)';
+    var dotColor = partyDotColorsVw[pi % partyDotColorsVw.length];
 
-    html += '<div style="background:var(--bg2);border:1px solid '+borderColor+';border-radius:10px;overflow:hidden;">';
+    html += '<div class="party-card">';
+    html += '<div class="party-header">';
+    html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
+    html += '<div class="party-meta">'+p.members.length+' members</div>';
+    html += '</div>';
 
-    // Header cu culoare selectabilă + live change
-    html += '<div id="party-hdr-'+pi+'" style="background:'+pColor+';padding:10px 14px;display:flex;align-items:center;gap:8px;">';
-    html += '<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;flex:1;">'+escHtml(p.name)+'</span>';
-    html += '<select data-pi="'+pi+'" data-field="color" onchange="document.getElementById(\'party-hdr-'+pi+'\').style.background=this.value" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:11px;padding:3px 6px;cursor:pointer;">';
-    partyColors.forEach(function(c){
-      html += '<option value="'+c.bg+'"'+(pColor===c.bg?' selected':'')+'>'+c.name+'</option>';
-    });
-    html += '</select></div>';
-
-    // Table
-    var inputStyle = 'background:transparent;border:none;border-radius:0;color:var(--text);text-align:left;padding:3px 4px;font-size:11px;width:100%;min-width:0;font-family:Share Tech Mono,monospace;outline:none;';
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">';
-    html += '<colgroup>'
-      +'<col style="width:32%;">'
-      +'<col style="width:12%;">'
-      +'<col style="width:12%;">'
-      +'<col style="width:16%;">'
-      +'<col style="width:16%;">'
-      +'<col style="width:14%;">'
-      +'<col style="width:18px;">'
-      +'</colgroup>';
-    html += '<thead><tr style="background:var(--bg3);">'
-      +'<th style="text-align:left;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.06em;">PLAYER</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">K</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">A</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">DMG</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">TAKEN</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:var(--muted);font-size:9px;">HEAL</th>'
-      +'<th></th>'
-      +'</tr></thead><tbody data-pi="'+pi+'" class="vw-party-body">';
+    html += '<table class="data-table">';
+    html += '<thead><tr>'
+      +'<th style="width:28%;">Player</th>'
+      +'<th class="num">K</th><th class="num">A</th>'
+      +'<th class="num">DMG</th><th class="num">TAKEN</th><th class="num">HEAL</th>'
+      +'<th class="action-cell"></th>'
+      +'</tr></thead>';
+    html += '<tbody data-pi="'+pi+'" class="vw-party-body">';
 
     p.members.forEach(function(m, mi){
-      var dotColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
-      html += '<tr class="vw-row" draggable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="border-bottom:1px solid rgba(255,255,255,.04);cursor:grab;">'
-        +'<td style="padding:6px 8px;cursor:pointer;overflow:hidden;" onclick="openMemberPicker('+w.id+','+pi+','+mi+')">'
-          +'<div style="display:flex;align-items:center;gap:6px;min-width:0;">'
-          +'<span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';flex-shrink:0;"></span>'
-          +'<span data-pi="'+pi+'" data-mi="'+mi+'" data-field="name" style="color:#ddd;font-size:12px;font-weight:600;font-family:Exo 2,sans-serif;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.15);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escHtml(m.name)+'</span>'
-        +'</div></td>'
-        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="defeat" value="'+(m.defeat||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="assist" value="'+(m.assist||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_dealt" value="'+(m.dmg_dealt||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="dmg_taken" value="'+(m.dmg_taken||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:4px 2px;"><input draggable="false" type="number" data-pi="'+pi+'" data-mi="'+mi+'" data-field="healed" value="'+(m.healed||0)+'" style="'+inputStyle+'"></td>'
-        +'<td style="padding:4px 2px;text-align:center;white-space:nowrap;">'
-          +'<button onclick="removeWarMember('+w.id+','+pi+','+mi+')" style="background:transparent;border:none;color:#e84040;font-size:14px;cursor:pointer;padding:0 2px;" title="Elimină">×</button>'
-        +'</td>'
+      var roleColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
+      var nameClass = m.role==='TANK'?'name-tank':m.role==='HEALER'?'name-heal':'name-dps';
+      html += '<tr class="vw-row" draggable="true" data-pi="'+pi+'" data-mi="'+mi+'">'
+        +'<td onclick="openMemberPicker('+w.id+','+pi+','+mi+')" style="cursor:pointer;">'
+          +'<div class="player-cell">'
+          +'<span class="role-dot" style="background:'+roleColor+';"></span>'
+          +'<span class="player-name '+nameClass+'" data-pi="'+pi+'" data-mi="'+mi+'" data-field="name">'+escHtml(m.name)+'</span>'
+          +'</div></td>'
+        +'<td class="num num-k">'+(m.defeat||0)+'</td>'
+        +'<td class="num">'+(m.assist||0)+'</td>'
+        +'<td class="num num-dmg">'+(m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0')+'</td>'
+        +'<td class="num num-taken">'+(m.dmg_taken?(m.dmg_taken).toLocaleString():'0')+'</td>'
+        +'<td class="num num-heal">'+(m.healed?(m.healed).toLocaleString():'0')+'</td>'
+        +'<td class="action-cell"><button class="btn-icon" onclick="removeWarMember('+w.id+','+pi+','+mi+')">×</button></td>'
         +'</tr>';
     });
 
     // Total row
-    html += '<tr style="background:rgba(240,192,64,.06);border-top:2px solid var(--gold);">'
-      +'<td style="padding:6px 8px;font-weight:700;color:var(--gold);font-size:11px;">TOTAL</td>'
-      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pKills+'</td>'
-      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pAssists+'</td>'
-      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pDmg.toLocaleString()+'</td>'
-      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pTaken.toLocaleString()+'</td>'
-      +'<td style="text-align:left;padding:6px 4px;font-weight:700;color:var(--gold);font-size:11px;overflow:hidden;text-overflow:ellipsis;">'+pHealed.toLocaleString()+'</td>'
-      +'<td></td></tr>';
+    html += '</tbody><tbody><tr class="total-row">'
+      +'<td>Total</td>'
+      +'<td class="num num-k">'+pKills+'</td>'
+      +'<td class="num">'+pAssists+'</td>'
+      +'<td class="num num-dmg">'+pDmg.toLocaleString()+'</td>'
+      +'<td class="num num-taken">'+pTaken.toLocaleString()+'</td>'
+      +'<td class="num num-heal">'+pHealed.toLocaleString()+'</td>'
+      +'<td></td></tr></tbody>';
 
-    html += '</tbody></table>';
+    html += '</table>';
 
-    // Add member button + dropzone
+    // Add member dropzone
     html += '<div class="vw-dropzone-end" data-pi="'+pi+'" style="padding:8px 10px;border-top:1px solid var(--border);">'
       +'<button onclick="openMemberPicker('+w.id+','+pi+',-1)" style="background:transparent;border:1px dashed var(--border2);color:var(--muted);font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;width:100%;">+ Adaugă membru</button>'
       +'</div>';
@@ -1283,47 +1197,41 @@ function viewWar(warId){
     html += '</div>';
   });
 
-  // Extras section (from _Extras special party)
-  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
-  var extrasMembers = extrasParty ? extrasParty.members : (w.extras||[]);
-  if(extrasMembers && extrasMembers.length){
-    var inpSt2 = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:4px 6px;font-size:12px;font-family:Share Tech Mono,monospace;width:100%;';
-    html += '<div class="col-span-1 md:col-span-2 xl:col-span-3" style="background:var(--bg2);border:1px solid rgba(240,192,64,.2);border-radius:10px;overflow:hidden;">';
-    html += '<div style="background:rgba(240,192,64,.12);padding:10px 14px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:var(--gold);">'+t('extraSection')+' ('+extrasMembers.length+')</div>';
-    html += '<table style="width:100%;font-size:13px;border-collapse:collapse;">';
-    html += '<thead><tr style="background:var(--bg3);">'
-      +'<th style="text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;">'+t('player')+'</th>'
-      +'<th style="text-align:center;padding:8px 6px;color:var(--muted);font-size:10px;">'+t('party')+'</th>'
-      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;">K</th>'
-      +'<th style="text-align:right;padding:8px 6px;color:var(--muted);font-size:10px;">A</th>'
-      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">DMG</th>'
-      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">TAKEN</th>'
-      +'<th style="text-align:right;padding:8px 8px;color:var(--muted);font-size:10px;">HEAL</th>'
-      +'<th style="width:70px;"></th>'
-      +'</tr></thead><tbody>';
-    extrasMembers.forEach(function(ex, ei){
-      html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);">'
-        +'<td style="padding:8px 10px;color:#ddd;font-weight:600;">'+escHtml(ex.name)+'</td>'
-        +'<td style="padding:6px;text-align:center;"><select id="extra-party-'+ei+'" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;padding:2px 4px;">';
-      w.parties.forEach(function(pt){ html += '<option>'+escHtml(pt.name)+'</option>'; });
-      html += '</select></td>'
-        +'<td style="padding:6px 3px;"><input type="number" id="extra-k-'+ei+'" value="'+(ex.defeat||0)+'" style="'+inpSt2+'width:50px;"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" id="extra-a-'+ei+'" value="'+(ex.assist||0)+'" style="'+inpSt2+'width:50px;"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" id="extra-d-'+ei+'" value="'+(ex.dmg_dealt||0)+'" style="'+inpSt2+'"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" id="extra-t-'+ei+'" value="'+(ex.dmg_taken||0)+'" style="'+inpSt2+'"></td>'
-        +'<td style="padding:6px 3px;"><input type="number" id="extra-h-'+ei+'" value="'+(ex.healed||0)+'" style="'+inpSt2+'"></td>'
-        +'<td style="padding:6px 4px;"><button onclick="moveExtraToParty('+w.id+','+ei+')" style="background:var(--gold);border:none;color:#000;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;cursor:pointer;">Mută</button></td>'
-        +'</tr>';
+  html += '</div>'; // vw-parties-grid
+  html += '</div>'; // vw-tab-parties
+
+  // ── Leaderboard tab (hidden) ──
+  var topByKills = allMembers.slice().sort(function(a,b){return (b.defeat||0)-(a.defeat||0);}).slice(0,5);
+  var topByHeal = allMembers.slice().sort(function(a,b){return (b.healed||0)-(a.healed||0);}).slice(0,5);
+  var topByDmg = allMembers.slice().sort(function(a,b){return (b.dmg_dealt||0)-(a.dmg_dealt||0);}).slice(0,5);
+  html += '<div id="vw-tab-leaderboard" style="display:none;">';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">';
+  function renderPodium(title, list, statKey, statColor){
+    var h = '<div class="party-card"><div class="party-header" style="border-bottom:1px solid var(--border);"><div class="party-name" style="font-size:13px;">'+title+'</div></div>';
+    h += '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">';
+    var medals = ['var(--accent-primary)','#c0c0c0','#cd7f32','var(--text-secondary)','var(--text-muted)'];
+    list.forEach(function(m,idx){
+      var val = m[statKey]||0;
+      var roleColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
+      h += '<div style="display:flex;align-items:center;gap:10px;">'
+        +'<span style="font-size:'+(idx===0?'18':'16')+'px;font-weight:'+(idx===0?'800':'700')+';color:'+medals[idx]+';width:24px;">'+(idx+1)+'</span>'
+        +'<div style="flex:1;"><div style="font-weight:600;color:'+(idx===0?'#fff':'var(--text-primary)')+';font-size:13px;">'+escHtml(m.name)+'</div>'
+        +'<div style="font-family:JetBrains Mono,monospace;font-size:12px;color:'+(statColor||'var(--text-secondary)')+';">'+val.toLocaleString()+'</div></div>'
+        +'<span class="role-dot" style="background:'+roleColor+';width:8px;height:8px;border-radius:50%;"></span>'
+        +'</div>';
     });
-    html += '</tbody></table></div>';
+    h += '</div></div>';
+    return h;
   }
+  html += renderPodium('Top Damage', topByDmg, 'dmg_dealt', '#c9a06a');
+  html += renderPodium('Top Healed', topByHeal, 'healed', 'var(--heal)');
+  html += renderPodium('Top Kills', topByKills, 'defeat', 'var(--accent-primary)');
+  html += '</div></div>';
 
-  html += '</div>'; // close grid
-
-  // Member picker panel (hidden by default)
-  html += '<div id="member-picker" class="hidden" style="width:260px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:fixed;right:16px;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;z-index:40;">'
+  // Member picker panel
+  html += '<div id="member-picker" class="hidden" style="width:260px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:fixed;right:16px;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;z-index:40;">'
     +'<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;">'
-      +'<span style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);flex:1;">Selectează membru</span>'
+      +'<span style="font-size:14px;font-weight:700;color:var(--gold);flex:1;">Selectează membru</span>'
       +'<button onclick="closeMemberPicker()" style="background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;">×</button>'
     +'</div>'
     +'<div style="padding:8px 10px;">'
@@ -1332,10 +1240,7 @@ function viewWar(warId){
     +'<div id="picker-list" style="padding:4px 6px;"></div>'
   +'</div>';
 
-  html += '</div>'; // close flex wrapper
-
   document.getElementById('view-war-content').innerHTML = html;
-  // Single delegated click listener for picker list (CSP-safe, no per-item closures)
   var pl = document.getElementById('picker-list');
   if(pl) pl.addEventListener('click', function(e){
     var item = e.target.closest('[data-name]');
@@ -1343,6 +1248,16 @@ function viewWar(warId){
   });
   bindWarDragDrop(warId);
   showPage('view-war');
+}
+
+// ── Tab switching for view war ──
+function showVwTab(tabId, el){
+  document.querySelectorAll('#page-view-war .tab').forEach(function(t){ t.classList.remove('active'); });
+  if(el) el.classList.add('active');
+  ['parties','leaderboard'].forEach(function(id){
+    var tab = document.getElementById('vw-tab-'+id);
+    if(tab) tab.style.display = (id===tabId) ? '' : 'none';
+  });
 }
 
 // ── VIEW WAR: Member picker panel ────────────────────────────────────────
@@ -1608,9 +1523,7 @@ async function saveWarEdits(warId){
       body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties,extras:w.extras||[]})});
     if(!r.ok) throw new Error('HTTP '+r.status);
   } catch(e){ alert('Eroare la salvare: '+e.message); return; }
-  document.getElementById('vw-opponent').textContent = '· '+w.opponent+' ·';
-  document.getElementById('vw-date').textContent = w.date;
-  document.getElementById('vw-ct-text').textContent = 'Nova vs '+w.opponent+' · '+w.date;
+  viewWar(warId); // re-render with updated data
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
@@ -2216,14 +2129,14 @@ async function extractAllScoreboards(){
 
     tableHtml += '<div style="margin-bottom:12px;">';
     var labelTag = party.label ? ' <span style="font-size:11px;color:#9080cc;background:rgba(255,255,255,.1);padding:1px 8px;border-radius:99px;margin-left:8px;font-weight:600;">'+escHtml(party.label)+'</span>' : '';
-    var pColor = party.color || '#1e1545';
+    var pColor = party.color || '#3a2060';
     var piIdx = state.parties.indexOf(party);
     var colorSelect = '<select data-score-pi="'+piIdx+'" onchange="state.parties['+piIdx+'].color=this.value;this.parentElement.style.background=this.value" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:11px;padding:3px 6px;cursor:pointer;margin-left:auto;">'
-      +'<option value="#1e1545"'+(pColor==='#1e1545'?' selected':'')+'>Mov</option>'
-      +'<option value="#3a1020"'+(pColor==='#3a1020'?' selected':'')+'>Red</option>'
-      +'<option value="#3a3010"'+(pColor==='#3a3010'?' selected':'')+'>Yellow</option>'
-      +'<option value="#102040"'+(pColor==='#102040'?' selected':'')+'>Blue</option>'
-      +'<option value="#103020"'+(pColor==='#103020'?' selected':'')+'>Green</option>'
+      +'<option value="#3a2060"'+(pColor==='#3a2060'||pColor==='#1e1545'?' selected':'')+'>Mov</option>'
+      +'<option value="#4a1520"'+(pColor==='#4a1520'||pColor==='#3a1020'?' selected':'')+'>Red</option>'
+      +'<option value="#4a3a10"'+(pColor==='#4a3a10'||pColor==='#3a3010'?' selected':'')+'>Yellow</option>'
+      +'<option value="#1a3050"'+(pColor==='#1a3050'||pColor==='#102040'?' selected':'')+'>Blue</option>'
+      +'<option value="#1a4030"'+(pColor==='#1a4030'||pColor==='#103020'?' selected':'')+'>Green</option>'
       +'</select>';
     tableHtml += '<div style="background:'+pColor+';padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;">'+escHtml(party.name)+labelTag+colorSelect+'</div>';
     tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
@@ -2375,30 +2288,22 @@ async function handlePartyUploadWithVision(e){
 }
 
 function renderPartyEditorFromData(parties){
-  var html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+  var partyDotColors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
+  var html = '';
   parties.forEach(function(p,pi){
-    html += '<div class="party-card"><div class="party-card-hdr">';
-    html += '<input type="text" value="'+p.name+'" style="background:transparent;border:none;color:#fff;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;width:72px;outline:none;" onchange="updatePartyName('+pi+',this.value)">';
-    html += '<input type="text" value="'+(p.label||'')+'" style="background:rgba(255,255,255,.08);border:none;color:#9080cc;font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
-    html += '</div>';
+    var dotColor = partyDotColors[pi % partyDotColors.length];
+    html += '<div class="party-edit-card">';
+    html += '<div class="party-edit-header"><div class="party-color-dot" style="background:'+dotColor+';width:10px;height:10px;border-radius:3px;"></div>'+escHtml(p.name)+'</div>';
     p.members.forEach(function(m,mi){
-      var roleColors={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'};
       var role = m.role||'DPS';
-      var matchDot = m.tlgmKey
-        ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
-        : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
-      html += '<div class="party-member" style="padding:5px 10px;">';
-      html += '<div class="role-dot dot-'+role+'" id="dot-'+pi+'-'+mi+'"></div>';
-      html += '<input type="text" value="'+(m.name||'')+'" style="flex:1;background:transparent;border:none;color:#ddd;font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
-      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value);this.style.color=({TANK:\'var(--tank)\',HEALER:\'var(--heal)\',DPS:\'var(--dps)\'})[this.value];document.getElementById(\'dot-'+pi+'-'+mi+'\').className=\'role-dot dot-\'+this.value;" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColors[role]+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
-      ['TANK','HEALER','DPS'].forEach(function(r){
-        html += '<option value="'+r+'"'+(r===role?' selected':'')+'>'+r+'</option>';
-      });
-      html += '</select>'+matchDot+'</div>';
+      var roleClass = role==='TANK'?'tank':role==='HEALER'?'heal':'dps';
+      html += '<div class="party-edit-member">';
+      html += '<span class="role-tag '+roleClass+'" onclick="var roles=[\'TANK\',\'HEALER\',\'DPS\'];var ci=roles.indexOf(\''+role+'\');var nr=roles[(ci+1)%3];updateMemberRole('+pi+','+mi+',nr);renderPartyEditorFromData(state.parties);" style="cursor:pointer;">'+role.replace('ER','')+'</span>';
+      html += '<span style="color:var(--text);flex:1;">'+escHtml(m.name||'')+'</span>';
+      html += '</div>';
     });
     html += '</div>';
   });
-  html += '</div>';
   document.getElementById('party-manual-editor').innerHTML = html;
 }
 
