@@ -45,7 +45,7 @@ router.post('/auth', async (req, res) => {
 router.get('/', requireAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, username, secret, role, created_at FROM users ORDER BY created_at'
+      'SELECT id, username, role, discord_id, avatar, created_at FROM users ORDER BY created_at'
     );
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }

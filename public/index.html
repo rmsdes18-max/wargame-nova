@@ -1946,30 +1946,52 @@ function renderUsersList(){
     .then(function(users){
       var html = '';
       users.forEach(function(u){
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
-          +'<span style="font-weight:600;color:var(--text);font-size:13px;flex:1;">'+escHtml(u.username)+'</span>'
-          +'<span style="font-size:11px;color:var(--text-muted);font-family:JetBrains Mono,monospace;">'+u.secret+'</span>'
-          +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;'
-            +(u.role==='admin'?'background:rgba(240,192,64,.15);color:var(--accent-primary);':'background:rgba(91,143,255,.15);color:var(--tank);')
-          +'">'+u.role.toUpperCase()+'</span>'
-          +(u.role!=='admin'?'<button onclick="deleteUser('+u.id+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:14px;">\u00d7</button>':'')
+        var avatarHtml = u.avatar
+          ? '<img src="'+escHtml(u.avatar)+'" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;">'
+          : '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-muted);flex-shrink:0;">'+escHtml(u.username.charAt(0).toUpperCase())+'</div>';
+
+        var discordBadge = u.discord_id
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="#5865F2" style="flex-shrink:0;" title="Discord"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.373-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.1.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>'
+          : '';
+
+        var dateStr = '';
+        if(u.created_at){
+          var d = new Date(u.created_at);
+          var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          dateStr = d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+        }
+
+        var roleSelect = '';
+        if(u.role !== 'admin'){
+          roleSelect = '<select onchange="changeUserRole('+u.id+',this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px;cursor:pointer;">'
+            +'<option value="viewer"'+(u.role==='viewer'?' selected':'')+'>Viewer</option>'
+            +'<option value="editor"'+(u.role==='editor'?' selected':'')+'>Editor</option>'
+            +'</select>';
+        } else {
+          roleSelect = '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:rgba(240,192,64,.15);color:var(--gold);">ADMIN</span>';
+        }
+
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
+          +avatarHtml
+          +'<div style="flex:1;min-width:0;">'
+            +'<div style="display:flex;align-items:center;gap:6px;">'
+              +'<span style="font-weight:600;color:var(--text);font-size:13px;">'+escHtml(u.username)+'</span>'
+              +discordBadge
+            +'</div>'
+            +'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined '+dateStr+'</div>'
+          +'</div>'
+          +roleSelect
+          +(u.role!=='admin'?'<button onclick="deleteUser('+u.id+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:16px;padding:2px 6px;" title="Remove user">\u00d7</button>':'')
           +'</div>';
       });
       document.getElementById('users-list').innerHTML = html || '<div style="color:var(--muted);font-size:12px;">No users yet</div>';
     });
 }
 
-function createUser(){
-  var name = document.getElementById('new-user-name').value.trim();
-  var role = document.getElementById('new-user-role').value;
-  if(!name) return;
-  fetch('/api/users', {method:'POST', headers:apiHeaders(true), body:JSON.stringify({username:name, role:role})})
-    .then(function(r){ return r.json(); })
-    .then(function(u){
-      if(u.error){ alert(u.error); return; }
-      document.getElementById('new-user-name').value = '';
-      renderUsersList();
-    });
+function changeUserRole(id, newRole){
+  fetch('/api/users/'+id, {method:'PATCH', headers:apiHeaders(true), body:JSON.stringify({role:newRole})})
+    .then(function(r){ if(!r.ok) alert('Failed to update role'); })
+    .then(function(){ renderUsersList(); });
 }
 
 function deleteUser(id){
@@ -2198,24 +2220,12 @@ function initSettingsPage(){
   var k = loadApiKey();
   if(k){
     document.getElementById('api-key-input').value = k;
-    document.getElementById('api-key-current').textContent = 'Key salvat: '+k.substring(0,20)+'...'+k.substring(k.length-6);
-    showApiStatus('✓ API key configurat','var(--heal)');
+    document.getElementById('api-key-current').textContent = 'Key saved: '+k.substring(0,20)+'...'+k.substring(k.length-6);
+    showApiStatus('✓ API key configured','var(--heal)');
   } else {
-    document.getElementById('api-key-current').textContent = 'Niciun key salvat';
+    document.getElementById('api-key-current').textContent = 'No key saved';
   }
-  var sec = localStorage.getItem('nova_admin_secret')||'';
-  var secEl = document.getElementById('admin-secret-input');
-  if(secEl) secEl.value = sec;
-  renderAliasTable();
   renderUsersList();
-}
-
-function saveAdminSecret(){
-  var sec = (document.getElementById('admin-secret-input').value||'').trim();
-  if(sec) localStorage.setItem('nova_admin_secret', sec);
-  else localStorage.removeItem('nova_admin_secret');
-  var el = document.getElementById('backend-status');
-  if(el){ el.style.display='block'; el.style.color='var(--heal)'; el.textContent='✓ Admin Secret salvat.'; }
 }
 
 async function testApiKey(){
@@ -2920,18 +2930,6 @@ async function goStep3WithVision(){
   <div class="section-sub" data-t="settingsSub">Configurare API și preferințe</div>
   <div style="max-width:500px;">
 
-    <!-- Admin Secret (Dokploy) -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="adminSecret">Admin Secret</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" data-t="adminSecretDesc">Secretul setat în Dokploy.</div>
-      <div style="margin-bottom:14px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;" data-t="adminSecretLabel">ADMIN_SECRET (nu îl împărtăși)</div>
-        <input type="password" id="admin-secret-input" placeholder="secretul din env vars Dokploy" data-tp="adminSecretPh" style="width:100%;">
-      </div>
-      <button class="btn btn-primary" onclick="saveAdminSecret()" style="padding:8px 16px;font-size:13px;" data-t="save">Salvează</button>
-      <div id="backend-status" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);"></div>
-    </div>
-
     <!-- Anthropic API Key -->
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="apiKey">Anthropic API Key</div>
@@ -2947,49 +2945,19 @@ async function goStep3WithVision(){
     </div>
 
 
-    <!-- Alias Jucători -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="aliasTitle">Alias Jucători</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" data-t="aliasDesc">Dacă un jucător are alt nume în joc.</div>
-      <div id="alias-table" style="margin-bottom:10px;"></div>
-      <button onclick="addAlias()" style="background:transparent;border:1px solid var(--border2);color:var(--text);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;" data-t="addAlias">+ Adaugă alias</button>
-    </div>
-
-    <!-- Data Transfer -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="transferTitle">Transfer Date</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;" data-t="transferDesc">Exportă datele într-un fișier JSON pentru backup.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button onclick="exportData()" class="btn-transfer-data" data-t="exportData">⬇ Export Date</button>
-        <label class="btn-transfer-data" style="cursor:pointer;">
-          <span data-t="importData">⬆ Import Date</span>
-          <input type="file" accept=".json" onchange="importData(this)" style="display:none;">
-        </label>
-      </div>
-      <div id="import-status" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;"></div>
-    </div>
-
     <!-- User Management (admin only) -->
     <div id="users-section" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">User Management</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Create invite codes for editors and viewers</div>
-      <div id="users-list" style="margin-bottom:12px;"></div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input id="new-user-name" type="text" placeholder="Username" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;">
-        <select id="new-user-role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;">
-          <option value="editor">Editor</option>
-          <option value="viewer">Viewer</option>
-        </select>
-        <button class="btn btn-primary" onclick="createUser()" style="padding:7px 16px;font-size:13px;">+ Create</button>
-      </div>
-    </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Manage guild members and their access levels</div>
+      <div id="users-list" style="margin-bottom:16px;"></div>
 
-    <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.15);border-radius:8px;padding:12px 14px;font-size:11px;color:#a08020;line-height:1.7;">
-      <b data-t="howItWorks">Cum funcționează:</b><br>
-      • <span data-t="howLine1">Datele se salvează direct în baza de date pe Dokploy</span><br>
-      • <span data-t="howLine2">Colegii accesează același URL — văd datele în timp real</span><br>
-      • <span data-t="howLine3">Tu ești singurul cu Admin Secret — doar tu poți modifica</span><br>
-      • <span data-t="howLine4">Cost Vision AI: ~$0.02-0.05 per war</span>
+      <!-- Role permissions info -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:11px;color:var(--text-muted);line-height:1.8;margin-bottom:16px;">
+        <div style="font-weight:600;color:var(--text);margin-bottom:4px;">Role Permissions</div>
+        <div><span style="color:var(--gold);font-weight:600;">Admin</span> — Full access, manage users, settings</div>
+        <div><span style="color:#5b8fff;font-weight:600;">Editor</span> — Create &amp; edit wars, manage parties</div>
+        <div><span style="color:var(--text-muted);font-weight:600;">Viewer</span> — View wars and stats only</div>
+      </div>
     </div>
     <div class="btn-row" style="margin-top:16px;">
       <button class="btn btn-secondary" onclick="showPage('wars')">← Înapoi</button>
