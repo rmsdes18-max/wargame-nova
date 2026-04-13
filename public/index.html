@@ -1307,7 +1307,7 @@ function viewWar(warId){
   html += '<button class="btn btn-secondary" onclick="exportWarImage()">&#x1F4F8; Export</button>';
   if(_vwEditMode){
     html += '<button class="btn btn-secondary" onclick="cancelEditMode()">Cancel</button>';
-    if(_userRole === 'admin'){
+    if(_userRole === 'admin' || _userRole === 'editor'){
       html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete</button>';
     }
     html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
@@ -2217,6 +2217,10 @@ async function initGuildSettings(){
     var data = await r.json();
     document.getElementById('gs-guild-name').value = data.name;
     document.getElementById('gs-invite-code').textContent = data.invite_code;
+    // Set default invite role
+    var defRole = (data.settings && data.settings.default_invite_role) || 'viewer';
+    var defRoleSel = document.getElementById('gs-default-role');
+    if(defRoleSel) defRoleSel.value = defRole;
     var tierEl = document.getElementById('gs-tier');
     tierEl.textContent = data.tier.toUpperCase();
     tierEl.style.background = data.tier==='pro'?'rgba(240,192,64,.15)':'rgba(255,255,255,.06)';
@@ -2272,6 +2276,13 @@ async function initGuildSettings(){
   }catch(e){ console.error('Guild settings error',e); }
 }
 
+async function updateDefaultInviteRole(role){
+  try{
+    var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({settings:{default_invite_role:role}})});
+    if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); }
+  }catch(e){ alert(e.message); }
+}
+
 async function renameGuild(){
   var name = document.getElementById('gs-guild-name').value.trim();
   if(!name) return;
@@ -2313,15 +2324,16 @@ function copyInviteCode(){
 
 async function generateInviteLink(){
   var hours = document.getElementById('invite-expires').value;
+  var role = document.getElementById('invite-link-role').value || 'viewer';
   var resEl = document.getElementById('invite-link-result');
   try{
-    var body = {};
+    var body = { default_role: role };
     if(hours) body.expires_hours = parseInt(hours);
     var r = await fetch('/api/guilds/'+_currentGuildId+'/invite',{method:'POST',headers:apiHeaders(),body:JSON.stringify(body)});
     var data = await r.json();
     if(!r.ok){ resEl.style.display='';resEl.innerHTML='<span style="color:#e84040;">'+escHtml(data.error)+'</span>'; return; }
     resEl.style.display='';
-    resEl.innerHTML='<div style="color:var(--gold);margin-bottom:4px;">Invite code: <code style="color:#fff;background:var(--bg);padding:2px 6px;border-radius:3px;">'+escHtml(data.code)+'</code></div>'
+    resEl.innerHTML='<div style="color:var(--gold);margin-bottom:4px;">Invite code: <code style="color:#fff;background:var(--bg);padding:2px 6px;border-radius:3px;">'+escHtml(data.code)+'</code> <span style="font-size:10px;color:var(--text-muted);">(joins as '+escHtml(data.default_role||'viewer')+')</span></div>'
       +(data.expires_at?'<div style="font-size:10px;color:var(--text-muted);">Expires: '+new Date(data.expires_at).toLocaleString()+'</div>':'');
   }catch(e){ resEl.style.display='';resEl.textContent=e.message; }
 }
@@ -3174,6 +3186,14 @@ async function goStep3WithVision(){
         <code id="gs-invite-code" style="font-family:JetBrains Mono,monospace;font-size:13px;color:var(--gold);background:var(--bg3);padding:3px 8px;border-radius:4px;"></code>
         <button onclick="copyInviteCode()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;">Copy</button>
       </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Join as</span>
+        <select id="gs-default-role" onchange="updateDefaultInviteRole(this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;cursor:pointer;">
+          <option value="viewer">Viewer</option>
+          <option value="editor">Editor</option>
+        </select>
+        <span style="font-size:10px;color:var(--text-muted);">role for new members using invite code</span>
+      </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Tier</span>
         <span id="gs-tier" style="font-size:11px;padding:2px 8px;border-radius:3px;font-weight:600;"></span>
@@ -3185,6 +3205,10 @@ async function goStep3WithVision(){
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Invite Links</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Generate temporary invite links with expiration</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <select id="invite-link-role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
+          <option value="viewer">Join as Viewer</option>
+          <option value="editor">Join as Editor</option>
+        </select>
         <select id="invite-expires" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
           <option value="">No expiration</option>
           <option value="24">Expires in 24h</option>

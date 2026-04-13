@@ -132,13 +132,23 @@ router.delete('/:id', requireAuth, guildContext, requireGuildRole('admin'), asyn
 
 // ── POST /api/guilds/:id/invite — generate invite link (admin only) ──
 router.post('/:id/invite', requireAuth, guildContext, requireGuildRole('admin'), async (req, res) => {
-  const { expires_hours, max_uses } = req.body;
+  const { expires_hours, max_uses, default_role } = req.body;
+  const role = ['viewer', 'editor'].includes(default_role) ? default_role : 'viewer';
+
+  // Free tier: check if can invite as editor
+  if (role === 'editor' && req.guild.tier === 'free') {
+    const limits = await checkFreeTierLimits(req.guild.id, req.guild.tier);
+    if (limits.editors >= 1) {
+      return res.status(403).json({ error: 'Free tier: max 1 editor. Upgrade to Pro.' });
+    }
+  }
+
   try {
     const expiresAt = expires_hours ? new Date(Date.now() + expires_hours * 3600000) : null;
     const { rows } = await pool.query(
-      `INSERT INTO guild_invites (guild_id, created_by, expires_at, max_uses)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [req.guild.id, req.user.id, expiresAt, max_uses || null]
+      `INSERT INTO guild_invites (guild_id, created_by, expires_at, max_uses, default_role)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [req.guild.id, req.user.id, expiresAt, max_uses || null, role]
     );
     res.status(201).json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -155,16 +165,22 @@ router.post('/join', requireAuth, async (req, res) => {
 
     // Try guild permanent invite_code first
     let guildId = null;
+    let joinRole = 'viewer';
     const { rows: guildRows } = await client.query(
       'SELECT id, tier FROM guilds WHERE invite_code = $1', [code]
     );
 
     if (guildRows.length) {
       guildId = guildRows[0].id;
+      // Permanent code — check guild settings for default role
+      const { rows: guildSettings } = await client.query('SELECT settings FROM guilds WHERE id = $1', [guildId]);
+      if (guildSettings.length && guildSettings[0].settings?.default_invite_role) {
+        joinRole = guildSettings[0].settings.default_invite_role;
+      }
     } else {
       // Try temporary invite link
       const { rows: inviteRows } = await client.query(
-        `SELECT gi.id, gi.guild_id, gi.max_uses, gi.uses, gi.expires_at, g.tier
+        `SELECT gi.id, gi.guild_id, gi.max_uses, gi.uses, gi.expires_at, gi.default_role, g.tier
          FROM guild_invites gi JOIN guilds g ON g.id = gi.guild_id
          WHERE gi.code = $1`, [code]
       );
@@ -182,9 +198,21 @@ router.post('/join', requireAuth, async (req, res) => {
         return res.status(410).json({ error: 'Invite has reached max uses' });
       }
       guildId = invite.guild_id;
+      joinRole = invite.default_role || 'viewer';
 
       // Increment uses
       await client.query('UPDATE guild_invites SET uses = uses + 1 WHERE id = $1', [invite.id]);
+    }
+
+    // Free tier: check editor limit
+    if (joinRole === 'editor') {
+      const { rows: tierCheck } = await client.query('SELECT tier FROM guilds WHERE id = $1', [guildId]);
+      if (tierCheck[0]?.tier === 'free') {
+        const { rows: editorCount } = await client.query(
+          "SELECT COUNT(*)::int as count FROM guild_members WHERE guild_id = $1 AND role = 'editor'", [guildId]
+        );
+        if (editorCount[0].count >= 1) joinRole = 'viewer'; // fallback to viewer
+      }
     }
 
     // Check if already a member
@@ -197,17 +225,17 @@ router.post('/join', requireAuth, async (req, res) => {
       return res.status(409).json({ error: 'Already a member of this guild' });
     }
 
-    // Add as viewer
+    // Add with determined role
     await client.query(
       'INSERT INTO guild_members (user_id, guild_id, role) VALUES ($1, $2, $3)',
-      [req.user.id, guildId, 'viewer']
+      [req.user.id, guildId, joinRole]
     );
 
     // Get guild info for response
     const { rows: guildInfo } = await client.query('SELECT id, name, slug FROM guilds WHERE id = $1', [guildId]);
 
     await client.query('COMMIT');
-    res.status(201).json({ guild: guildInfo[0], role: 'viewer' });
+    res.status(201).json({ guild: guildInfo[0], role: joinRole });
   } catch (e) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: e.message });
