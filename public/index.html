@@ -53,6 +53,42 @@ tailwind.config = {
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;}
+
+/* ── War Timeline ── */
+.war-timeline{position:relative;padding-left:32px;margin-top:8px;}
+.war-timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--border,#3f4147);}
+.war-timeline-item{position:relative;margin-bottom:20px;}
+.war-timeline-item::before{content:'';position:absolute;left:-25px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--gold,#f0c040);border:2px solid var(--bg2,#2b2d31);z-index:1;}
+.war-timeline-date{font-size:11px;font-weight:600;color:var(--text-muted,#8b8d94);margin-bottom:4px;letter-spacing:.03em;}
+.war-timeline-item .war-card{margin:0;}
+
+/* ── Landing Page ── */
+.landing-page{display:flex;min-height:100vh;background:var(--bg,#1e1f22);}
+.landing-left{flex:0 0 42%;display:flex;flex-direction:column;justify-content:center;padding:60px 48px;}
+.landing-right{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;background:rgba(255,255,255,.02);border-left:1px solid var(--border,#3f4147);overflow:hidden;}
+.landing-title{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:8px;}
+.landing-title span{color:var(--gold,#f0c040);}
+.landing-sub{font-size:15px;color:var(--text-muted,#8b8d94);line-height:1.6;margin-bottom:32px;max-width:380px;}
+.landing-features{list-style:none;padding:0;margin:0 0 36px 0;}
+.landing-features li{font-size:13px;color:var(--text-secondary,#b5bac1);padding:6px 0;display:flex;align-items:center;gap:10px;}
+.landing-features li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold,#f0c040);flex-shrink:0;}
+.landing-discord-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 28px;background:#5865F2;border-radius:8px;color:#fff;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;}
+.landing-discord-btn:hover{opacity:.9;}
+.landing-mock-card{background:var(--card,#2b2d31);border:1px solid var(--border,#3f4147);border-radius:10px;padding:16px 20px;width:100%;max-width:380px;margin-bottom:16px;}
+.landing-mock-card .mock-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.landing-mock-card .mock-opponent{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;}
+.landing-mock-card .mock-date{font-size:11px;color:var(--text-muted,#8b8d94);}
+.landing-mock-card .mock-stats{display:flex;gap:16px;}
+.landing-mock-card .mock-stat{display:flex;flex-direction:column;}
+.landing-mock-card .mock-stat .lbl{font-size:9px;text-transform:uppercase;color:var(--text-muted,#8b8d94);letter-spacing:.05em;}
+.landing-mock-card .mock-stat .val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#fff;}
+.landing-mock-bar{height:4px;border-radius:2px;margin-top:10px;display:flex;gap:2px;overflow:hidden;}
+.landing-mock-bar span{height:100%;border-radius:2px;}
+@media(max-width:768px){
+  .landing-page{flex-direction:column;}
+  .landing-left{flex:none;padding:40px 24px;}
+  .landing-right{flex:none;padding:24px;border-left:none;border-top:1px solid var(--border,#3f4147);}
+}
 </style>
 </head>
 <body>
@@ -61,7 +97,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="app-shell">
 
   <!-- ─── SIDEBAR ─── -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" style="display:none">
     <a class="sidebar-logo" href="#" onclick="showPage('wars');closeSidebar();return false;">
       <span class="sidebar-logo-mark">カ NOVA ミ</span>
       <span class="sidebar-logo-sub">War Games</span>
@@ -85,7 +121,7 @@ input[type=number]{-moz-appearance:textfield;}
       <button id="lang-btn" class="sidebar-footer-btn" onclick="toggleLang()">
         <span class="sidebar-item-icon">⚐</span><span>EN</span>
       </button>
-      <button class="sidebar-footer-btn" onclick="promptPin();closeSidebar()">
+      <button id="settings-btn" class="sidebar-footer-btn" onclick="promptPin();closeSidebar()">
         <span class="sidebar-item-icon">⚙</span><span data-t="settings">Settings</span>
       </button>
       <div id="sidebar-user" style="padding:4px 0;"></div>
@@ -95,7 +131,7 @@ input[type=number]{-moz-appearance:textfield;}
 
   <!-- ─── MAIN ─── -->
   <main class="main">
-    <div class="topbar">
+    <div class="topbar" style="display:none">
       <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
@@ -112,8 +148,85 @@ input[type=number]{-moz-appearance:textfield;}
 
     <div class="page-container">
 
+<!-- ═══════════════ LANDING / LOGIN PAGE ═══════════════ -->
+<div class="page active" id="page-login" style="padding:0;max-width:none;">
+  <div class="landing-page">
+    <div class="landing-left">
+      <div class="landing-title">Wargame Stats<br><span>Nova</span></div>
+      <p class="landing-sub">Track your guild wars, analyze performance, and dominate the battlefield. Real-time stats for every war.</p>
+      <ul class="landing-features">
+        <li>Automatic scoreboard parsing from screenshots</li>
+        <li>Per-player kill, assist, damage &amp; healing stats</li>
+        <li>War history timeline with full analytics</li>
+        <li>Role-based access for your guild officers</li>
+      </ul>
+      <a href="/api/auth/discord" class="landing-discord-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Login with Discord
+      </a>
+    </div>
+    <div class="landing-right">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Preview</div>
+      <div class="landing-mock-card">
+        <div class="mock-header">
+          <span class="mock-opponent">vs Shadow Legion</span>
+          <span class="mock-date">2026-04-07</span>
+        </div>
+        <div class="mock-stats">
+          <div class="mock-stat"><span class="lbl">Kills</span><span class="val">412</span></div>
+          <div class="mock-stat"><span class="lbl">Assists</span><span class="val">1,893</span></div>
+          <div class="mock-stat"><span class="lbl">Dmg Dealt</span><span class="val">28.5M</span></div>
+          <div class="mock-stat"><span class="lbl">Healed</span><span class="val">8.21M</span></div>
+        </div>
+        <div class="landing-mock-bar">
+          <span style="flex:3;background:#5b8fff;"></span>
+          <span style="flex:2;background:#3ecf6e;"></span>
+          <span style="flex:4;background:#e84040;"></span>
+          <span style="flex:1;background:#f0c040;"></span>
+        </div>
+      </div>
+      <div class="landing-mock-card">
+        <div class="mock-header">
+          <span class="mock-opponent">vs Iron Wolves</span>
+          <span class="mock-date">2026-04-01</span>
+        </div>
+        <div class="mock-stats">
+          <div class="mock-stat"><span class="lbl">Kills</span><span class="val">287</span></div>
+          <div class="mock-stat"><span class="lbl">Assists</span><span class="val">1,245</span></div>
+          <div class="mock-stat"><span class="lbl">Dmg Dealt</span><span class="val">19.7M</span></div>
+          <div class="mock-stat"><span class="lbl">Healed</span><span class="val">6.44M</span></div>
+        </div>
+        <div class="landing-mock-bar">
+          <span style="flex:4;background:#5b8fff;"></span>
+          <span style="flex:3;background:#3ecf6e;"></span>
+          <span style="flex:2;background:#e84040;"></span>
+          <span style="flex:1.5;background:#f0c040;"></span>
+        </div>
+      </div>
+      <div class="landing-mock-card" style="opacity:.5;">
+        <div class="mock-header">
+          <span class="mock-opponent">vs Crimson Order</span>
+          <span class="mock-date">2026-03-25</span>
+        </div>
+        <div class="mock-stats">
+          <div class="mock-stat"><span class="lbl">Kills</span><span class="val">356</span></div>
+          <div class="mock-stat"><span class="lbl">Assists</span><span class="val">1,581</span></div>
+          <div class="mock-stat"><span class="lbl">Dmg Dealt</span><span class="val">24.1M</span></div>
+          <div class="mock-stat"><span class="lbl">Healed</span><span class="val">7.33M</span></div>
+        </div>
+        <div class="landing-mock-bar">
+          <span style="flex:2;background:#5b8fff;"></span>
+          <span style="flex:3;background:#3ecf6e;"></span>
+          <span style="flex:3;background:#e84040;"></span>
+          <span style="flex:2;background:#f0c040;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
-<div class="page active" id="page-wars">
+<div class="page" id="page-wars">
     <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:24px;" data-t="warHistory">War History</h2>
     <div id="wars-list" class="wars-grid"></div>
 </div>
@@ -216,7 +329,7 @@ input[type=number]{-moz-appearance:textfield;}
 
 <script>
 // ── LANGUAGE ──────────────────────────────────────────────────────────────
-var _lang = localStorage.getItem('nova_lang') || 'ro';
+var _lang = localStorage.getItem('nova_lang') || 'en';
 var _t = {
   ro: {
     // Nav
@@ -475,6 +588,7 @@ function matchPartiesAgainstRoster(parties){
 // ── PIN PROTECTION ────────────────────────────────────────────────────────
 var _PIN = '4465';
 function promptPin(){
+  if(_userRole !== 'admin'){ return; }
   if(sessionStorage.getItem('nova_pin_ok')==='1'){ showPage('settings'); return; }
   var overlay = document.createElement('div');
   overlay.id = 'pin-overlay';
@@ -1017,6 +1131,7 @@ function renderWarsList(){
   }
   // Count members + stats per war
   var partyDotColors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
+  el.className = 'war-timeline';
   el.innerHTML = wars.map(function(w,i){
     var totalMembers = 0, totalParties = 0;
     var totalK=0, totalA=0, totalDmg=0, totalHeal=0;
@@ -1047,10 +1162,11 @@ function renderWarsList(){
       partyDotsHtml += '</div>';
     }
 
-    return '<div class="war-card" onclick="viewWar('+w.id+')">'
+    return '<div class="war-timeline-item">'
+      +'<div class="war-timeline-date">'+escHtml(w.date)+'</div>'
+      +'<div class="war-card" onclick="viewWar('+w.id+')">'
       +'<div class="war-card-header">'
         +'<span class="war-card-opponent">vs '+escHtml(w.opponent)+'</span>'
-        +'<span class="war-card-date">'+escHtml(w.date)+'</span>'
       +'</div>'
       +'<div class="war-card-stats">'
         +'<div class="war-card-stat"><span class="lbl">Kills</span><span class="val">'+totalK+'</span></div>'
@@ -1059,8 +1175,6 @@ function renderWarsList(){
         +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtStat(totalHeal)+'</span></div>'
       +'</div>'
       +partyDotsHtml
-      +'<div style="position:absolute;bottom:8px;right:8px;">'
-        +'<button onclick="event.stopPropagation();shareWar('+w.id+')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px;" title="Share">&#x1F517;</button>'
       +'</div>'
       +'</div>';
   }).join('');
@@ -1782,6 +1896,10 @@ function updateUIForRole(){
   var nwTab = document.getElementById('new-war-tab');
   if(nwTab) nwTab.style.display = isEditor ? '' : 'none';
 
+  // Settings button - admin only
+  var settingsBtn = document.getElementById('settings-btn');
+  if(settingsBtn) settingsBtn.style.display = isAdmin ? '' : 'none';
+
   // Sidebar user area
   var userEl = document.getElementById('sidebar-user');
   if(userEl){
@@ -1816,7 +1934,7 @@ function logout(){
   _userAvatar = '';
   _authToken = '';
   updateUIForRole();
-  showPage('wars');
+  showAppShell(false);
 }
 
 // ── SHARE WAR ─────────────────────────────────────────────────────────────
@@ -1888,6 +2006,24 @@ function deleteUser(id){
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
+function showAppShell(loggedIn){
+  var sidebar = document.getElementById('sidebar');
+  var topbar = document.querySelector('.topbar');
+  if(loggedIn){
+    if(sidebar) sidebar.style.display = '';
+    if(topbar) topbar.style.display = '';
+    // Only switch to wars if currently on login page
+    var loginPage = document.getElementById('page-login');
+    if(loginPage && loginPage.classList.contains('active')){
+      showPage('wars');
+    }
+  } else {
+    if(sidebar) sidebar.style.display = 'none';
+    if(topbar) topbar.style.display = 'none';
+    showPage('login');
+  }
+}
+
 function checkAuth(){
   // Check if Discord just redirected back with a token
   var hash = window.location.hash;
@@ -1908,13 +2044,16 @@ function checkAuth(){
           _userRole = u.role || 'viewer';
           _userName = u.username || '';
           _userAvatar = u.avatar || '';
+          showAppShell(true);
         } else {
           // Invalid token
           localStorage.removeItem('nova_token');
+          _authToken = '';
           _userRole = 'viewer';
+          showAppShell(false);
         }
         updateUIForRole();
-      }).catch(function(){ updateUIForRole(); });
+      }).catch(function(){ showAppShell(false); updateUIForRole(); });
   } else {
     // Check legacy admin secret
     var sec = localStorage.getItem('nova_admin_secret');
@@ -1922,6 +2061,9 @@ function checkAuth(){
       _userRole = 'admin';
       _userName = 'Admin';
       _authToken = sec;
+      showAppShell(true);
+    } else {
+      showAppShell(false);
     }
     updateUIForRole();
   }
