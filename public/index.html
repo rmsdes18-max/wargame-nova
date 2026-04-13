@@ -1169,7 +1169,7 @@ function viewWar(warId){
     p.members.forEach(function(m){ pKills+=m.defeat||0; pAssists+=m.assist||0; pDmg+=m.dmg_dealt||0; pTaken+=m.dmg_taken||0; pHealed+=m.healed||0; });
     var dotColor = partyDotColorsVw[pi % partyDotColorsVw.length];
 
-    html += '<div class="party-card">';
+    html += '<div class="party-card" data-pi="'+pi+'">';
     html += '<div class="party-header">';
     if(_vwEditMode){
       html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
@@ -1538,7 +1538,7 @@ function bindExtrasDragDrop(warId){
     });
   });
 
-  // Make dimmed (missing) rows accept extra drops
+  // Make dimmed (missing) rows accept extra drops → replace
   document.querySelectorAll('.vw-row[data-is-missing="1"]').forEach(function(row){
     row.addEventListener('dragover', function(e){
       e.preventDefault();
@@ -1557,6 +1557,27 @@ function bindExtrasDragDrop(warId){
       var toPi = +row.getAttribute('data-pi');
       var toMi = +row.getAttribute('data-mi');
       replaceWithExtra(warId, extraIdx, toPi, toMi);
+    });
+  });
+
+  // Make ALL party cards accept extra drops → append to end
+  document.querySelectorAll('.party-card[data-pi]').forEach(function(card){
+    card.addEventListener('dragover', function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      card.style.boxShadow = 'inset 0 -3px 0 0 var(--accent-primary)';
+    });
+    card.addEventListener('dragleave', function(){
+      card.style.boxShadow = '';
+    });
+    card.addEventListener('drop', function(e){
+      e.preventDefault();
+      card.style.boxShadow = '';
+      var data = e.dataTransfer.getData('text/plain');
+      if(!data.startsWith('extra:')) return;
+      var extraIdx = +data.split(':')[1];
+      var toPi = +card.getAttribute('data-pi');
+      appendExtraToParty(warId, extraIdx, toPi);
     });
   });
 }
@@ -1580,6 +1601,30 @@ function replaceWithExtra(warId, extraIdx, toPi, toMi){
     };
   }
   // Remove from extras
+  extrasParty.members.splice(extraIdx, 1);
+  if(!extrasParty.members.length){
+    w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
+  }
+  viewWar(warId);
+}
+
+function appendExtraToParty(warId, extraIdx, toPi){
+  var w = getWar(warId);
+  if(!w) return;
+  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  if(!extrasParty || !extrasParty.members[extraIdx]) return;
+  var extra = extrasParty.members[extraIdx];
+  if(w.parties[toPi]){
+    w.parties[toPi].members.push({
+      name: extra.name,
+      role: extra.role||'DPS',
+      defeat: extra.defeat||0,
+      assist: extra.assist||0,
+      dmg_dealt: extra.dmg_dealt||0,
+      dmg_taken: extra.dmg_taken||0,
+      healed: extra.healed||0
+    });
+  }
   extrasParty.members.splice(extraIdx, 1);
   if(!extrasParty.members.length){
     w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
