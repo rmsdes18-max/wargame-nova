@@ -104,7 +104,7 @@ input[type=number]{-moz-appearance:textfield;}
     </a>
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">Main</div>
-      <a class="sidebar-item nav-tab active guild-nav" onclick="showPage('wars');closeSidebar()" data-t="allWars" style="display:none">
+      <a class="sidebar-item nav-tab active" onclick="showPage('wars');closeSidebar()" data-t="allWars">
         <span class="sidebar-item-icon">⚔</span>
         <span class="sidebar-item-label">All Wars</span>
       </a>
@@ -112,7 +112,10 @@ input[type=number]{-moz-appearance:textfield;}
         <span class="sidebar-item-icon">+</span>
         <span class="sidebar-item-label">New War</span>
       </a>
-      <!-- Members page disabled until guild-scoped -->
+      <a class="sidebar-item" href="members.html" data-t="members">
+        <span class="sidebar-item-icon">◆</span>
+        <span class="sidebar-item-label">Members</span>
+      </a>
       <a class="sidebar-item" id="guild-settings-tab" onclick="showPage('guild-settings');closeSidebar()" style="display:none">
         <span class="sidebar-item-icon">&#x2699;</span>
         <span class="sidebar-item-label">Guild Settings</span>
@@ -1933,9 +1936,11 @@ function updateUIForRole(){
   var isAdmin = _userRole === 'admin';
   var isEditor = _userRole === 'admin' || _userRole === 'editor';
 
-  // Settings button - admin only
-  var settingsBtn = document.getElementById('settings-btn');
-  if(settingsBtn) settingsBtn.style.display = isAdmin ? '' : 'none';
+  // New War — editor+ only
+  var nwTab = document.getElementById('new-war-tab');
+  if(nwTab) nwTab.style.display = isEditor ? '' : 'none';
+  var nwBtn = document.querySelector('.topbar-actions .btn-primary');
+  if(nwBtn) nwBtn.style.display = isEditor ? '' : 'none';
 
   // Guild settings sidebar item - admin only
   var gsTab = document.getElementById('guild-settings-tab');
