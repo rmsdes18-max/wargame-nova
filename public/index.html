@@ -208,7 +208,7 @@ input[type=number]{-moz-appearance:textfield;}
 </div>
 
 <!-- ═══════════════ VIEW WAR PAGE ═══════════════ -->
-<div class="page" id="page-view-war" style="max-width:none;">
+<div class="page" id="page-view-war">
   <div id="view-war-content"></div>
 </div>
 
@@ -1052,15 +1052,6 @@ function renderWarsList(){
   }).join('');
 }
 
-function showDeleteConfirm(i){
-  document.getElementById('del-btn-'+i).style.display='none';
-  document.getElementById('del-confirm-'+i).style.display='flex';
-}
-
-function cancelDelete(i){
-  document.getElementById('del-btn-'+i).style.display='';
-  document.getElementById('del-confirm-'+i).style.display='none';
-}
 
 async function confirmDeleteWar(warId){
   try{
@@ -1071,12 +1062,14 @@ async function confirmDeleteWar(warId){
   renderWarsList();
 }
 
-var vwOpen = true;
 var _vwEditMode = false;
 var _vwWarId = null;
-function toggleVwSidebar(){}
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function roleColor(role){ return role==='TANK'?'var(--tank)':role==='HEALER'?'var(--heal)':'var(--dps)'; }
+function roleClass(role){ return role==='TANK'?'name-tank':role==='HEALER'?'name-heal':'name-dps'; }
+function fmtNum(n){ return n ? n.toLocaleString() : '0'; }
+function getWar(warId){ var wars=loadWars(); return wars.find(function(x){return x.id===warId;}); }
 
 function editableCell(cls, val, warId, pi, mi, field){
   return '<td class="num '+cls+'"><span class="editable-val" data-war="'+warId+'" data-pi="'+pi+'" data-mi="'+mi+'" data-field="'+field+'" onclick="makeEditable(this)" style="cursor:pointer;">'+val+'</span></td>';
@@ -1094,8 +1087,7 @@ function makeEditable(span){
     var pi = +span.dataset.pi;
     var mi = +span.dataset.mi;
     var field = span.dataset.field;
-    var wars = loadWars();
-    var w = wars.find(function(x){ return x.id===warId; });
+    var w = getWar(warId);
     if(w && w.parties[pi] && w.parties[pi].members[mi]){
       w.parties[pi].members[mi][field] = newVal;
     }
@@ -1146,7 +1138,7 @@ function viewWar(warId){
   html += '</div>';
 
   // ── Stat cards ──
-  html += '<div class="stats-row" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">';
+  html += '<div class="stats-row">';
   html += '<div class="stat-card gold"><div class="label">Kills</div><div class="value">'+(totalDefeats||'—')+'</div></div>';
   html += '<div class="stat-card"><div class="label">Assists</div><div class="value">'+(totalAssists||'—')+'</div></div>';
   html += '<div class="stat-card"><div class="label">Dmg Dealt</div><div class="value">'+(totalDmg?totalDmg.toLocaleString():'—')+'</div></div>';
@@ -1198,8 +1190,8 @@ function viewWar(warId){
     html += '<tbody data-pi="'+pi+'" class="vw-party-body">';
 
     p.members.forEach(function(m, mi){
-      var roleColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
-      var nameClass = m.role==='TANK'?'name-tank':m.role==='HEALER'?'name-heal':'name-dps';
+      var rc = roleColor(m.role);
+      var nc = roleClass(m.role);
       var isDimmed = !(m.defeat||m.assist||m.dmg_dealt);
 
       html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="'+(_vwEditMode?'true':'false')+'" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">';
@@ -1208,11 +1200,11 @@ function viewWar(warId){
       html += '<td>';
       html += '<div class="player-cell">';
       if(_vwEditMode){
-        html += '<span class="role-dot" style="background:'+roleColor+';cursor:pointer;" onclick="cycleRole('+w.id+','+pi+','+mi+')"></span>';
-        html += '<span class="player-name '+nameClass+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
+        html += '<span class="role-dot" style="background:'+rc+';cursor:pointer;" onclick="cycleRole('+w.id+','+pi+','+mi+')"></span>';
+        html += '<span class="player-name '+nc+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
       } else {
-        html += '<span class="role-dot" style="background:'+roleColor+';"></span>';
-        html += '<span class="player-name '+nameClass+'">'+escHtml(m.name)+'</span>';
+        html += '<span class="role-dot" style="background:'+rc+';"></span>';
+        html += '<span class="player-name '+nc+'">'+escHtml(m.name)+'</span>';
       }
       html += '</div></td>';
 
@@ -1220,16 +1212,16 @@ function viewWar(warId){
       if(_vwEditMode){
         html += editableCell('num-k', (m.defeat||0), w.id, pi, mi, 'defeat');
         html += editableCell('', (m.assist||0), w.id, pi, mi, 'assist');
-        html += editableCell('num-dmg', (m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0'), w.id, pi, mi, 'dmg_dealt');
-        html += editableCell('num-taken', (m.dmg_taken?(m.dmg_taken).toLocaleString():'0'), w.id, pi, mi, 'dmg_taken');
-        html += editableCell('num-heal', (m.healed?(m.healed).toLocaleString():'0'), w.id, pi, mi, 'healed');
+        html += editableCell('num-dmg', fmtNum(m.dmg_dealt), w.id, pi, mi, 'dmg_dealt');
+        html += editableCell('num-taken', fmtNum(m.dmg_taken), w.id, pi, mi, 'dmg_taken');
+        html += editableCell('num-heal', fmtNum(m.healed), w.id, pi, mi, 'healed');
         html += '<td class="action-cell"><button class="btn-icon" onclick="removeWarMember('+w.id+','+pi+','+mi+')">×</button></td>';
       } else {
         html += '<td class="num num-k">'+(m.defeat||0)+'</td>';
         html += '<td class="num">'+(m.assist||0)+'</td>';
-        html += '<td class="num num-dmg">'+(m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0')+'</td>';
-        html += '<td class="num num-taken">'+(m.dmg_taken?(m.dmg_taken).toLocaleString():'0')+'</td>';
-        html += '<td class="num num-heal">'+(m.healed?(m.healed).toLocaleString():'0')+'</td>';
+        html += '<td class="num num-dmg">'+fmtNum(m.dmg_dealt)+'</td>';
+        html += '<td class="num num-taken">'+fmtNum(m.dmg_taken)+'</td>';
+        html += '<td class="num num-heal">'+fmtNum(m.healed)+'</td>';
       }
 
       html += '</tr>';
@@ -1259,18 +1251,17 @@ function viewWar(warId){
     html += '<div class="extras-panel">';
     html += '<div class="extras-panel-header">Extra Players'+(extrasMembers.length?' ('+extrasMembers.length+')':'')+'</div>';
     extrasMembers.forEach(function(ex, ei){
-      var roleColor = ex.role==='TANK'?'var(--tank)':ex.role==='HEALER'?'var(--heal)':'var(--dps)';
       html += '<div class="extra-player-card" draggable="true" data-extra-idx="'+ei+'">'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
-          +'<span class="role-dot" style="background:'+roleColor+';"></span>'
+          +'<span class="role-dot" style="background:'+roleColor(ex.role)+';"></span>'
           +'<span style="font-weight:600;color:#fff;font-size:13px;">'+escHtml(ex.name)+'</span>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
           +'<div><span style="color:var(--text-muted);">K</span> <span style="color:#cf4444;">'+(ex.defeat||0)+'</span></div>'
           +'<div><span style="color:var(--text-muted);">A</span> <span>'+(ex.assist||0)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">'+(ex.dmg_dealt?(ex.dmg_dealt).toLocaleString():'0')+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:#a08090;">'+(ex.dmg_taken?(ex.dmg_taken).toLocaleString():'0')+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:#5eb882;">'+(ex.healed?(ex.healed).toLocaleString():'0')+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">'+fmtNum(ex.dmg_dealt)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:#a08090;">'+fmtNum(ex.dmg_taken)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:#5eb882;">'+fmtNum(ex.healed)+'</span></div>'
         +'</div>'
         +'</div>';
     });
@@ -1291,12 +1282,11 @@ function viewWar(warId){
     var medals = ['var(--accent-primary)','#c0c0c0','#cd7f32','var(--text-secondary)','var(--text-muted)'];
     list.forEach(function(m,idx){
       var val = m[statKey]||0;
-      var roleColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
       h += '<div style="display:flex;align-items:center;gap:10px;">'
         +'<span style="font-size:'+(idx===0?'18':'16')+'px;font-weight:'+(idx===0?'800':'700')+';color:'+medals[idx]+';width:24px;">'+(idx+1)+'</span>'
         +'<div style="flex:1;"><div style="font-weight:600;color:'+(idx===0?'#fff':'var(--text-primary)')+';font-size:13px;">'+escHtml(m.name)+'</div>'
         +'<div style="font-family:JetBrains Mono,monospace;font-size:12px;color:'+(statColor||'var(--text-secondary)')+';">'+val.toLocaleString()+'</div></div>'
-        +'<span class="role-dot" style="background:'+roleColor+';width:8px;height:8px;border-radius:50%;"></span>'
+        +'<span class="role-dot" style="background:'+roleColor(m.role)+';width:8px;height:8px;border-radius:50%;"></span>'
         +'</div>';
     });
     h += '</div></div>';
@@ -1386,12 +1376,12 @@ function renderPickerList(){
 
   ['TANK','HEALER','DPS'].forEach(function(role){
     if(!roles[role].length) return;
-    var roleColor = role==='TANK'?'var(--tank)':role==='HEALER'?'var(--heal)':'var(--dps)';
-    listHtml += '<div style="font-size:10px;color:'+roleColor+';font-weight:700;padding:6px 8px 3px;letter-spacing:.06em;">'+role+'</div>';
+    var rc = roleColor(role);
+    listHtml += '<div style="font-size:10px;color:'+rc+';font-weight:700;padding:6px 8px 3px;letter-spacing:.06em;">'+role+'</div>';
     roles[role].forEach(function(r){
       var used = usedNames[normalizeName(r.name)];
       listHtml += '<div data-name="'+escHtml(r.name)+'" data-role="'+r.role+'" class="picker-item" style="color:'+(used?'var(--muted)':'#ddd')+';'+(used?'opacity:.5;':'')+'">'
-        +'<span style="width:7px;height:7px;border-radius:50%;background:'+roleColor+';"></span>'
+        +'<span style="width:7px;height:7px;border-radius:50%;background:'+rc+';"></span>'
         +escHtml(r.name)
         +(used?'<span style="margin-left:auto;font-size:9px;color:var(--muted);">in war</span>':'')
         +'</div>';
@@ -1551,7 +1541,6 @@ function bindExtrasDragDrop(warId){
   // Make dimmed (missing) rows accept extra drops
   document.querySelectorAll('.vw-row[data-is-missing="1"]').forEach(function(row){
     row.addEventListener('dragover', function(e){
-      var data = e.dataTransfer.types.length ? '' : '';
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       row.classList.add('vw-drop-above');
@@ -1573,8 +1562,7 @@ function bindExtrasDragDrop(warId){
 }
 
 function replaceWithExtra(warId, extraIdx, toPi, toMi){
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w = getWar(warId);
   if(!w) return;
   var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
   if(!extrasParty || !extrasParty.members[extraIdx]) return;
@@ -1611,14 +1599,12 @@ function movePlayerToParty(warId, fromPi, mi, targetPartyName){
 }
 
 function updatePartyNameInWar(warId, pi, newName){
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w = getWar(warId);
   if(w && w.parties[pi]) w.parties[pi].name = newName.trim();
 }
 
 function updatePlayerNameInWar(warId, pi, mi, newName){
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w = getWar(warId);
   if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
 }
 
@@ -1641,8 +1627,7 @@ function cancelEditMode(){
 }
 
 function cycleRole(warId, pi, mi){
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w = getWar(warId);
   if(!w || !w.parties[pi] || !w.parties[pi].members[mi]) return;
   var roles = ['TANK','HEALER','DPS'];
   var cur = w.parties[pi].members[mi].role;
@@ -1652,16 +1637,14 @@ function cycleRole(warId, pi, mi){
 }
 
 function removeWarMember(warId, pi, mi){
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w = getWar(warId);
   if(!w) return;
   w.parties[pi].members.splice(mi, 1);
   viewWar(warId);
 }
 
 function moveExtraToParty(warId, extraIdx){
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w = getWar(warId);
   if(!w) return;
 
   // Find _Extras party
@@ -2221,9 +2204,8 @@ async function extractAllScoreboards(){
   });
 
   // Render results table
-  var confirmed = state.novaPlayers.filter(function(p){ return p.status==='confirmed'; }).length;
-  var missing   = state.novaPlayers.filter(function(p){ return p.status==='missing'; }).length;
-  var extra     = state.novaPlayers.filter(function(p){ return p.status==='extra'; }).length;
+  var confirmed=0, missing=0, extra=0;
+  state.novaPlayers.forEach(function(p){ if(p.status==='confirmed') confirmed++; else if(p.status==='missing') missing++; else if(p.status==='extra') extra++; });
 
   var summaryHtml = '<div style="margin-bottom:12px;font-size:12px;">'
     +'<span style="color:var(--heal);">✓ '+confirmed+' cu stats</span>'
@@ -2328,20 +2310,6 @@ async function extractAllScoreboards(){
   document.getElementById('score-save-btn').style.display = '';
 }
 
-// ── Name similarity for smart matching ───────────────────────────────────
-function nameSimilarity(a, b){
-  var na = normalizeName(a), nb = normalizeName(b);
-  if(na === nb) return 1;
-  if(na.startsWith(nb) || nb.startsWith(na)) return 0.9;
-  // Character overlap
-  var short = na.length < nb.length ? na : nb;
-  var long  = na.length < nb.length ? nb : na;
-  var common = 0;
-  for(var i=0; i<short.length; i++){
-    if(long.indexOf(short[i]) !== -1) common++;
-  }
-  return common / Math.max(na.length, nb.length);
-}
 
 function saveWarWithStats(){
   // Add extra players with assigned party to their respective parties
