@@ -83,11 +83,8 @@ BEGIN
   END IF;
 END $$;
 
--- 4c. Aliases — add guild_id, adjust primary key
+-- 4c. Aliases — add guild_id (PK adjusted after data migration)
 ALTER TABLE aliases ADD COLUMN IF NOT EXISTS guild_id UUID REFERENCES guilds(id) ON DELETE CASCADE;
--- Drop old PK and create new one with guild_id
-ALTER TABLE aliases DROP CONSTRAINT IF EXISTS aliases_pkey;
-ALTER TABLE aliases ADD PRIMARY KEY (guild_id, normalized_key, type);
 
 -- ═══════════════════════════════════════════════════════════
 -- 5. MIGRATE EXISTING DATA → DEFAULT GUILD "Nova"
@@ -138,3 +135,14 @@ END $$;
 ALTER TABLE wars ALTER COLUMN guild_id SET NOT NULL;
 ALTER TABLE roster_members ALTER COLUMN guild_id SET NOT NULL;
 ALTER TABLE aliases ALTER COLUMN guild_id SET NOT NULL;
+
+-- 7. Fix aliases PK (after data migration filled guild_id)
+ALTER TABLE aliases DROP CONSTRAINT IF EXISTS aliases_pkey;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'aliases_pkey_guild'
+  ) THEN
+    ALTER TABLE aliases ADD CONSTRAINT aliases_pkey_guild PRIMARY KEY (guild_id, normalized_key, type);
+  END IF;
+END $$;
