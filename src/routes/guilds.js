@@ -32,6 +32,12 @@ router.post('/', requireAuth, async (req, res) => {
   const slug = slugify(name);
   if (!slug) return res.status(400).json({ error: 'Invalid guild name' });
 
+  // Verify user exists in DB (token may reference stale ID after DB reset)
+  const { rows: userCheck } = await pool.query('SELECT id FROM users WHERE id = $1', [req.user.id]);
+  if (!userCheck.length) {
+    return res.status(401).json({ error: 'Session expired. Please log out and log in again.' });
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
