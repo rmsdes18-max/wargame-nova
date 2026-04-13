@@ -39,6 +39,7 @@ tailwind.config = {
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="css/nova.css">
 <style id="vw-dnd-styles">
 .vw-row{transition:background .15s,opacity .15s;}
@@ -366,6 +367,10 @@ function toggleLang(){
     ? '<span style="color:var(--gold);font-weight:800;">RO</span> <span style="opacity:.4;">EN</span>'
     : '<span style="opacity:.4;">RO</span> <span style="color:var(--gold);font-weight:800;">EN</span>');
 })();
+
+// ── USER ROLE ─────────────────────────────────────────────────────────────
+var _userRole = 'viewer'; // default
+var _userName = '';
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 var state = {
@@ -1048,6 +1053,9 @@ function renderWarsList(){
         +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtStat(totalHeal)+'</span></div>'
       +'</div>'
       +partyDotsHtml
+      +'<div style="position:absolute;bottom:8px;right:8px;">'
+        +'<button onclick="event.stopPropagation();shareWar('+w.id+')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px;" title="Share">&#x1F517;</button>'
+      +'</div>'
       +'</div>';
   }).join('');
 }
@@ -1127,12 +1135,18 @@ function viewWar(warId){
   html += '<div class="war-actions">';
   html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
   html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
+  html += '<button class="btn btn-secondary" onclick="shareWar('+w.id+')">&#x1F517; Share</button>';
+  html += '<button class="btn btn-secondary" onclick="exportWarImage()">&#x1F4F8; Export</button>';
   if(_vwEditMode){
     html += '<button class="btn btn-secondary" onclick="cancelEditMode()">Cancel</button>';
-    html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete</button>';
+    if(_userRole === 'admin'){
+      html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete</button>';
+    }
     html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
   } else {
-    html += '<button class="btn btn-secondary" onclick="enterEditMode('+w.id+')">✎ Edit</button>';
+    if(_userRole === 'admin' || _userRole === 'editor'){
+      html += '<button class="btn btn-secondary" onclick="enterEditMode('+w.id+')">&#x270E; Edit</button>';
+    }
   }
   html += '</div>';
   html += '</div>';
@@ -1749,6 +1763,92 @@ async function saveWarEdits(warId){
   viewWar(warId); // re-render with updated data
 }
 
+// ── ROLE-BASED UI ─────────────────────────────────────────────────────────
+function updateUIForRole(){
+  var isAdmin = _userRole === 'admin';
+  var isEditor = _userRole === 'admin' || _userRole === 'editor';
+
+  // New War button in topbar
+  var newWarBtn = document.querySelector('.topbar-actions .btn-primary');
+  if(newWarBtn) newWarBtn.style.display = isEditor ? '' : 'none';
+
+  // New War sidebar item
+  var nwTab = document.getElementById('new-war-tab');
+  if(nwTab) nwTab.style.display = isEditor ? '' : 'none';
+
+  // Update user display in sidebar footer
+  var versionEl = document.querySelector('.sidebar-version');
+  if(versionEl) versionEl.textContent = _userName ? _userName + ' (' + _userRole + ')' : 'v1.0';
+}
+
+// ── SHARE WAR ─────────────────────────────────────────────────────────────
+function shareWar(warId){
+  var url = window.location.origin + window.location.pathname + '#war-' + warId;
+  navigator.clipboard.writeText(url).then(function(){
+    // Brief visual feedback
+    var btn = event.target;
+    var orig = btn.textContent;
+    btn.textContent = '\u2713 Copied!';
+    setTimeout(function(){ btn.textContent = orig; }, 1500);
+  }).catch(function(){
+    prompt('Copy this link:', url);
+  });
+}
+
+// ── EXPORT WAR AS IMAGE ───────────────────────────────────────────────────
+function exportWarImage(){
+  var el = document.getElementById('view-war-content');
+  if(!el) return;
+  html2canvas(el, {backgroundColor:'#1e1f22', scale:2}).then(function(canvas){
+    var link = document.createElement('a');
+    link.download = 'war-export.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+
+// ── USER MANAGEMENT ───────────────────────────────────────────────────────
+function renderUsersList(){
+  if(_userRole !== 'admin') return;
+  var section = document.getElementById('users-section');
+  if(section) section.style.display = '';
+  fetch('/api/users', {headers: apiHeaders(true)})
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(users){
+      var html = '';
+      users.forEach(function(u){
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
+          +'<span style="font-weight:600;color:var(--text);font-size:13px;flex:1;">'+escHtml(u.username)+'</span>'
+          +'<span style="font-size:11px;color:var(--text-muted);font-family:JetBrains Mono,monospace;">'+u.secret+'</span>'
+          +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;'
+            +(u.role==='admin'?'background:rgba(240,192,64,.15);color:var(--accent-primary);':'background:rgba(91,143,255,.15);color:var(--tank);')
+          +'">'+u.role.toUpperCase()+'</span>'
+          +(u.role!=='admin'?'<button onclick="deleteUser('+u.id+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:14px;">\u00d7</button>':'')
+          +'</div>';
+      });
+      document.getElementById('users-list').innerHTML = html || '<div style="color:var(--muted);font-size:12px;">No users yet</div>';
+    });
+}
+
+function createUser(){
+  var name = document.getElementById('new-user-name').value.trim();
+  var role = document.getElementById('new-user-role').value;
+  if(!name) return;
+  fetch('/api/users', {method:'POST', headers:apiHeaders(true), body:JSON.stringify({username:name, role:role})})
+    .then(function(r){ return r.json(); })
+    .then(function(u){
+      if(u.error){ alert(u.error); return; }
+      document.getElementById('new-user-name').value = '';
+      renderUsersList();
+    });
+}
+
+function deleteUser(id){
+  if(!confirm('Delete this user?')) return;
+  fetch('/api/users/'+id, {method:'DELETE', headers:apiHeaders(true)})
+    .then(function(){ renderUsersList(); });
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 async function initApp(){
   try{
@@ -1763,7 +1863,48 @@ async function initApp(){
     if(results[2]) _rosterCache = results[2];
     if(results[3]) _mAliasCache = results[3];
   } catch(e){ console.warn('API init failed, using localStorage fallback',e); }
+
+  // Check if user has stored credentials
+  (function checkAuth(){
+    var stored = localStorage.getItem('nova_user');
+    if(stored){
+      try{
+        var u = JSON.parse(stored);
+        _userRole = u.role || 'viewer';
+        _userName = u.username || '';
+      }catch(e){}
+    }
+    // Also check legacy admin secret
+    var sec = localStorage.getItem('nova_admin_secret');
+    if(sec && !stored){
+      // Verify against API
+      fetch('/api/users/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:sec})})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(u){
+          if(u){
+            _userRole = u.role;
+            _userName = u.username;
+            localStorage.setItem('nova_user', JSON.stringify(u));
+          }
+          updateUIForRole();
+        }).catch(function(){ updateUIForRole(); });
+    } else {
+      updateUIForRole();
+    }
+  })();
+
   renderWarsList();
+
+  // Hash routing: #war-{id} opens that war
+  function checkHashRoute(){
+    var hash = window.location.hash;
+    if(hash.startsWith('#war-')){
+      var warId = +hash.replace('#war-','');
+      if(warId) setTimeout(function(){ viewWar(warId); }, 500);
+    }
+  }
+  checkHashRoute();
+  window.addEventListener('hashchange', checkHashRoute);
 }
 initApp();
 // Apply translations to ALL data-t elements (text) and data-tp elements (placeholders)
@@ -1900,6 +2041,7 @@ function initSettingsPage(){
   var secEl = document.getElementById('admin-secret-input');
   if(secEl) secEl.value = sec;
   renderAliasTable();
+  renderUsersList();
 }
 
 function saveAdminSecret(){
@@ -2659,6 +2801,21 @@ async function goStep3WithVision(){
         </label>
       </div>
       <div id="import-status" style="margin-top:8px;font-size:11px;display:none;padding:6px 10px;border-radius:6px;"></div>
+    </div>
+
+    <!-- User Management (admin only) -->
+    <div id="users-section" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">User Management</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Create invite codes for editors and viewers</div>
+      <div id="users-list" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="new-user-name" type="text" placeholder="Username" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;">
+        <select id="new-user-role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;">
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+        </select>
+        <button class="btn btn-primary" onclick="createUser()" style="padding:7px 16px;font-size:13px;">+ Create</button>
+      </div>
     </div>
 
     <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.15);border-radius:8px;padding:12px 14px;font-size:11px;color:#a08020;line-height:1.7;">

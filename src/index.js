@@ -11,6 +11,7 @@ app.use(express.json());
 app.use('/api/wars',    require('./routes/wars'));
 app.use('/api/roster',  require('./routes/roster'));
 app.use('/api/aliases', require('./routes/aliases'));
+app.use('/api/users',   require('./routes/users'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
