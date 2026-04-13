@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { pool }   = require('../db');
-const auth       = require('../middleware/auth');
-const router     = Router();
+const { requireAuth, guildContext, requireGuildRole } = require('../middleware/guildContext');
+const router = Router();
 
 function validateType(req, res) {
   if (!['war', 'member'].includes(req.params.type)) {
@@ -11,13 +11,13 @@ function validateType(req, res) {
   return true;
 }
 
-// GET all aliases of a type as flat object
-router.get('/:type', async (req, res) => {
+// GET all aliases of a type for current guild
+router.get('/:type', requireAuth, guildContext, async (req, res) => {
   if (!validateType(req, res)) return;
   try {
     const { rows } = await pool.query(
-      'SELECT normalized_key, actual_name FROM aliases WHERE type=$1',
-      [req.params.type]
+      'SELECT normalized_key, actual_name FROM aliases WHERE type = $1 AND guild_id = $2',
+      [req.params.type, req.guild.id]
     );
     const obj = {};
     rows.forEach(r => { obj[r.normalized_key] = r.actual_name; });
@@ -25,8 +25,8 @@ router.get('/:type', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT full replace
-router.put('/:type', auth, async (req, res) => {
+// PUT full replace (editor+)
+router.put('/:type', requireAuth, guildContext, requireGuildRole('editor'), async (req, res) => {
   if (!validateType(req, res)) return;
   const obj = req.body;
   if (typeof obj !== 'object' || Array.isArray(obj)) {
@@ -36,12 +36,12 @@ router.put('/:type', auth, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query('DELETE FROM aliases WHERE type=$1', [type]);
+    await client.query('DELETE FROM aliases WHERE type = $1 AND guild_id = $2', [type, req.guild.id]);
     const entries = Object.entries(obj);
     for (const [k, v] of entries) {
       await client.query(
-        'INSERT INTO aliases (normalized_key, actual_name, type) VALUES ($1,$2,$3)',
-        [k, v, type]
+        'INSERT INTO aliases (normalized_key, actual_name, type, guild_id) VALUES ($1,$2,$3,$4)',
+        [k, v, type, req.guild.id]
       );
     }
     await client.query('COMMIT');
@@ -52,8 +52,8 @@ router.put('/:type', auth, async (req, res) => {
   } finally { client.release(); }
 });
 
-// PATCH partial update (set + delete individual keys)
-router.patch('/:type', auth, async (req, res) => {
+// PATCH partial update (editor+)
+router.patch('/:type', requireAuth, guildContext, requireGuildRole('editor'), async (req, res) => {
   if (!validateType(req, res)) return;
   const { type } = req.params;
   const { set = {}, delete: del = [] } = req.body;
@@ -63,16 +63,16 @@ router.patch('/:type', auth, async (req, res) => {
     let updated = 0, deleted = 0;
     for (const [k, v] of Object.entries(set)) {
       await client.query(
-        `INSERT INTO aliases (normalized_key, actual_name, type) VALUES ($1,$2,$3)
-         ON CONFLICT (normalized_key, type) DO UPDATE SET actual_name = $2`,
-        [k, v, type]
+        `INSERT INTO aliases (normalized_key, actual_name, type, guild_id) VALUES ($1,$2,$3,$4)
+         ON CONFLICT (guild_id, normalized_key, type) DO UPDATE SET actual_name = $2`,
+        [k, v, type, req.guild.id]
       );
       updated++;
     }
     for (const k of del) {
       const { rowCount } = await client.query(
-        'DELETE FROM aliases WHERE normalized_key=$1 AND type=$2',
-        [k, type]
+        'DELETE FROM aliases WHERE normalized_key = $1 AND type = $2 AND guild_id = $3',
+        [k, type, req.guild.id]
       );
       deleted += rowCount;
     }
