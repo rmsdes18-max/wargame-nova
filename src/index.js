@@ -3,7 +3,27 @@ const fs      = require('fs');
 const path    = require('path');
 const { pool } = require('./db');
 
+const helmet    = require('helmet');
+const cors      = require('cors');
+const rateLimit = require('express-rate-limit');
+
 const app = express();
+
+// Security headers (CSP off — inline scripts in HTML)
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// CORS
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
+app.use(cors({
+  origin: ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : true,
+  credentials: true
+}));
+
+// Rate limiting — general: 300 req / 15 min
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false }));
+
+// Rate limiting — auth: 20 req / 15 min (anti brute-force)
+app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false }));
 
 app.use(express.json());
 
