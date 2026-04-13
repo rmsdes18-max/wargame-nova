@@ -1937,17 +1937,17 @@ function updateUIForRole(){
   if(userEl){
     if(_userName && _authToken){
       var avatarHtml = _userAvatar
-        ? '<img src="'+_userAvatar+'" style="width:26px;height:26px;border-radius:50%;">'
-        : '<div style="width:26px;height:26px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text-muted);">'+_userName.charAt(0).toUpperCase()+'</div>';
-      var roleBadge = _userRole === 'admin' ? '<span style="font-size:8px;padding:1px 4px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);font-weight:600;">ADMIN</span>'
-        : _userRole === 'editor' ? '<span style="font-size:8px;padding:1px 4px;border-radius:3px;background:rgba(91,143,255,.15);color:#5b8fff;font-weight:600;">EDITOR</span>'
+        ? '<img src="'+_userAvatar+'" style="width:34px;height:34px;border-radius:50%;">'
+        : '<div style="width:34px;height:34px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-muted);">'+_userName.charAt(0).toUpperCase()+'</div>';
+      var roleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);font-weight:600;">ADMIN</span>'
+        : _userRole === 'editor' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(91,143,255,.15);color:#5b8fff;font-weight:600;">EDITOR</span>'
         : '';
       userEl.innerHTML = avatarHtml
-        +'<div style="display:flex;flex-direction:column;gap:1px;">'
-          +'<span style="font-size:11px;font-weight:600;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(_userName)+'</span>'
+        +'<div style="display:flex;flex-direction:column;gap:2px;">'
+          +'<span style="font-size:13px;font-weight:600;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(_userName)+'</span>'
           +roleBadge
         +'</div>'
-        +'<button onclick="logout()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:2px 4px;" title="Logout">\u2715</button>';
+        +'<button onclick="logout()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:4px 6px;" title="Logout">\u2715</button>';
     } else {
       userEl.innerHTML = '';
     }
@@ -2119,11 +2119,12 @@ function enterGuild(guild){
   var guildData = _guilds.find(function(g){ return g.id === guild.id; });
   if(guildData) _userRole = guildData.role || 'viewer';
   updateUIForRole();
-  // Show sidebar + topbar
+  // Show sidebar + topbar, remove sidebar-hidden
   var sidebar = document.getElementById('sidebar');
   var topbar = document.querySelector('.topbar');
   if(sidebar) sidebar.style.display = '';
   if(topbar) topbar.style.display = '';
+  document.body.classList.remove('sidebar-hidden');
   showPage('wars');
   loadGuildData();
 }
@@ -2144,16 +2145,21 @@ async function loadGuildData(){
   renderWarsList();
 }
 
-async function handleGuildRouting(){
+function hideAppChrome(){
   var sidebar = document.getElementById('sidebar');
+  var topbar = document.querySelector('.topbar');
+  if(sidebar) sidebar.style.display = 'none';
+  if(topbar) topbar.style.display = 'none';
+  document.body.classList.add('sidebar-hidden');
+}
+
+async function handleGuildRouting(){
   await loadGuilds();
   if(!_guilds.length){
-    // No guilds — hide sidebar, show onboarding
-    if(sidebar) sidebar.style.display = 'none';
+    hideAppChrome();
     showPage('guild-onboarding');
     return;
   }
-  // Check if saved guild is still valid
   var saved = _guilds.find(function(g){ return g.id === _currentGuildId; });
   if(saved){
     enterGuild(saved);
@@ -2163,8 +2169,7 @@ async function handleGuildRouting(){
     enterGuild(_guilds[0]);
     return;
   }
-  // Multiple guilds — hide sidebar, show picker
-  if(sidebar) sidebar.style.display = 'none';
+  hideAppChrome();
   renderGuildPicker();
   showPage('guild-picker');
 }
@@ -2316,16 +2321,11 @@ async function leaveCurrentGuild(){
 }
 
 function showAppShell(loggedIn){
-  var sidebar = document.getElementById('sidebar');
-  var topbar = document.querySelector('.topbar');
   if(loggedIn){
-    // Don't show sidebar yet — enterGuild() will show it
-    if(topbar) topbar.style.display = '';
-    // After auth, route through guild check
+    // handleGuildRouting decides what to show
     handleGuildRouting();
   } else {
-    if(sidebar) sidebar.style.display = 'none';
-    if(topbar) topbar.style.display = 'none';
+    hideAppChrome();
     showPage('login');
   }
 }
