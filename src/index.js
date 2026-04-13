@@ -34,6 +34,8 @@ app.use('/api/wars',    require('./routes/wars'));
 app.use('/api/roster',  require('./routes/roster'));
 app.use('/api/aliases', require('./routes/aliases'));
 app.use('/api/users',   require('./routes/users'));
+app.use('/api/ocr',     require('./routes/ocr'));
+app.use('/api/sudo',    require('./routes/sudo'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -51,6 +53,11 @@ app.get(['/members', '/membrii'], (req, res) => {
 // Admin login page
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(publicDir, 'admin.html'));
+});
+
+// Sudo panel (super admin only — auth check is in API, page is just static)
+app.get('/sudo', (req, res) => {
+  res.sendFile(path.join(publicDir, 'sudo.html'));
 });
 
 // Catch-all → index.html

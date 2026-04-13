@@ -119,9 +119,7 @@ input[type=number]{-moz-appearance:textfield;}
       </a>
     </nav>
     <div class="sidebar-footer">
-      <button id="settings-btn" class="sidebar-footer-btn" onclick="promptPin();closeSidebar()" style="display:none">
-        <span class="sidebar-item-icon">⚙</span><span data-t="settings">Settings</span>
-      </button>
+      <!-- Settings button removed — Guild Settings in nav -->
       <div class="sidebar-version">v1.0</div>
     </div>
   </aside>
@@ -651,7 +649,7 @@ function matchPartiesAgainstRoster(parties){
 // ── SETTINGS ACCESS (admin-only, no PIN) ──────────────────────────────────
 function promptPin(){
   if(_userRole !== 'admin'){ return; }
-  showPage('settings');
+  showPage('guild-settings');
 }
 
 function showPage(id){
@@ -2437,23 +2435,7 @@ function importData(input){
   reader.readAsText(file);
 }
 
-function saveApiKey(){
-  var key = document.getElementById('api-key-input').value.trim();
-  if(!key.startsWith('sk-ant-')){ showApiStatus('Key invalid — trebuie să înceapă cu sk-ant-','#e84040'); return; }
-  localStorage.setItem('nova_api_key', key);
-  showApiStatus('✓ API key salvat','var(--heal)');
-}
-function loadApiKey(){ return localStorage.getItem('nova_api_key')||''; }
-function checkApiKey(){
-  var k = document.getElementById('api-key-input').value.trim();
-  if(k) showApiStatus('','');
-}
-function showApiStatus(msg,color){
-  var el=document.getElementById('api-key-status');
-  el.style.display=msg?'block':'none';
-  el.style.color=color;
-  el.textContent=msg;
-}
+// API key functions removed — key is now server-side env var only
 // ── ALIAS JUCĂTORI ────────────────────────────────────────────────────────
 function renderAliasTable(){
   var aliases = loadAliases();
@@ -2516,61 +2498,8 @@ function updateAliasValue(key, val){
 }
 
 function initSettingsPage(){
-  var k = loadApiKey();
-  if(k){
-    document.getElementById('api-key-input').value = k;
-    document.getElementById('api-key-current').textContent = 'Key saved: '+k.substring(0,20)+'...'+k.substring(k.length-6);
-    showApiStatus('✓ API key configured','var(--heal)');
-  } else {
-    document.getElementById('api-key-current').textContent = 'No key saved';
-  }
-  renderUsersList();
-}
-
-async function testApiKey(){
-  var key = loadApiKey();
-  if(!key){ 
-    document.getElementById('api-test-result').style.display='block';
-    document.getElementById('api-test-result').textContent='Salvează un key mai întâi';
-    document.getElementById('api-test-result').style.color='#e84040';
-    return;
-  }
-  var btn = document.getElementById('test-api-btn');
-  btn.textContent='Se testează...'; btn.disabled=true;
-  var res = document.getElementById('api-test-result');
-  res.style.display='block';
-  res.textContent='Trimit request de test...';
-  res.style.color='var(--gold)';
-  try{
-    var resp = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key': key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:10,
-        messages:[{role:'user',content:'Say OK'}]
-      })
-    });
-    var data = await resp.json();
-    if(resp.ok){
-      res.textContent='✓ API key funcționează! Răspuns: '+data.content[0].text;
-      res.style.color='var(--heal)';
-      res.style.background='rgba(62,207,110,.08)';
-    } else {
-      res.textContent='✗ Eroare '+resp.status+': '+JSON.stringify(data.error);
-      res.style.color='#e84040';
-      res.style.background='rgba(232,64,64,.08)';
-    }
-  } catch(e){
-    res.textContent='✗ Network error: '+e.message;
-    res.style.color='#e84040';
-  }
-  btn.textContent='🔍 Testează API key'; btn.disabled=false;
+  // Settings page removed — redirect to guild settings
+  showPage('guild-settings');
 }
 
 // ── IMAGE COMPRESSION ─────────────────────────────────────────────────────
@@ -2591,35 +2520,21 @@ function compressImage(dataUrl, maxWidth, quality){
   });
 }
 
-// ── CLAUDE API CALL ────────────────────────────────────────────────────────
+// ── CLAUDE API CALL (via server proxy) ─────────────────────────────────────
 async function callClaude(prompt, imageDataUrl){
-  var key = loadApiKey();
-  if(!key) throw new Error('API key lipsă — mergi la Settings');
   var compressed = await compressImage(imageDataUrl);
   var b64 = compressed.split(',')[1];
-  var mime = 'image/jpeg';
-  var body = {
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
-    messages:[{
-      role:'user',
-      content:[
-        {type:'image', source:{type:'base64', media_type:mime, data:b64}},
-        {type:'text', text:prompt}
-      ]
-    }]
-  };
-  var resp = await fetch('https://api.anthropic.com/v1/messages',{
+  var resp = await fetch('/api/ocr',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body: JSON.stringify(body)
+    headers: apiHeaders(),
+    body: JSON.stringify({ prompt: prompt, image_base64: b64, image_mime: 'image/jpeg' })
   });
   if(!resp.ok){
-    var err = await resp.text();
-    throw new Error('API error '+resp.status+': '+err);
+    var err = await resp.json().catch(function(){ return {error:'OCR failed'}; });
+    throw new Error(err.error || 'OCR error '+resp.status);
   }
   var data = await resp.json();
-  return data.content[0].text;
+  return data.text;
 }
 
 // ── STEP 1: VISION PARTY EXTRACT ──────────────────────────────────────────
@@ -3011,7 +2926,7 @@ async function handlePartyUploadWithVision(e){
     document.getElementById('step1-btns').querySelector('.btn-primary').disabled=true;
     document.getElementById('step1-btns').querySelector('.btn-primary').textContent='Se procesează...';
 
-    var hasKey = !!loadApiKey();
+    var hasKey = true; // OCR key is server-side
     if(hasKey){
       document.getElementById('party-manual-editor').innerHTML =
         '<div class="processing"><span class="spin">◌</span> Claude analizează culorile și extrage party-urile...</div>';
@@ -3089,7 +3004,7 @@ async function goStep3WithVision(){
   });
   state.novaPlayers = allMembers;
 
-  var hasKey = !!loadApiKey();
+  var hasKey = true; // OCR key is server-side
   if(!hasKey){
     var s3 = document.getElementById('step3-status');
     s3.innerHTML = '⚠ Fără API key — <b>introdu manual statisticile în tabelul de mai jos</b>. '
@@ -3285,45 +3200,7 @@ async function goStep3WithVision(){
   </div>
 </div>
 
-<div class="page" id="page-settings">
-  <div class="section-title" data-t="settingsTitle">Settings</div>
-  <div class="section-sub" data-t="settingsSub">API Configuration</div>
-  <div style="max-width:500px;">
-
-    <!-- Anthropic API Key -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-t="apiKey">Anthropic API Key</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" data-t="apiKeyDesc">Pentru extragere automată party-uri și scoreboard din poze.</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="flex:1;" oninput="checkApiKey()">
-        <button class="btn btn-primary" onclick="saveApiKey()" style="padding:8px 16px;font-size:13px;">Salvează</button>
-      </div>
-      <div id="api-key-status" style="margin-top:8px;font-size:11px;display:none;"></div>
-      <div id="api-key-current" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
-      <button onclick="testApiKey()" style="margin-top:10px;background:transparent;border:1px solid var(--border2);color:var(--text);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;" id="test-api-btn">🔍 Testează API key</button>
-      <div id="api-test-result" style="margin-top:8px;font-size:11px;display:none;padding:8px 10px;border-radius:6px;"></div>
-    </div>
-
-
-    <!-- User Management (admin only) -->
-    <div id="users-section" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">User Management</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Manage guild members and their access levels</div>
-      <div id="users-list" style="margin-bottom:16px;"></div>
-
-      <!-- Role permissions info -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:11px;color:var(--text-muted);line-height:1.8;margin-bottom:16px;">
-        <div style="font-weight:600;color:var(--text);margin-bottom:4px;">Role Permissions</div>
-        <div><span style="color:var(--gold);font-weight:600;">Admin</span> — Full access, manage users, settings</div>
-        <div><span style="color:#5b8fff;font-weight:600;">Editor</span> — Create &amp; edit wars, manage parties</div>
-        <div><span style="color:var(--text-muted);font-weight:600;">Viewer</span> — View wars and stats only</div>
-      </div>
-    </div>
-    <div class="btn-row" style="margin-top:16px;">
-      <button class="btn btn-secondary" onclick="showPage('wars')">← Înapoi</button>
-    </div>
-  </div>
-</div>
+<!-- page-settings removed — guild settings is the main settings page now -->
 
     </div><!-- /.page-container -->
   </main>

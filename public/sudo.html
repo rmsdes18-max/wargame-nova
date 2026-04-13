@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wartl — Sudo</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#1e1f22;color:#dcddde;font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;}
+.container{max-width:1100px;margin:0 auto;padding:24px;}
+h1{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#f0c040;margin-bottom:4px;}
+.sub{font-size:13px;color:#8b8d94;margin-bottom:24px;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:#2b2d31;border:1px solid #3f4147;border-radius:10px;padding:16px 20px;}
+.stat-card .label{font-size:11px;color:#8b8d94;text-transform:uppercase;letter-spacing:.05em;}
+.stat-card .value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:#fff;margin-top:4px;}
+.section{background:#2b2d31;border:1px solid #3f4147;border-radius:10px;padding:20px;margin-bottom:16px;}
+.section-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;}
+.health-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;}
+.health-ok{color:#3ecf6e;}
+.health-err{color:#e84040;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:10px;text-transform:uppercase;color:#8b8d94;padding:8px 10px;border-bottom:1px solid #3f4147;letter-spacing:.05em;}
+td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:#dcddde;}
+.badge{font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;cursor:pointer;border:none;}
+.badge-free{background:rgba(255,255,255,.06);color:#8b8d94;}
+.badge-pro{background:rgba(240,192,64,.15);color:#f0c040;}
+.btn-del{background:transparent;border:1px solid rgba(232,64,64,.3);color:#e84040;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;}
+.btn-del:hover{background:rgba(232,64,64,.1);}
+.loading{text-align:center;padding:40px;color:#8b8d94;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Sudo Panel</h1>
+  <div class="sub">Platform administration — wartl-app.com</div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats">
+    <div class="stat-card"><div class="label">Total Guilds</div><div class="value" id="s-guilds">—</div></div>
+    <div class="stat-card"><div class="label">Total Users</div><div class="value" id="s-users">—</div></div>
+    <div class="stat-card"><div class="label">Total Wars</div><div class="value" id="s-wars">—</div></div>
+    <div class="stat-card"><div class="label">Wars This Month</div><div class="value" id="s-wars-month">—</div></div>
+  </div>
+
+  <!-- Health -->
+  <div class="section">
+    <div class="section-title">System Health</div>
+    <div id="health"><div class="loading">Loading...</div></div>
+  </div>
+
+  <!-- Guilds -->
+  <div class="section">
+    <div class="section-title">All Guilds</div>
+    <div id="guilds-table"><div class="loading">Loading...</div></div>
+  </div>
+
+  <!-- Users -->
+  <div class="section">
+    <div class="section-title">All Users</div>
+    <div id="users-table"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+var token = localStorage.getItem('nova_token') || '';
+function hdrs(){ return {'Content-Type':'application/json','Authorization':'Bearer '+token}; }
+
+async function load(){
+  try{
+    var [stats, health, guilds, users] = await Promise.all([
+      fetch('/api/sudo/stats',{headers:hdrs()}).then(r=>r.ok?r.json():null),
+      fetch('/api/sudo/health',{headers:hdrs()}).then(r=>r.ok?r.json():null),
+      fetch('/api/sudo/guilds',{headers:hdrs()}).then(r=>r.ok?r.json():null),
+      fetch('/api/sudo/users',{headers:hdrs()}).then(r=>r.ok?r.json():null),
+    ]);
+
+    if(!stats && !health){
+      window.location.href='/';
+      return;
+    }
+
+    // Stats
+    if(stats){
+      document.getElementById('s-guilds').textContent=stats.totalGuilds;
+      document.getElementById('s-users').textContent=stats.totalUsers;
+      document.getElementById('s-wars').textContent=stats.totalWars;
+      document.getElementById('s-wars-month').textContent=stats.warsThisMonth;
+    }
+
+    // Health
+    if(health){
+      document.getElementById('health').innerHTML=
+        '<div class="health-row"><span class="'+(health.database==='ok'?'health-ok':'health-err')+'">'+(health.database==='ok'?'&#10003;':'&#10007;')+'</span> Database: '+health.database+'</div>'
+        +'<div class="health-row"><span class="'+(health.anthropic_key==='configured'?'health-ok':'health-err')+'">'+(health.anthropic_key==='configured'?'&#10003;':'&#10007;')+'</span> Anthropic API: '+health.anthropic_key+'</div>';
+    }
+
+    // Guilds table
+    if(guilds && guilds.length){
+      var html='<table><tr><th>Name</th><th>Slug</th><th>Tier</th><th>Members</th><th>Wars</th><th>Created</th><th>Owner</th><th>Actions</th></tr>';
+      guilds.forEach(function(g){
+        var d=new Date(g.created_at);
+        var date=d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+        var tierClass=g.tier==='pro'?'badge-pro':'badge-free';
+        var otherTier=g.tier==='pro'?'free':'pro';
+        html+='<tr>'
+          +'<td style="font-weight:600;color:#fff;">'+esc(g.name)+'</td>'
+          +'<td style="font-family:JetBrains Mono,monospace;font-size:11px;color:#8b8d94;">'+esc(g.slug)+'</td>'
+          +'<td><button class="badge '+tierClass+'" onclick="toggleTier(\''+g.id+'\',\''+otherTier+'\')">'+g.tier.toUpperCase()+'</button></td>'
+          +'<td>'+g.member_count+'</td>'
+          +'<td>'+g.wars_count+'</td>'
+          +'<td style="font-size:11px;color:#8b8d94;">'+date+'</td>'
+          +'<td>'+esc(g.owner_username||'—')+'</td>'
+          +'<td><button class="btn-del" onclick="delGuild(\''+g.id+'\',\''+esc(g.name)+'\')">Delete</button></td>'
+          +'</tr>';
+      });
+      html+='</table>';
+      document.getElementById('guilds-table').innerHTML=html;
+    } else {
+      document.getElementById('guilds-table').innerHTML='<div style="color:#8b8d94;font-size:13px;">No guilds yet</div>';
+    }
+
+    // Users table
+    if(users && users.length){
+      var html='<table><tr><th>Username</th><th>Discord</th><th>Guilds</th><th>Joined</th><th>Actions</th></tr>';
+      users.forEach(function(u){
+        var d=new Date(u.created_at);
+        var date=d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+        html+='<tr>'
+          +'<td style="font-weight:600;color:#fff;">'+esc(u.username)+'</td>'
+          +'<td style="font-family:JetBrains Mono,monospace;font-size:11px;color:#8b8d94;">'+(u.discord_id||'—')+'</td>'
+          +'<td>'+u.guilds_count+'</td>'
+          +'<td style="font-size:11px;color:#8b8d94;">'+date+'</td>'
+          +'<td><button class="btn-del" onclick="delUser('+u.id+',\''+esc(u.username)+'\')">Delete</button></td>'
+          +'</tr>';
+      });
+      html+='</table>';
+      document.getElementById('users-table').innerHTML=html;
+    } else {
+      document.getElementById('users-table').innerHTML='<div style="color:#8b8d94;font-size:13px;">No users yet</div>';
+    }
+  }catch(e){
+    window.location.href='/';
+  }
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+
+async function toggleTier(guildId,newTier){
+  await fetch('/api/sudo/guilds/'+guildId+'/tier',{method:'PATCH',headers:hdrs(),body:JSON.stringify({tier:newTier})});
+  load();
+}
+
+async function delGuild(id,name){
+  if(!confirm('Delete guild "'+name+'" and ALL its data?')) return;
+  await fetch('/api/sudo/guilds/'+id,{method:'DELETE',headers:hdrs()});
+  load();
+}
+
+async function delUser(id,name){
+  if(!confirm('Delete user "'+name+'"? This removes them from all guilds.')) return;
+  await fetch('/api/sudo/users/'+id,{method:'DELETE',headers:hdrs()});
+  load();
+}
+
+load();
+</script>
+</body>
+</html>
