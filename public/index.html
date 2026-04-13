@@ -99,8 +99,8 @@ input[type=number]{-moz-appearance:textfield;}
   <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar" id="sidebar" style="display:none">
     <a class="sidebar-logo" href="#" onclick="showPage('wars');closeSidebar();return false;">
-      <span class="sidebar-logo-mark">WARTL</span>
-      <span class="sidebar-logo-sub" id="sidebar-guild-name"></span>
+      <span class="sidebar-logo-mark" id="sidebar-guild-name"></span>
+      <span class="sidebar-logo-sub">Wartl App</span>
     </a>
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">Main</div>
@@ -112,10 +112,7 @@ input[type=number]{-moz-appearance:textfield;}
         <span class="sidebar-item-icon">+</span>
         <span class="sidebar-item-label">New War</span>
       </a>
-      <a class="sidebar-item guild-nav" href="members.html" data-t="members" style="display:none">
-        <span class="sidebar-item-icon">◆</span>
-        <span class="sidebar-item-label">Members</span>
-      </a>
+      <!-- Members page disabled until guild-scoped -->
       <a class="sidebar-item" id="guild-settings-tab" onclick="showPage('guild-settings');closeSidebar()" style="display:none">
         <span class="sidebar-item-icon">&#x2699;</span>
         <span class="sidebar-item-label">Guild Settings</span>
@@ -2150,9 +2147,11 @@ async function loadGuildData(){
 }
 
 async function handleGuildRouting(){
+  var sidebar = document.getElementById('sidebar');
   await loadGuilds();
   if(!_guilds.length){
-    // No guilds — show onboarding
+    // No guilds — hide sidebar, show onboarding
+    if(sidebar) sidebar.style.display = 'none';
     showPage('guild-onboarding');
     return;
   }
@@ -2166,7 +2165,8 @@ async function handleGuildRouting(){
     enterGuild(_guilds[0]);
     return;
   }
-  // Multiple guilds — show picker
+  // Multiple guilds — hide sidebar, show picker
+  if(sidebar) sidebar.style.display = 'none';
   renderGuildPicker();
   showPage('guild-picker');
 }
@@ -2195,7 +2195,7 @@ async function initGuildSettings(){
     var r = await fetch('/api/guilds/'+_currentGuildId,{headers:apiHeaders()});
     if(!r.ok) return;
     var data = await r.json();
-    document.getElementById('gs-guild-name').textContent = data.name;
+    document.getElementById('gs-guild-name').value = data.name;
     document.getElementById('gs-invite-code').textContent = data.invite_code;
     var tierEl = document.getElementById('gs-tier');
     tierEl.textContent = data.tier.toUpperCase();
@@ -2250,6 +2250,21 @@ async function initGuildSettings(){
     });
     document.getElementById('gs-members-list').innerHTML = html || '<div style="color:var(--text-muted);font-size:12px;">No members</div>';
   }catch(e){ console.error('Guild settings error',e); }
+}
+
+async function renameGuild(){
+  var name = document.getElementById('gs-guild-name').value.trim();
+  if(!name) return;
+  try{
+    var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({name:name})});
+    if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); return; }
+    // Update sidebar
+    var nameEl = document.getElementById('sidebar-guild-name');
+    if(nameEl) nameEl.textContent = name;
+    // Update guilds cache
+    var g = _guilds.find(function(g){ return g.id === _currentGuildId; });
+    if(g) g.name = name;
+  }catch(e){ alert(e.message); }
 }
 
 async function changeGuildMemberRole(userId, newRole){
@@ -3219,7 +3234,8 @@ async function goStep3WithVision(){
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">Guild Info</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Name</span>
-        <span id="gs-guild-name" style="font-weight:600;color:#fff;font-size:14px;"></span>
+        <input id="gs-guild-name" type="text" style="flex:1;font-weight:600;color:#fff;font-size:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;outline:none;">
+        <button onclick="renameGuild()" style="background:var(--gold);border:none;color:#000;font-size:11px;font-weight:600;padding:6px 12px;border-radius:4px;cursor:pointer;">Save</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Invite Code</span>
