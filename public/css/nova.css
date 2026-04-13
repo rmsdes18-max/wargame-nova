@@ -439,8 +439,7 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
    ══════════════════════════════════════════════════════════════════════ */
 
 /* ── PAGES (SPA) ── */
-.page{display:none;padding:28px 24px;max-width:1200px;margin:0 auto;}
-#page-view-war{max-width:none;padding:20px 24px;}
+.page{display:none;padding:20px 24px;max-width:none;}
 .page.active{display:block;}
 
 /* ── STEP WIZARD ── */
