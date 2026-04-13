@@ -1132,8 +1132,9 @@ function viewWar(warId){
   html += '<div class="war-actions">';
   html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
   html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
+  html += '<button class="btn btn-secondary" onclick="syncRolesFromRoster('+w.id+')">Sync Roles</button>';
   html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete War</button>';
-  html += '<button class="btn btn-secondary" onclick="saveWarEdits('+w.id+')">Save</button>';
+  html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
   html += '</div>';
   html += '</div>';
 
@@ -1587,6 +1588,41 @@ function updatePlayerNameInWar(warId, pi, mi, newName){
   var wars = loadWars();
   var w = wars.find(function(x){ return x.id===warId; });
   if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
+}
+
+function syncRolesFromRoster(warId){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(!w) return;
+  var roster = loadMembriRoster();
+  var aliases = loadMembriAliases();
+  if(!roster.length){ alert('Roster gol — mergi la Members și adaugă membrii.'); return; }
+  var synced = 0;
+  w.parties.forEach(function(p){
+    p.members.forEach(function(m){
+      var found = null;
+      // 1. Direct name match
+      for(var i=0;i<roster.length;i++){
+        if(namesMatch(roster[i].name, m.name)){ found=roster[i]; break; }
+      }
+      // 2. Alias lookup
+      if(!found){
+        var keys = Object.keys(aliases);
+        for(var j=0;j<keys.length;j++){
+          var av = (aliases[keys[j]]||'').trim();
+          if(av && namesMatch(m.name, av)){
+            var r2 = roster.find(function(r){ return normalizeName(r.name)===keys[j]; });
+            if(r2){ found=r2; break; }
+          }
+        }
+      }
+      if(found && found.role && found.role !== m.role){
+        m.role = found.role;
+        synced++;
+      }
+    });
+  });
+  viewWar(warId);
 }
 
 function removeWarMember(warId, pi, mi){
