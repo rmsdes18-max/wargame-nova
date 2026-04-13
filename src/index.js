@@ -27,6 +27,11 @@ app.get(['/members', '/membrii'], (req, res) => {
   res.sendFile(path.join(publicDir, 'members.html'));
 });
 
+// Admin login page
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(publicDir, 'admin.html'));
+});
+
 // Catch-all → index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));

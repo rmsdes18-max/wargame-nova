@@ -103,6 +103,23 @@ router.get('/discord/callback', async (req, res) => {
   }
 });
 
+// POST /api/auth/admin — admin login with username + password
+router.post('/admin', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+
+  // Hardcoded admin check via env vars
+  const adminUser = process.env.ADMIN_USER || 'admin';
+  const adminPass = process.env.ADMIN_PASS || process.env.ADMIN_SECRET;
+
+  if (username === adminUser && password === adminPass) {
+    const token = createToken({ id: 0, username: adminUser, role: 'admin', avatar: null, discord_id: null });
+    return res.json({ token, username: adminUser, role: 'admin' });
+  }
+
+  return res.status(401).json({ error: 'Invalid credentials' });
+});
+
 // GET /api/auth/me — verify token, return user
 router.get('/me', (req, res) => {
   // Check cookie or Authorization header
