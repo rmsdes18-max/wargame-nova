@@ -112,17 +112,15 @@ input[type=number]{-moz-appearance:textfield;}
         <span class="sidebar-item-icon">+</span>
         <span class="sidebar-item-label">New War</span>
       </a>
-      <a class="sidebar-item nav-tab" onclick="showPage('guild-settings');closeSidebar()" data-t="members">
+      <a class="sidebar-item nav-tab" onclick="showPage('members');closeSidebar()" data-t="members">
         <span class="sidebar-item-icon">◆</span>
         <span class="sidebar-item-label">Members</span>
       </a>
-      <a class="sidebar-item" id="guild-settings-tab" onclick="showPage('guild-settings');closeSidebar()" style="display:none">
-        <span class="sidebar-item-icon">&#x2699;</span>
-        <span class="sidebar-item-label">Guild Settings</span>
-      </a>
     </nav>
     <div class="sidebar-footer">
-      <!-- Settings button removed — Guild Settings in nav -->
+      <a class="sidebar-footer-btn" id="guild-settings-tab" onclick="showPage('guild-settings');closeSidebar()" style="display:none;color:var(--text-muted);font-size:12px;">
+        <span class="sidebar-item-icon" style="font-size:13px;">&#x2699;</span><span>Guild Settings</span>
+      </a>
       <div class="sidebar-version">v1.0</div>
     </div>
   </aside>
@@ -668,6 +666,7 @@ function showPage(id){
   if(id==='wars'){ renderWarsList(); document.querySelectorAll('.nav-tab')[0].classList.add('active'); }
   if(id==='settings'){ initSettingsPage(); }
   if(id==='new-war'){ document.getElementById('new-war-tab').classList.add('active'); }
+  if(id==='members'){ renderMembersPage(); }
   if(id==='guild-settings'){ initGuildSettings(); }
   if(id==='guild-picker'){ renderGuildPicker(); }
   // Reveal app shell (hidden until first showPage to prevent flash)
@@ -2276,6 +2275,48 @@ async function initGuildSettings(){
   }catch(e){ console.error('Guild settings error',e); }
 }
 
+// ── MEMBERS PAGE ──
+async function renderMembersPage(){
+  var container = document.getElementById('members-list-container');
+  var countEl = document.getElementById('members-count');
+  if(!container) return;
+  container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Loading...</div>';
+  try{
+    var r = await fetch('/api/roster',{headers:apiHeaders()});
+    if(!r.ok){ container.innerHTML='<div style="color:#e84040;">Failed to load roster</div>'; return; }
+    var members = await r.json();
+    if(!members.length){
+      // Empty state
+      countEl.textContent = '';
+      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
+        +'<div style="font-size:48px;opacity:.2;margin-bottom:16px;">◆</div>'
+        +'<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">No members yet</div>'
+        +'<div style="font-size:13px;color:var(--text-muted);max-width:300px;margin-bottom:20px;">Add your guild members to track war participation and stats.</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">'
+          +'<button onclick="showPage(\'new-war\')" class="btn btn-primary" style="padding:8px 18px;font-size:13px;">Sync from Screenshot</button>'
+        +'</div>'
+        +'</div>';
+      return;
+    }
+    countEl.textContent = members.filter(function(m){return m.active!==false;}).length + ' active';
+    var roleColors = {TANK:'#5b8fff',HEALER:'#3ecf6e',DPS:'#e84040'};
+    var html = '';
+    members.forEach(function(m){
+      if(m.active === false) return;
+      var color = roleColors[m.role] || 'var(--text-muted)';
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+        +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+color+';flex-shrink:0;">'+m.name.charAt(0).toUpperCase()+'</div>'
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(m.name)+'</div>'
+          +(m.guildRole?'<div style="font-size:10px;color:var(--text-muted);">'+escHtml(m.guildRole)+'</div>':'')
+        +'</div>'
+        +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+m.role+'</span>'
+        +'</div>';
+    });
+    container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+html+'</div>';
+  }catch(e){ container.innerHTML='<div style="color:#e84040;">Error: '+e.message+'</div>'; }
+}
+
 async function updateDefaultInviteRole(role){
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({settings:{default_invite_role:role}})});
@@ -3168,6 +3209,13 @@ async function goStep3WithVision(){
 </script>
 
 <!-- SETTINGS PAGE -->
+<!-- ═══════════════ MEMBERS PAGE ═══════════════ -->
+<div class="page" id="page-members">
+  <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px;">Guild Members</h2>
+  <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-bottom:20px;"></div>
+  <div id="members-list-container"></div>
+</div>
+
 <!-- ═══════════════ GUILD SETTINGS ═══════════════ -->
 <div class="page" id="page-guild-settings">
   <div class="section-title">Guild Settings</div>
