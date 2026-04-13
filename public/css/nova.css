@@ -347,6 +347,10 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
 .editable-val:hover{background:rgba(255,255,255,.06);}
 [contenteditable]:focus{background:rgba(240,192,64,.06);border-radius:3px;}
 
+/* Role dot editable in edit mode */
+.role-dot[onclick]{cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.role-dot[onclick]:hover{transform:scale(1.4);box-shadow:0 0 6px rgba(255,255,255,.2);}
+
 /* Extras panel */
 .extras-panel{background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;align-self:start;position:sticky;top:60px;}
 .extras-panel-header{padding:12px 16px;font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-subtle);}

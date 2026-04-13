@@ -1072,6 +1072,8 @@ async function confirmDeleteWar(warId){
 }
 
 var vwOpen = true;
+var _vwEditMode = false;
+var _vwWarId = null;
 function toggleVwSidebar(){}
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1107,6 +1109,7 @@ function makeEditable(span){
 }
 
 function viewWar(warId){
+  _vwWarId = warId;
   var wars = loadWars();
   var w = wars.find(function(x){ return x.id===warId; });
   if(!w) return;
@@ -1132,9 +1135,13 @@ function viewWar(warId){
   html += '<div class="war-actions">';
   html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
   html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
-  html += '<button class="btn btn-secondary" onclick="syncRolesFromRoster('+w.id+')">Sync Roles</button>';
-  html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete War</button>';
-  html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
+  if(_vwEditMode){
+    html += '<button class="btn btn-secondary" onclick="cancelEditMode()">Cancel</button>';
+    html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete</button>';
+    html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
+  } else {
+    html += '<button class="btn btn-secondary" onclick="enterEditMode('+w.id+')">✎ Edit</button>';
+  }
   html += '</div>';
   html += '</div>';
 
@@ -1172,7 +1179,11 @@ function viewWar(warId){
 
     html += '<div class="party-card">';
     html += '<div class="party-header">';
-    html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" data-field="partyname" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
+    if(_vwEditMode){
+      html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
+    } else {
+      html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
+    }
     html += '<div class="party-meta">'+p.members.length+' members</div>';
     html += '</div>';
 
@@ -1182,7 +1193,7 @@ function viewWar(warId){
       +'<th style="width:28%;">Player</th>'
       +'<th class="num">K</th><th class="num">A</th>'
       +'<th class="num">DMG</th><th class="num">TAKEN</th><th class="num">HEAL</th>'
-      +'<th class="action-cell"></th>'
+      +(_vwEditMode?'<th class="action-cell"></th>':'')
       +'</tr></thead>';
     html += '<tbody data-pi="'+pi+'" class="vw-party-body">';
 
@@ -1190,19 +1201,38 @@ function viewWar(warId){
       var roleColor = m.role==='TANK'?'var(--tank)':m.role==='HEALER'?'var(--heal)':'var(--dps)';
       var nameClass = m.role==='TANK'?'name-tank':m.role==='HEALER'?'name-heal':'name-dps';
       var isDimmed = !(m.defeat||m.assist||m.dmg_dealt);
-      html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="true" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">'
-        +'<td onclick="openMemberPicker('+w.id+','+pi+','+mi+')" style="cursor:pointer;">'
-          +'<div class="player-cell">'
-          +'<span class="role-dot" style="background:'+roleColor+';"></span>'
-          +'<span class="player-name '+nameClass+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>'
-          +'</div></td>'
-        +editableCell('num-k', (m.defeat||0), w.id, pi, mi, 'defeat')
-        +editableCell('', (m.assist||0), w.id, pi, mi, 'assist')
-        +editableCell('num-dmg', (m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0'), w.id, pi, mi, 'dmg_dealt')
-        +editableCell('num-taken', (m.dmg_taken?(m.dmg_taken).toLocaleString():'0'), w.id, pi, mi, 'dmg_taken')
-        +editableCell('num-heal', (m.healed?(m.healed).toLocaleString():'0'), w.id, pi, mi, 'healed')
-        +'<td class="action-cell"><button class="btn-icon" onclick="removeWarMember('+w.id+','+pi+','+mi+')">×</button></td>'
-        +'</tr>';
+
+      html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="'+(_vwEditMode?'true':'false')+'" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">';
+
+      // Player name cell
+      html += '<td>';
+      html += '<div class="player-cell">';
+      if(_vwEditMode){
+        html += '<span class="role-dot" style="background:'+roleColor+';cursor:pointer;" onclick="cycleRole('+w.id+','+pi+','+mi+')"></span>';
+        html += '<span class="player-name '+nameClass+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
+      } else {
+        html += '<span class="role-dot" style="background:'+roleColor+';"></span>';
+        html += '<span class="player-name '+nameClass+'">'+escHtml(m.name)+'</span>';
+      }
+      html += '</div></td>';
+
+      // Stat cells
+      if(_vwEditMode){
+        html += editableCell('num-k', (m.defeat||0), w.id, pi, mi, 'defeat');
+        html += editableCell('', (m.assist||0), w.id, pi, mi, 'assist');
+        html += editableCell('num-dmg', (m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0'), w.id, pi, mi, 'dmg_dealt');
+        html += editableCell('num-taken', (m.dmg_taken?(m.dmg_taken).toLocaleString():'0'), w.id, pi, mi, 'dmg_taken');
+        html += editableCell('num-heal', (m.healed?(m.healed).toLocaleString():'0'), w.id, pi, mi, 'healed');
+        html += '<td class="action-cell"><button class="btn-icon" onclick="removeWarMember('+w.id+','+pi+','+mi+')">×</button></td>';
+      } else {
+        html += '<td class="num num-k">'+(m.defeat||0)+'</td>';
+        html += '<td class="num">'+(m.assist||0)+'</td>';
+        html += '<td class="num num-dmg">'+(m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0')+'</td>';
+        html += '<td class="num num-taken">'+(m.dmg_taken?(m.dmg_taken).toLocaleString():'0')+'</td>';
+        html += '<td class="num num-heal">'+(m.healed?(m.healed).toLocaleString():'0')+'</td>';
+      }
+
+      html += '</tr>';
     });
 
     // Total row
@@ -1213,7 +1243,7 @@ function viewWar(warId){
       +'<td class="num num-dmg">'+pDmg.toLocaleString()+'</td>'
       +'<td class="num num-taken">'+pTaken.toLocaleString()+'</td>'
       +'<td class="num num-heal">'+pHealed.toLocaleString()+'</td>'
-      +'<td></td></tr></tbody>';
+      +(_vwEditMode?'<td></td>':'')+'</tr></tbody>';
 
     html += '</table>';
     html += '</div>';
@@ -1295,8 +1325,10 @@ function viewWar(warId){
     var item = e.target.closest('[data-name]');
     if(item) pickMember(item.getAttribute('data-name'), item.getAttribute('data-role'));
   });
-  bindWarDragDrop(warId);
-  bindExtrasDragDrop(warId);
+  if(_vwEditMode){
+    bindWarDragDrop(warId);
+    bindExtrasDragDrop(warId);
+  }
   showPage('view-war');
 }
 
@@ -1590,38 +1622,32 @@ function updatePlayerNameInWar(warId, pi, mi, newName){
   if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
 }
 
-function syncRolesFromRoster(warId){
+function enterEditMode(warId){
+  _vwEditMode = true;
+  _vwWarId = warId;
+  viewWar(warId);
+}
+
+function cancelEditMode(){
+  _vwEditMode = false;
+  // Reload from API/cache to discard changes
+  if(_vwWarId){
+    // Re-fetch to discard in-memory edits
+    fetch('/api/wars').then(function(r){ return r.ok?r.json():null; }).then(function(wars){
+      if(wars) _warsCache = wars;
+      viewWar(_vwWarId);
+    }).catch(function(){ viewWar(_vwWarId); });
+  }
+}
+
+function cycleRole(warId, pi, mi){
   var wars = loadWars();
   var w = wars.find(function(x){ return x.id===warId; });
-  if(!w) return;
-  var roster = loadMembriRoster();
-  var aliases = loadMembriAliases();
-  if(!roster.length){ alert('Roster gol — mergi la Members și adaugă membrii.'); return; }
-  var synced = 0;
-  w.parties.forEach(function(p){
-    p.members.forEach(function(m){
-      var found = null;
-      // 1. Direct name match
-      for(var i=0;i<roster.length;i++){
-        if(namesMatch(roster[i].name, m.name)){ found=roster[i]; break; }
-      }
-      // 2. Alias lookup
-      if(!found){
-        var keys = Object.keys(aliases);
-        for(var j=0;j<keys.length;j++){
-          var av = (aliases[keys[j]]||'').trim();
-          if(av && namesMatch(m.name, av)){
-            var r2 = roster.find(function(r){ return normalizeName(r.name)===keys[j]; });
-            if(r2){ found=r2; break; }
-          }
-        }
-      }
-      if(found && found.role && found.role !== m.role){
-        m.role = found.role;
-        synced++;
-      }
-    });
-  });
+  if(!w || !w.parties[pi] || !w.parties[pi].members[mi]) return;
+  var roles = ['TANK','HEALER','DPS'];
+  var cur = w.parties[pi].members[mi].role;
+  var idx = roles.indexOf(cur);
+  w.parties[pi].members[mi].role = roles[(idx+1)%3];
   viewWar(warId);
 }
 
@@ -1691,6 +1717,7 @@ async function saveWarEdits(warId){
       body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties,extras:w.extras||[]})});
     if(!r.ok) throw new Error('HTTP '+r.status);
   } catch(e){ alert('Eroare la salvare: '+e.message); return; }
+  _vwEditMode = false;
   viewWar(warId); // re-render with updated data
 }
 
