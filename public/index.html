@@ -94,7 +94,7 @@ input[type=number]{-moz-appearance:textfield;}
 <body>
 
 <!-- ═══ APP SHELL ═══ -->
-<div class="app-shell">
+<div class="app-shell" id="app-shell" style="opacity:0;transition:opacity .15s">
 
   <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar" id="sidebar" style="display:none">
@@ -146,7 +146,7 @@ input[type=number]{-moz-appearance:textfield;}
     <div class="page-container">
 
 <!-- ═══════════════ LANDING / LOGIN PAGE ═══════════════ -->
-<div class="page active" id="page-login" style="padding:0;max-width:none;">
+<div class="page" id="page-login" style="padding:0;max-width:none;">
   <div class="landing-page">
     <div class="landing-left">
       <div class="landing-title">Wargame Stats<br><span>Nova</span></div>
@@ -667,6 +667,9 @@ function showPage(id){
   if(id==='new-war'){ document.getElementById('new-war-tab').classList.add('active'); }
   if(id==='guild-settings'){ initGuildSettings(); }
   if(id==='guild-picker'){ renderGuildPicker(); }
+  // Reveal app shell (hidden until first showPage to prevent flash)
+  var shell = document.getElementById('app-shell');
+  if(shell) shell.style.opacity = '1';
 }
 
 function startNewWar(){
