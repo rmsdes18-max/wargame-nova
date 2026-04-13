@@ -99,8 +99,8 @@ input[type=number]{-moz-appearance:textfield;}
   <!-- ─── SIDEBAR ─── -->
   <aside class="sidebar" id="sidebar" style="display:none">
     <a class="sidebar-logo" href="#" onclick="showPage('wars');closeSidebar();return false;">
-      <span class="sidebar-logo-mark" id="sidebar-guild-name"></span>
-      <span class="sidebar-logo-sub">Wartl App</span>
+      <span class="sidebar-logo-mark">WARTL</span>
+      <span class="sidebar-logo-sub">War Tracker</span>
     </a>
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">Main</div>
@@ -134,7 +134,7 @@ input[type=number]{-moz-appearance:textfield;}
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <div class="breadcrumb">
-        <span class="breadcrumb-root">Dashboard</span>
+        <span class="breadcrumb-root" id="topbar-guild-name">Dashboard</span>
         <span class="breadcrumb-sep">›</span>
         <span class="breadcrumb-current" id="breadcrumb-current" data-t="allWars">All Wars</span>
       </div>
@@ -2127,9 +2127,9 @@ async function loadGuilds(){
 
 function enterGuild(guild){
   setCurrentGuild(guild.id);
-  // Update sidebar guild name
-  var nameEl = document.getElementById('sidebar-guild-name');
-  if(nameEl) nameEl.textContent = guild.name || '';
+  // Update topbar guild name
+  var nameEl = document.getElementById('topbar-guild-name');
+  if(nameEl) nameEl.textContent = guild.name || 'Dashboard';
   // Show guild nav items
   document.querySelectorAll('.guild-nav').forEach(function(el){ el.style.display = ''; });
   // Find user's role in this guild
@@ -2289,8 +2289,8 @@ async function renameGuild(){
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({name:name})});
     if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); return; }
-    // Update sidebar
-    var nameEl = document.getElementById('sidebar-guild-name');
+    // Update topbar
+    var nameEl = document.getElementById('topbar-guild-name');
     if(nameEl) nameEl.textContent = name;
     // Update guilds cache
     var g = _guilds.find(function(g){ return g.id === _currentGuildId; });
