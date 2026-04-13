@@ -125,4 +125,19 @@ router.get('/health', checkSuperAdmin, async (req, res) => {
   });
 });
 
+// POST /api/sudo/reset-all-data — wipe all guild data, keep user accounts
+router.post('/reset-all-data', checkSuperAdmin, async (req, res) => {
+  try {
+    await pool.query(`
+      DELETE FROM roster_members;
+      DELETE FROM aliases;
+      DELETE FROM wars;
+      DELETE FROM guild_invites;
+      DELETE FROM guild_members;
+      DELETE FROM guilds;
+    `);
+    res.json({ success: true, message: 'All guild data deleted. User accounts preserved.' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;

@@ -45,9 +45,9 @@ app.get('/api/health', (req, res) => {
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
 
-// URL prietenos pentru pagina Membrii
+// /members redirects to SPA
 app.get(['/members', '/membrii'], (req, res) => {
-  res.sendFile(path.join(publicDir, 'members.html'));
+  res.redirect('/');
 });
 
 // Admin login page
