@@ -88,6 +88,7 @@ input[type=number]{-moz-appearance:textfield;}
       <button class="sidebar-footer-btn" onclick="promptPin();closeSidebar()">
         <span class="sidebar-item-icon">⚙</span><span data-t="settings">Settings</span>
       </button>
+      <div id="sidebar-user" style="padding:4px 0;"></div>
       <div class="sidebar-version">v1.0</div>
     </div>
   </aside>
@@ -371,6 +372,8 @@ function toggleLang(){
 // ── USER ROLE ─────────────────────────────────────────────────────────────
 var _userRole = 'viewer'; // default
 var _userName = '';
+var _userAvatar = '';
+var _authToken = '';
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 var state = {
@@ -393,6 +396,9 @@ function apiHeaders(isAdmin){
   if(isAdmin){
     var s = localStorage.getItem('nova_admin_secret')||'';
     if(s) h['X-Admin-Secret'] = s;
+    // Also send bearer token if available
+    var token = localStorage.getItem('nova_token');
+    if(token) h['Authorization'] = 'Bearer ' + token;
   }
   return h;
 }
@@ -1776,9 +1782,41 @@ function updateUIForRole(){
   var nwTab = document.getElementById('new-war-tab');
   if(nwTab) nwTab.style.display = isEditor ? '' : 'none';
 
-  // Update user display in sidebar footer
-  var versionEl = document.querySelector('.sidebar-version');
-  if(versionEl) versionEl.textContent = _userName ? _userName + ' (' + _userRole + ')' : 'v1.0';
+  // Sidebar user area
+  var userEl = document.getElementById('sidebar-user');
+  if(userEl){
+    if(_userName && _authToken){
+      var avatarHtml = _userAvatar
+        ? '<img src="'+_userAvatar+'" style="width:24px;height:24px;border-radius:50%;flex-shrink:0;">'
+        : '<div style="width:24px;height:24px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-muted);flex-shrink:0;">'+_userName.charAt(0).toUpperCase()+'</div>';
+      var roleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--accent-primary);font-weight:600;">ADMIN</span>'
+        : _userRole === 'editor' ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(91,143,255,.15);color:var(--tank);font-weight:600;">EDITOR</span>'
+        : '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.06);color:var(--text-muted);font-weight:600;">VIEWER</span>';
+      userEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">'
+        +avatarHtml
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:12px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(_userName)+'</div>'
+          +'<div style="margin-top:2px;">'+roleBadge+'</div>'
+        +'</div>'
+        +'<button onclick="logout()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:2px 4px;" title="Logout">\u2715</button>'
+        +'</div>';
+    } else {
+      userEl.innerHTML = '<a href="/api/auth/discord" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#5865F2;border-radius:6px;color:#fff;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;transition:opacity .15s;">'
+        +'<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>'
+        +'Login with Discord</a>';
+    }
+  }
+}
+
+function logout(){
+  localStorage.removeItem('nova_token');
+  localStorage.removeItem('nova_user');
+  _userRole = 'viewer';
+  _userName = '';
+  _userAvatar = '';
+  _authToken = '';
+  updateUIForRole();
+  showPage('wars');
 }
 
 // ── SHARE WAR ─────────────────────────────────────────────────────────────
@@ -1849,6 +1887,46 @@ function deleteUser(id){
     .then(function(){ renderUsersList(); });
 }
 
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function checkAuth(){
+  // Check if Discord just redirected back with a token
+  var hash = window.location.hash;
+  if(hash.startsWith('#auth=')){
+    var token = hash.replace('#auth=','');
+    localStorage.setItem('nova_token', token);
+    window.location.hash = ''; // clean URL
+  }
+
+  // Load stored token
+  _authToken = localStorage.getItem('nova_token') || '';
+  if(_authToken){
+    // Verify token with API
+    fetch('/api/auth/me', {headers:{'Authorization':'Bearer '+_authToken}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(u){
+        if(u){
+          _userRole = u.role || 'viewer';
+          _userName = u.username || '';
+          _userAvatar = u.avatar || '';
+        } else {
+          // Invalid token
+          localStorage.removeItem('nova_token');
+          _userRole = 'viewer';
+        }
+        updateUIForRole();
+      }).catch(function(){ updateUIForRole(); });
+  } else {
+    // Check legacy admin secret
+    var sec = localStorage.getItem('nova_admin_secret');
+    if(sec){
+      _userRole = 'admin';
+      _userName = 'Admin';
+      _authToken = sec;
+    }
+    updateUIForRole();
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 async function initApp(){
   try{
@@ -1864,34 +1942,7 @@ async function initApp(){
     if(results[3]) _mAliasCache = results[3];
   } catch(e){ console.warn('API init failed, using localStorage fallback',e); }
 
-  // Check if user has stored credentials
-  (function checkAuth(){
-    var stored = localStorage.getItem('nova_user');
-    if(stored){
-      try{
-        var u = JSON.parse(stored);
-        _userRole = u.role || 'viewer';
-        _userName = u.username || '';
-      }catch(e){}
-    }
-    // Also check legacy admin secret
-    var sec = localStorage.getItem('nova_admin_secret');
-    if(sec && !stored){
-      // Verify against API
-      fetch('/api/users/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:sec})})
-        .then(function(r){ return r.ok ? r.json() : null; })
-        .then(function(u){
-          if(u){
-            _userRole = u.role;
-            _userName = u.username;
-            localStorage.setItem('nova_user', JSON.stringify(u));
-          }
-          updateUIForRole();
-        }).catch(function(){ updateUIForRole(); });
-    } else {
-      updateUIForRole();
-    }
-  })();
+  checkAuth();
 
   renderWarsList();
 

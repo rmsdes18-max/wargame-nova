@@ -8,6 +8,7 @@ const app = express();
 app.use(express.json());
 
 // API routes (înainte de static, să nu fie interceptate)
+app.use('/api/auth',    require('./routes/auth'));
 app.use('/api/wars',    require('./routes/wars'));
 app.use('/api/roster',  require('./routes/roster'));
 app.use('/api/aliases', require('./routes/aliases'));
