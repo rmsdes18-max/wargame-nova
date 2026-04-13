@@ -22,8 +22,8 @@ app.use(cors({
 // Rate limiting — general: 300 req / 15 min
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false }));
 
-// Rate limiting — auth: 20 req / 15 min (anti brute-force)
-app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false }));
+// Rate limiting — auth: 50 req / 15 min (anti brute-force)
+app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 50, standardHeaders: true, legacyHeaders: false }));
 
 app.use(express.json());
 
