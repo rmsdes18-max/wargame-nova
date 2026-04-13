@@ -278,7 +278,7 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
 .card-sub{font-size:13px;color:var(--text-secondary);margin-bottom:12px;}
 
 /* Stat Cards */
-.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
 .stat-card{background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;padding:14px 16px;}
 .stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);margin-bottom:6px;}
 .stat-card .value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff;}
@@ -341,6 +341,11 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
 .player-dimmed{opacity:0.4;transition:opacity .15s;}
 .player-dimmed:hover{opacity:0.7;}
 .player-dimmed.vw-drop-above{opacity:1;background:rgba(240,192,64,.08) !important;box-shadow:inset 0 0 0 1px var(--accent-primary) !important;}
+
+/* Editable values */
+.editable-val{cursor:pointer;transition:background .1s;padding:1px 4px;border-radius:3px;}
+.editable-val:hover{background:rgba(255,255,255,.06);}
+[contenteditable]:focus{background:rgba(240,192,64,.06);border-radius:3px;}
 
 /* Extras panel */
 .extras-panel{background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;align-self:start;position:sticky;top:60px;}
@@ -431,6 +436,7 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
 
 /* ── PAGES (SPA) ── */
 .page{display:none;padding:28px 24px;max-width:1200px;margin:0 auto;}
+#page-view-war{max-width:none;padding:20px 24px;}
 .page.active{display:block;}
 
 /* ── STEP WIZARD ── */

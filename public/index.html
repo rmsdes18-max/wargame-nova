@@ -208,7 +208,7 @@ input[type=number]{-moz-appearance:textfield;}
 </div>
 
 <!-- ═══════════════ VIEW WAR PAGE ═══════════════ -->
-<div class="page" id="page-view-war">
+<div class="page" id="page-view-war" style="max-width:none;">
   <div id="view-war-content"></div>
 </div>
 
@@ -1076,6 +1076,36 @@ function toggleVwSidebar(){}
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function editableCell(cls, val, warId, pi, mi, field){
+  return '<td class="num '+cls+'"><span class="editable-val" data-war="'+warId+'" data-pi="'+pi+'" data-mi="'+mi+'" data-field="'+field+'" onclick="makeEditable(this)" style="cursor:pointer;">'+val+'</span></td>';
+}
+
+function makeEditable(span){
+  var val = span.textContent.replace(/,/g,'');
+  var input = document.createElement('input');
+  input.type = 'number';
+  input.value = parseInt(val)||0;
+  input.style.cssText = 'width:80px;background:var(--bg-tertiary);border:1px solid var(--accent-primary);border-radius:4px;color:var(--text-primary);font-size:13px;font-family:JetBrains Mono,monospace;text-align:right;padding:2px 6px;outline:none;';
+  input.onblur = function(){
+    var newVal = +input.value || 0;
+    var warId = +span.dataset.war;
+    var pi = +span.dataset.pi;
+    var mi = +span.dataset.mi;
+    var field = span.dataset.field;
+    var wars = loadWars();
+    var w = wars.find(function(x){ return x.id===warId; });
+    if(w && w.parties[pi] && w.parties[pi].members[mi]){
+      w.parties[pi].members[mi][field] = newVal;
+    }
+    span.textContent = newVal ? newVal.toLocaleString() : '0';
+    input.replaceWith(span);
+  };
+  input.onkeydown = function(e){ if(e.key==='Enter') input.blur(); };
+  span.replaceWith(input);
+  input.focus();
+  input.select();
+}
+
 function viewWar(warId){
   var wars = loadWars();
   var w = wars.find(function(x){ return x.id===warId; });
@@ -1108,7 +1138,7 @@ function viewWar(warId){
   html += '</div>';
 
   // ── Stat cards ──
-  html += '<div class="stats-row">';
+  html += '<div class="stats-row" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">';
   html += '<div class="stat-card gold"><div class="label">Kills</div><div class="value">'+(totalDefeats||'—')+'</div></div>';
   html += '<div class="stat-card"><div class="label">Assists</div><div class="value">'+(totalAssists||'—')+'</div></div>';
   html += '<div class="stat-card"><div class="label">Dmg Dealt</div><div class="value">'+(totalDmg?totalDmg.toLocaleString():'—')+'</div></div>';
@@ -1129,7 +1159,8 @@ function viewWar(warId){
   var extrasMembers = extrasParty ? extrasParty.members : [];
 
   // ── Parties tab ──
-  html += '<div id="vw-tab-parties" style="display:grid;grid-template-columns:1fr 280px;gap:16px;">';
+  var hasExtras = extrasMembers && extrasMembers.length > 0;
+  html += '<div id="vw-tab-parties" style="display:grid;grid-template-columns:'+(hasExtras?'1fr 280px':'1fr')+';gap:16px;">';
   html += '<div class="parties-grid"><div id="vw-parties-grid" style="display:contents;">';
 
   w.parties.forEach(function(p, pi){
@@ -1140,10 +1171,11 @@ function viewWar(warId){
 
     html += '<div class="party-card">';
     html += '<div class="party-header">';
-    html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
+    html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" data-field="partyname" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
     html += '<div class="party-meta">'+p.members.length+' members</div>';
     html += '</div>';
 
+    html += '<div style="overflow-x:auto;">';
     html += '<table class="data-table">';
     html += '<thead><tr>'
       +'<th style="width:28%;">Player</th>'
@@ -1161,13 +1193,13 @@ function viewWar(warId){
         +'<td onclick="openMemberPicker('+w.id+','+pi+','+mi+')" style="cursor:pointer;">'
           +'<div class="player-cell">'
           +'<span class="role-dot" style="background:'+roleColor+';"></span>'
-          +'<span class="player-name '+nameClass+'" data-pi="'+pi+'" data-mi="'+mi+'" data-field="name">'+escHtml(m.name)+'</span>'
+          +'<span class="player-name '+nameClass+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>'
           +'</div></td>'
-        +'<td class="num num-k">'+(m.defeat||0)+'</td>'
-        +'<td class="num">'+(m.assist||0)+'</td>'
-        +'<td class="num num-dmg">'+(m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0')+'</td>'
-        +'<td class="num num-taken">'+(m.dmg_taken?(m.dmg_taken).toLocaleString():'0')+'</td>'
-        +'<td class="num num-heal">'+(m.healed?(m.healed).toLocaleString():'0')+'</td>'
+        +editableCell('num-k', (m.defeat||0), w.id, pi, mi, 'defeat')
+        +editableCell('', (m.assist||0), w.id, pi, mi, 'assist')
+        +editableCell('num-dmg', (m.dmg_dealt?(m.dmg_dealt).toLocaleString():'0'), w.id, pi, mi, 'dmg_dealt')
+        +editableCell('num-taken', (m.dmg_taken?(m.dmg_taken).toLocaleString():'0'), w.id, pi, mi, 'dmg_taken')
+        +editableCell('num-heal', (m.healed?(m.healed).toLocaleString():'0'), w.id, pi, mi, 'healed')
         +'<td class="action-cell"><button class="btn-icon" onclick="removeWarMember('+w.id+','+pi+','+mi+')">×</button></td>'
         +'</tr>';
     });
@@ -1183,11 +1215,7 @@ function viewWar(warId){
       +'<td></td></tr></tbody>';
 
     html += '</table>';
-
-    // Add member dropzone
-    html += '<div class="vw-dropzone-end" data-pi="'+pi+'" style="padding:8px 10px;border-top:1px solid var(--border);">'
-      +'<button onclick="openMemberPicker('+w.id+','+pi+',-1)" style="background:transparent;border:1px dashed var(--border2);color:var(--muted);font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;width:100%;">+ Adaugă membru</button>'
-      +'</div>';
+    html += '</div>';
 
     html += '</div>';
   });
@@ -1196,9 +1224,9 @@ function viewWar(warId){
   html += '</div>'; // parties-grid
 
   // ── Extras panel ──
-  html += '<div class="extras-panel">';
-  html += '<div class="extras-panel-header">Extra Players'+(extrasMembers.length?' ('+extrasMembers.length+')':'')+'</div>';
-  if(extrasMembers.length){
+  if(hasExtras){
+    html += '<div class="extras-panel">';
+    html += '<div class="extras-panel-header">Extra Players'+(extrasMembers.length?' ('+extrasMembers.length+')':'')+'</div>';
     extrasMembers.forEach(function(ex, ei){
       var roleColor = ex.role==='TANK'?'var(--tank)':ex.role==='HEALER'?'var(--heal)':'var(--dps)';
       html += '<div class="extra-player-card" draggable="true" data-extra-idx="'+ei+'">'
@@ -1215,10 +1243,8 @@ function viewWar(warId){
         +'</div>'
         +'</div>';
     });
-  } else {
-    html += '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">No extra players</div>';
+    html += '</div>'; // extras-panel
   }
-  html += '</div>'; // extras-panel
 
   html += '</div>'; // vw-tab-parties
 
@@ -1549,6 +1575,18 @@ function movePlayerToParty(warId, fromPi, mi, targetPartyName){
   if(toPi<0) return;
   var toIndex = w.parties[toPi].members.length;
   performDragMove(warId, fromPi, mi, toPi, toIndex);
+}
+
+function updatePartyNameInWar(warId, pi, newName){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(w && w.parties[pi]) w.parties[pi].name = newName.trim();
+}
+
+function updatePlayerNameInWar(warId, pi, mi, newName){
+  var wars = loadWars();
+  var w = wars.find(function(x){ return x.id===warId; });
+  if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
 }
 
 function removeWarMember(warId, pi, mi){
