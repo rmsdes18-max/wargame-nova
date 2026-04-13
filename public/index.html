@@ -560,6 +560,12 @@ var _currentGuildId = localStorage.getItem('nova_guild_id') || '';
 var _guilds = []; // user's guilds list
 
 function getCurrentGuildId(){ return _currentGuildId; }
+function handleExpiredSession(){
+  localStorage.removeItem('nova_token');
+  localStorage.removeItem('nova_guild_id');
+  _authToken=''; _currentGuildId=''; _guilds=[];
+  window.location.reload();
+}
 function setCurrentGuild(guildId){
   _currentGuildId = guildId;
   localStorage.setItem('nova_guild_id', guildId);
@@ -2078,6 +2084,7 @@ async function doCreateGuild(){
   try{
     var r = await fetch('/api/guilds',{method:'POST',headers:apiHeaders(),body:JSON.stringify({name:name,invite_code:code||undefined})});
     var data = await r.json();
+    if(r.status===401){ handleExpiredSession(); return; }
     if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
     setCurrentGuild(data.id);
     _guilds.push(data);
@@ -2093,6 +2100,7 @@ async function doJoinGuild(){
   try{
     var r = await fetch('/api/guilds/join',{method:'POST',headers:apiHeaders(),body:JSON.stringify({code:code})});
     var data = await r.json();
+    if(r.status===401){ handleExpiredSession(); return; }
     if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
     setCurrentGuild(data.guild.id);
     await loadGuilds();
@@ -2103,6 +2111,7 @@ async function doJoinGuild(){
 async function loadGuilds(){
   try{
     var r = await fetch('/api/guilds',{headers:apiHeaders()});
+    if(r.status===401){ handleExpiredSession(); return; }
     if(r.ok) _guilds = await r.json();
     else _guilds = [];
   }catch(e){ _guilds = []; }
