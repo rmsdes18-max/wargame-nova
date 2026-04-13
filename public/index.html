@@ -126,13 +126,14 @@ input[type=number]{-moz-appearance:textfield;}
     </div>
   </div>
 
-  <div class="wizard-steps" id="wizard-steps">
+  <div class="wizard-steps" id="wizard-steps" style="max-width:800px;">
     <div class="wstep active" id="ws-1"><span class="wstep-num">1</span><span data-t="partySetup">Party Setup</span></div>
     <div class="wstep" id="ws-2"><span class="wstep-num">2</span><span data-t="scoreboard">Scoreboard</span></div>
   </div>
 
       <!-- STEP 1: Party upload -->
       <div id="step-1">
+        <div style="max-width:700px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
           <div class="form-group">
             <label class="form-label" data-t="opponent">Opponent</label>
@@ -153,6 +154,7 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="upload-title" data-t="dropHere">Drop party screenshot here</div>
           <div class="upload-sub" data-t="orClick">or click to select file</div>
         </div>
+        </div><!-- /max-width:700px -->
 
         <div id="party-split-view" style="display:none;">
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Vision AI detected parties. Verify roles — edit if needed:</div>
