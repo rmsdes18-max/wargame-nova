@@ -32,12 +32,13 @@ app.get('*', (req, res) => {
 
 // Run migrations on startup
 async function runMigrations() {
-  const sql = fs.readFileSync(
-    path.join(__dirname, '../migrations/001_init.sql'),
-    'utf8'
-  );
-  await pool.query(sql);
-  console.log('Migrations applied');
+  const migrationsDir = path.join(__dirname, '../migrations');
+  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+  for (const file of files) {
+    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+    await pool.query(sql);
+  }
+  console.log('Migrations applied:', files.join(', '));
 }
 
 const PORT = process.env.PORT || 3000;

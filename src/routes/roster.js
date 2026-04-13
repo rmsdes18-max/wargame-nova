@@ -3,12 +3,17 @@ const { pool }   = require('../db');
 const auth       = require('../middleware/auth');
 const router     = Router();
 
-// GET all members
+// GET all members (optionally filter by ?active=true/false)
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT name, role, guild_role AS "guildRole" FROM roster_members ORDER BY sort_order, id'
-    );
+    let query = 'SELECT name, role, guild_role AS "guildRole", active FROM roster_members';
+    const params = [];
+    if (req.query.active !== undefined) {
+      query += ' WHERE active = $1';
+      params.push(req.query.active === 'true');
+    }
+    query += ' ORDER BY sort_order, id';
+    const { rows } = await pool.query(query, params);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -22,10 +27,10 @@ router.put('/', auth, async (req, res) => {
     await client.query('BEGIN');
     await client.query('DELETE FROM roster_members');
     for (let i = 0; i < members.length; i++) {
-      const { name, role, guildRole } = members[i];
+      const { name, role, guildRole, active } = members[i];
       await client.query(
-        'INSERT INTO roster_members (name, role, guild_role, sort_order) VALUES ($1,$2,$3,$4)',
-        [name, role, guildRole || null, i]
+        'INSERT INTO roster_members (name, role, guild_role, sort_order, active) VALUES ($1,$2,$3,$4,$5)',
+        [name, role, guildRole || null, i, active !== false]
       );
     }
     await client.query('COMMIT');
@@ -45,10 +50,10 @@ router.post('/', auth, async (req, res) => {
       'SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM roster_members'
     );
     await pool.query(
-      'INSERT INTO roster_members (name, role, guild_role, sort_order) VALUES ($1,$2,$3,$4)',
+      'INSERT INTO roster_members (name, role, guild_role, sort_order, active) VALUES ($1,$2,$3,$4,true)',
       [name, role, guildRole || null, maxRows[0].next]
     );
-    res.status(201).json({ name, role, guildRole: guildRole || null });
+    res.status(201).json({ name, role, guildRole: guildRole || null, active: true });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'Member already exists' });
     res.status(500).json({ error: e.message });
@@ -58,23 +63,22 @@ router.post('/', auth, async (req, res) => {
 // PATCH update single member by name
 router.patch('/:name', auth, async (req, res) => {
   const oldName = decodeURIComponent(req.params.name);
-  const { name: newName, role, guildRole } = req.body;
+  const { name: newName, role, guildRole, active } = req.body;
   try {
-    const { rows } = await pool.query(
-      `UPDATE roster_members SET
-        name       = COALESCE($1, name),
-        role       = COALESCE($2, role),
-        guild_role = CASE WHEN $3::boolean THEN $4 ELSE guild_role END
-       WHERE name = $5
-       RETURNING name, role, guild_role AS "guildRole"`,
-      [
-        newName || null,
-        role || null,
-        guildRole !== undefined,
-        guildRole !== undefined ? (guildRole || null) : null,
-        oldName
-      ]
-    );
+    const setClauses = [];
+    const params = [];
+    let idx = 1;
+
+    if (newName !== undefined) { setClauses.push(`name = $${idx++}`); params.push(newName); }
+    if (role !== undefined) { setClauses.push(`role = $${idx++}`); params.push(role); }
+    if (guildRole !== undefined) { setClauses.push(`guild_role = $${idx++}`); params.push(guildRole || null); }
+    if (active !== undefined) { setClauses.push(`active = $${idx++}`); params.push(active); }
+
+    if (!setClauses.length) return res.status(400).json({ error: 'No fields to update' });
+
+    params.push(oldName);
+    const query = `UPDATE roster_members SET ${setClauses.join(', ')} WHERE name = $${idx} RETURNING name, role, guild_role AS "guildRole", active`;
+    const { rows } = await pool.query(query, params);
     if (!rows.length) return res.status(404).json({ error: 'Member not found' });
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }

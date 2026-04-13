@@ -4,13 +4,167 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nova — Members</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/nova.css">
 <style>
-/* All styling lives in /css/nova.css */
+/* ── Members-specific styles ── */
+.members-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+.members-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);}
+.members-header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.members-count{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+/* Tabs */
+.members-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border-subtle);margin-bottom:16px;}
+.members-tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;}
+.members-tab:hover{color:var(--text);}
+.members-tab.active{color:#fff;border-bottom-color:var(--gold);}
+
+/* Filter pills */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-pill{padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;border:1px solid var(--border-subtle);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.filter-pill:hover{color:var(--text);border-color:var(--text);}
+.filter-pill.active{background:var(--gold);color:#000;border-color:var(--gold);}
+.search-input{background:var(--bg2);border:1px solid var(--border-subtle);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--text);outline:none;width:200px;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .15s;}
+.search-input:focus{border-color:var(--gold);}
+.search-input::placeholder{color:var(--muted);}
+
+/* Member list */
+.member-list{display:flex;flex-direction:column;gap:2px;}
+.member-item{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;transition:background .15s;cursor:default;}
+.member-item:hover{background:var(--bg-hover,rgba(255,255,255,.03));}
+.member-item.dimmed{opacity:.45;}
+.member-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0;cursor:pointer;transition:transform .15s;}
+.member-avatar:hover{transform:scale(1.1);}
+.member-avatar.av-TANK{background:#3a5fb8;}
+.member-avatar.av-HEALER{background:#2d8a4e;}
+.member-avatar.av-DPS{background:#b83a3a;}
+.member-name{font-weight:600;font-size:14px;color:var(--text);cursor:pointer;white-space:nowrap;}
+.member-name:hover{text-decoration:underline;}
+.role-pill-sm{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
+.role-pill-sm.rp-TANK{background:rgba(91,143,255,.15);color:#5b8fff;}
+.role-pill-sm.rp-HEALER{background:rgba(62,207,110,.15);color:#3ecf6e;}
+.role-pill-sm.rp-DPS{background:rgba(232,64,64,.15);color:#e84040;}
+.member-alias{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.member-alias.no-alias{font-style:italic;opacity:.5;}
+.member-status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;opacity:.5;}
+.member-guild{font-size:10px;color:var(--gold);font-weight:600;flex-shrink:0;}
+.member-spacer{flex:1;}
+.member-action-btn{font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.member-action-btn:hover{border-color:var(--dps,#e84040);color:var(--dps,#e84040);}
+.member-action-btn.restore-btn:hover{border-color:var(--heal,#3ecf6e);color:var(--heal,#3ecf6e);}
+
+/* Separator */
+.members-separator{display:flex;align-items:center;gap:10px;padding:16px 12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);opacity:.6;}
+.members-separator::after{content:'';flex:1;height:1px;background:var(--border-subtle);}
+
+/* Profile modal */
+.profile-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;}
+.profile-modal-overlay.open{display:flex;}
+.profile-modal{background:var(--bg2,#2b2d31);border:1px solid var(--border-subtle,#3f4147);border-radius:12px;padding:24px;width:min(700px,92vw);max-height:85vh;overflow-y:auto;position:relative;}
+.profile-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;transition:color .15s;}
+.profile-close:hover{color:var(--text);}
+.profile-top{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.profile-avatar-lg{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;color:#fff;}
+.profile-info{display:flex;flex-direction:column;gap:4px;}
+.profile-name-lg{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);}
+.profile-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.profile-alias-text{font-size:12px;color:var(--muted);}
+.profile-section-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 0 6px;}
+.profile-empty{font-size:13px;color:var(--muted);padding:16px 0;}
+.profile-table-wrap{overflow-x:auto;}
+
+/* Sync panel (screenshot scanning) */
+.sync-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;}
+.sync-overlay.open{display:flex;}
+.sync-card{background:var(--bg2,#2b2d31);border:1px solid var(--border-subtle,#3f4147);border-radius:12px;padding:24px;width:min(640px,92vw);max-height:85vh;overflow-y:auto;position:relative;}
+.sync-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--border-subtle);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;margin-bottom:12px;}
+.upload-zone.drag-active{border-color:var(--gold);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-icon{font-size:28px;margin-bottom:4px;}
+.upload-title{font-size:13px;font-weight:600;color:var(--text);}
+.upload-sub{font-size:11px;color:var(--muted);}
+
+/* Gallery */
+.screenshot-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.screenshot-card{width:120px;border-radius:8px;overflow:hidden;border:1px solid var(--border-subtle);background:var(--bg);}
+.screenshot-card img{width:100%;display:block;}
+.screenshot-card-footer{padding:4px 6px;display:flex;align-items:center;gap:4px;}
+.screenshot-label-input{flex:1;background:none;border:none;color:var(--text);font-size:10px;outline:none;min-width:0;}
+.btn-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;}
+
+/* Scan results */
+.scan-results{margin-top:12px;}
+.scan-summary{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;color:var(--muted);}
+.scan-table{width:100%;border-collapse:collapse;font-size:12px;}
+.scan-table td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.04);}
+.scan-name{font-weight:600;color:var(--text);}
+.scan-match-cell{display:flex;align-items:center;gap:6px;}
+.scan-match-name{color:var(--text);}
+.scan-no-match{color:var(--muted);font-style:italic;}
+.scan-actions{display:flex;gap:4px;}
+.scan-btn-accept{background:rgba(62,207,110,.15);border:none;color:var(--heal);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px;}
+.scan-btn-skip{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;}
+.scan-done{color:var(--heal);font-size:11px;font-weight:600;}
+.scan-skipped{color:var(--muted);font-size:11px;}
+.scan-spinning{padding:12px;text-align:center;color:var(--muted);}
+.scan-error{padding:12px;color:var(--dps);font-size:12px;}
+.btn-apply-all{font-size:11px;background:rgba(62,207,110,.15);border:none;color:var(--heal);padding:3px 10px;border-radius:4px;cursor:pointer;}
+.btn-scan-all{font-size:11px;background:rgba(240,192,64,.12);border:none;color:var(--gold);padding:3px 10px;border-radius:4px;cursor:pointer;}
+
+/* Unresolved */
+.scan-unresolved{margin-top:12px;}
+.unresolved-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;}
+.unresolved-hint{font-size:10px;color:var(--muted);margin-bottom:8px;opacity:.7;}
+.extracted-pills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.extracted-pill{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid var(--border-subtle);color:var(--text);cursor:pointer;transition:all .12s;}
+.extracted-pill.selected{border-color:var(--gold);color:var(--gold);background:rgba(240,192,64,.08);}
+.extracted-pill.skipped-pill{opacity:.3;cursor:default;}
+.unresolved-role-group{margin-bottom:8px;}
+.unresolved-role-label{font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px;}
+.member-assign-btn{font-size:11px;padding:2px 8px;margin:2px;border-radius:4px;border:1px solid var(--border-subtle);background:none;color:var(--text);cursor:default;transition:all .12s;}
+.member-assign-btn.assign-ready{cursor:pointer;border-color:var(--gold);color:var(--gold);}
+.member-assign-btn.assign-ready:hover{background:rgba(240,192,64,.1);}
+
+/* Add member form */
+.add-form-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;}
+.add-form-overlay.open{display:flex;}
+.add-form-card{background:var(--bg2,#2b2d31);border:1px solid var(--border-subtle,#3f4147);border-radius:12px;padding:24px;width:min(400px,90vw);}
+.add-form-card label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;margin-top:12px;}
+.add-form-card label:first-child{margin-top:0;}
+.add-form-card input,.add-form-card select{width:100%;background:var(--bg);border:1px solid var(--border-subtle);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;font-family:'Plus Jakarta Sans',sans-serif;}
+.add-form-card select{cursor:pointer;}
+.add-form-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
+
+/* Roster modal */
+.modal-textarea{width:100%;min-height:200px;background:var(--bg);border:1px solid var(--border-subtle);border-radius:8px;padding:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;outline:none;}
+.modal-preview{font-size:13px;padding:6px 0;min-height:20px;}
+.modal-actions{display:flex;gap:8px;margin-top:8px;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.btn-modal-parse{padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;border:1px solid var(--border-subtle);background:transparent;color:var(--text);cursor:pointer;}
+.btn-modal-apply{padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;border:1px solid var(--heal);background:transparent;color:var(--heal);cursor:pointer;opacity:.4;pointer-events:none;}
+.btn-modal-apply.ready{opacity:1;pointer-events:auto;}
+.btn-modal-cancel{padding:6px 14px;font-size:12px;border-radius:6px;border:1px solid var(--border-subtle);background:transparent;color:var(--muted);cursor:pointer;}
+
+/* Warn banner */
+.warn-banner{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--dps);color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
+.warn-banner.visible{opacity:1;pointer-events:auto;}
+
+@media(max-width:640px){
+  .members-header{flex-direction:column;align-items:flex-start;}
+  .filter-bar{flex-direction:column;align-items:flex-start;}
+  .search-input{width:100%;}
+  .member-alias{max-width:80px;}
+  .member-item{gap:8px;padding:6px 8px;}
+}
 </style>
 </head>
 <body class="shell-locked">
+
+<div id="warn-banner" class="warn-banner"></div>
 
 <div class="app-shell">
 
@@ -36,6 +190,9 @@
       </a>
     </nav>
     <div class="sidebar-footer">
+      <button class="sidebar-footer-btn" onclick="promptPin();closeSidebar()">
+        <span class="sidebar-item-icon">⚙</span><span>Settings</span>
+      </button>
       <div class="sidebar-version">v1.0</div>
     </div>
   </aside>
@@ -53,112 +210,119 @@
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
-        <button class="btn-edit-roster" onclick="openRosterModal()">✎ Update</button>
-        <button class="btn-add-member"  onclick="toggleAddForm()">+ Add</button>
-        <div class="members-counter" id="counter">
-          <span class="counter-total" id="cnt-total">68</span>
-          <span class="counter-matched" id="cnt-matched">0 matched</span>
-          <span class="counter-unmatched" id="cnt-unmatched">68 unmatched</span>
-        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openSyncPanel()">Sync from Screenshot</button>
+        <button class="btn btn-secondary btn-sm" onclick="openRosterModal()">Update Roster</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddForm()">+ Add</button>
       </div>
     </div>
 
     <div class="page-container">
+      <div class="page active" id="page-members" style="max-width:none;padding:20px 24px;">
 
-<!-- Add Member Form (fixed overlay) -->
-<div class="add-member-form" id="add-member-form">
-  <span class="add-form-label">NAME</span>
-  <input class="add-name-input" type="text" id="add-name-input" placeholder="Player name…"
-         onkeydown="if(event.key==='Enter')confirmAddMember()">
-  <span class="add-form-label">ROLE</span>
-  <select class="add-form-select" id="add-role-select">
-    <option value="TANK">TANK</option>
-    <option value="HEALER">HEALER</option>
-    <option value="DPS">DPS</option>
-  </select>
-  <span class="add-form-label">GUILD</span>
-  <select class="add-form-select" id="add-guild-select">
-    <option value="">—</option>
-    <option value="Leader">Leader</option>
-    <option value="Advisor">Advisor</option>
-    <option value="On Leave">On Leave</option>
-  </select>
-  <button class="btn-add-confirm" onclick="confirmAddMember()">✓ Add</button>
-  <button class="btn-add-cancel"  onclick="cancelAddMember()">✕</button>
+        <!-- HEADER -->
+        <div class="members-header">
+          <div>
+            <div class="members-title">Guild Members</div>
+            <div class="members-count" id="members-count">0 members</div>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="members-tabs">
+          <button class="members-tab active" data-tab="active" onclick="switchTab('active')">Active</button>
+          <button class="members-tab" data-tab="archived" onclick="switchTab('archived')">Archived</button>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filter-bar">
+          <button class="filter-pill active" data-filter="All" onclick="setFilter('All')">All</button>
+          <button class="filter-pill" data-filter="TANK" onclick="setFilter('TANK')">Tank</button>
+          <button class="filter-pill" data-filter="HEALER" onclick="setFilter('HEALER')">Healer</button>
+          <button class="filter-pill" data-filter="DPS" onclick="setFilter('DPS')">DPS</button>
+          <input class="search-input" type="text" placeholder="Search by name..." oninput="onSearch(this.value)" id="search-input">
+        </div>
+
+        <!-- MEMBER LIST -->
+        <div class="member-list" id="member-list"></div>
+
+      </div>
+    </div>
+  </main>
 </div>
 
-<div class="members-layout">
-
-  <!-- Col 1: DPS -->
-  <div class="role-column">
-    <div class="role-col-header">
-      <div class="role-col-title rgh-DPS">⚔ DPS <span class="role-col-count" id="col-count-DPS"></span></div>
-    </div>
-    <div class="role-col-members" id="col-DPS"></div>
+<!-- ── PROFILE MODAL ── -->
+<div class="profile-modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
+  <div class="profile-modal" id="profile-modal-content">
+    <button class="profile-close" onclick="closeProfileModal()">&times;</button>
+    <div id="profile-body"></div>
   </div>
-
-  <!-- Col 2: TANK -->
-  <div class="role-column">
-    <div class="role-col-header">
-      <div class="role-col-title rgh-TANK">🛡 TANK <span class="role-col-count" id="col-count-TANK"></span></div>
-    </div>
-    <div class="role-col-members" id="col-TANK"></div>
-  </div>
-
-  <!-- Col 3: HEALER -->
-  <div class="role-column">
-    <div class="role-col-header">
-      <div class="role-col-title rgh-HEALER">💚 HEALER <span class="role-col-count" id="col-count-HEALER"></span></div>
-    </div>
-    <div class="role-col-members" id="col-HEALER"></div>
-  </div>
-
-  <!-- Col 4: Detail (profile / sync) -->
-  <div class="detail-column">
-    <div class="detail-col-header">
-      <span class="detail-col-title" id="detail-col-title">Selectează un membru</span>
-      <button class="btn-sync-toggle" id="btn-sync-toggle" onclick="toggleSyncPanel()">⟳ Sync</button>
-    </div>
-    <div class="screenshots-inner" id="screenshots-inner" style="display:none;">
-      <div id="warn-banner" class="warn-banner"></div>
-      <div class="upload-zone" id="upload-zone"
-           ondragover="onDragOver(event)"
-           ondragleave="onDragLeave(event)"
-           ondrop="onDrop(event)">
-        <input type="file" multiple accept="image/*" id="file-input" onchange="onFileSelect(event)">
-        <div class="upload-icon">📷</div>
-        <div class="upload-title">Drop screenshots here</div>
-        <div class="upload-sub">or click to browse · multiple files · max 10 MB each</div>
-      </div>
-      <div class="gallery-header">
-        <span id="gallery-label" style="font-size:11px;color:var(--muted);"></span>
-        <button id="btn-scan-all" class="btn-scan-all" onclick="scanAll()" style="display:none;">🔍 Scan All</button>
-      </div>
-      <div class="screenshot-gallery" id="screenshot-gallery"></div>
-      <div id="scan-results-combined" class="scan-results combined-results" style="display:none;"></div>
-    </div>
-    <div id="member-profile-panel" style="display:none;flex:1;overflow-y:auto;flex-direction:column;"></div>
-    <div id="detail-empty-state" class="detail-empty-state">Apasă pe un membru pentru a vedea profilul.</div>
-  </div>
-
 </div>
 
-<!-- ── EDIT ROSTER MODAL ── -->
+<!-- ── ADD MEMBER FORM ── -->
+<div class="add-form-overlay" id="add-form-overlay" onclick="if(event.target===this)closeAddForm()">
+  <div class="add-form-card">
+    <div class="modal-title">Add Member</div>
+    <label>Name</label>
+    <input type="text" id="add-name-input" placeholder="Player name..." onkeydown="if(event.key==='Enter')confirmAddMember()">
+    <label>Role</label>
+    <select id="add-role-select">
+      <option value="TANK">TANK</option>
+      <option value="HEALER">HEALER</option>
+      <option value="DPS">DPS</option>
+    </select>
+    <label>Guild Role</label>
+    <select id="add-guild-select">
+      <option value="">—</option>
+      <option value="Leader">Leader</option>
+      <option value="Advisor">Advisor</option>
+      <option value="On Leave">On Leave</option>
+    </select>
+    <div class="add-form-actions">
+      <button class="btn-modal-cancel" onclick="closeAddForm()">Cancel</button>
+      <button class="btn-modal-parse" onclick="confirmAddMember()" style="border-color:var(--heal);color:var(--heal);">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ROSTER UPDATE MODAL ── -->
 <div class="modal-overlay" id="roster-modal" onclick="if(event.target===this)closeRosterModal()">
   <div class="modal-card">
     <div class="modal-title">
       Update TLGM Roster
-      <button onclick="closeRosterModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0;">✕</button>
+      <button onclick="closeRosterModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0;">&times;</button>
     </div>
     <div class="modal-sub">Paste the full Telegram member list (markdown table format). Existing aliases are preserved.</div>
     <textarea class="modal-textarea" id="roster-textarea"
               placeholder="### 🛡️ Tank (21 membri)&#10;| Nume | Rol în guild |&#10;| BuffDaddy | Member |&#10;| HdPwNer | **Leader** |&#10;..."></textarea>
     <div class="modal-preview" id="modal-preview"></div>
     <div class="modal-actions">
-      <button class="btn-modal-parse"  onclick="previewParsed()">Parse &amp; Preview</button>
-      <button class="btn-modal-apply" id="btn-modal-apply" onclick="applyRosterUpdate()">✓ Apply Update</button>
+      <button class="btn-modal-parse" onclick="previewParsed()">Parse &amp; Preview</button>
+      <button class="btn-modal-apply" id="btn-modal-apply" onclick="applyRosterUpdate()">Apply Update</button>
       <button class="btn-modal-cancel" onclick="closeRosterModal()">Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- ── SYNC FROM SCREENSHOT MODAL ── -->
+<div class="sync-overlay" id="sync-overlay" onclick="if(event.target===this)closeSyncPanel()">
+  <div class="sync-card">
+    <button class="sync-close" onclick="closeSyncPanel()">&times;</button>
+    <div class="modal-title" style="margin-bottom:12px;">Sync from Screenshot</div>
+    <div class="upload-zone" id="upload-zone"
+         ondragover="onDragOver(event)"
+         ondragleave="onDragLeave(event)"
+         ondrop="onDrop(event)">
+      <input type="file" multiple accept="image/*" id="file-input" onchange="onFileSelect(event)">
+      <div class="upload-icon">📷</div>
+      <div class="upload-title">Drop screenshots here</div>
+      <div class="upload-sub">or click to browse · multiple files · max 10 MB each</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span id="gallery-label" style="font-size:11px;color:var(--muted);"></span>
+      <button id="btn-scan-all" class="btn-scan-all" onclick="scanAll()" style="display:none;">Scan All</button>
+    </div>
+    <div class="screenshot-gallery" id="screenshot-gallery"></div>
+    <div id="scan-results-combined" class="scan-results" style="display:none;"></div>
   </div>
 </div>
 
@@ -167,97 +331,58 @@
 //  STATIC DATA
 // ═══════════════════════════════════════════════════════
 var DEFAULT_MEMBERS = [
-  // TANK (21)
-  {name:'BuffDaddy',    role:'TANK',   guildRole:null},
-  {name:'Cakoぞ゜',     role:'TANK',   guildRole:null},
-  {name:'Corvixus',     role:'TANK',   guildRole:null},
-  {name:'D0ug1as',      role:'TANK',   guildRole:null},
-  {name:'dauvang',      role:'TANK',   guildRole:null},
-  {name:'FastKiller01', role:'TANK',   guildRole:null},
-  {name:'HdPwNer',      role:'TANK',   guildRole:'Leader'},
-  {name:'HenryTurker',  role:'TANK',   guildRole:null},
-  {name:'LazyLello',    role:'TANK',   guildRole:null},
-  {name:'Loelialoy',    role:'TANK',   guildRole:null},
-  {name:'Oggy',         role:'TANK',   guildRole:null},
-  {name:'Orianae',      role:'TANK',   guildRole:null},
-  {name:'Pablo13',      role:'TANK',   guildRole:null},
-  {name:'PaoloBrosio',  role:'TANK',   guildRole:null},
-  {name:'Soimu',        role:'TANK',   guildRole:null},
-  {name:'Stormyial',    role:'TANK',   guildRole:null},
-  {name:'wwatts0n',     role:'TANK',   guildRole:'Leader'},
-  {name:'Xin9 Nova',    role:'TANK',   guildRole:null},
-  {name:'XSt3fR0',      role:'TANK',   guildRole:null},
-  {name:'XxBubblesxX',  role:'TANK',   guildRole:null},
-  {name:'くZava',        role:'TANK',   guildRole:null},
-  // HEALER (27)
-  {name:'・Jabber・',   role:'HEALER', guildRole:null},
-  {name:'AirMouz',      role:'HEALER', guildRole:null},
-  {name:'Askadras',     role:'HEALER', guildRole:null},
-  {name:'Bagyytzuuh',   role:'HEALER', guildRole:null},
-  {name:'Buldoza',      role:'HEALER', guildRole:null},
-  {name:'Cklioz',       role:'HEALER', guildRole:null},
-  {name:'Dareoner',     role:'HEALER', guildRole:null},
-  {name:'Enelyye',      role:'HEALER', guildRole:null},
-  {name:'Exowinargo',   role:'HEALER', guildRole:null},
-  {name:'Ezary',        role:'HEALER', guildRole:null},
-  {name:'Flawless〆',   role:'HEALER', guildRole:null},
-  {name:'Funky33',      role:'HEALER', guildRole:null},
-  {name:'gogurm',       role:'HEALER', guildRole:null},
-  {name:'Haloran',      role:'HEALER', guildRole:null},
-  {name:'LuvEv3',       role:'HEALER', guildRole:null},
-  {name:'Mezzy•',       role:'HEALER', guildRole:null},
-  {name:'MiniMoSk',     role:'HEALER', guildRole:'On Leave'},
-  {name:'Nicrooz',      role:'HEALER', guildRole:null},
-  {name:'Ricki',        role:'HEALER', guildRole:null},
-  {name:'Selene•',      role:'HEALER', guildRole:null},
-  {name:'Shimunbg',     role:'HEALER', guildRole:null},
-  {name:'shinrage',     role:'HEALER', guildRole:null},
-  {name:'Skarrgan',     role:'HEALER', guildRole:null},
-  {name:'Starshiptrooper',role:'HEALER',guildRole:null},
-  {name:'TinySpark',    role:'HEALER', guildRole:null},
-  {name:'Valkerynメ',   role:'HEALER', guildRole:null},
-  {name:'xxBladde',     role:'HEALER', guildRole:null},
-  {name:'Yacoob',       role:'HEALER', guildRole:'Advisor'},
-  // DPS (19)
-  {name:'alkais',       role:'DPS',    guildRole:null},
-  {name:'BilalBlc',     role:'DPS',    guildRole:null},
-  {name:'Boomie',       role:'DPS',    guildRole:'Advisor'},
-  {name:'DevilNorielll',role:'DPS',    guildRole:null},
-  {name:'Firebang',     role:'DPS',    guildRole:null},
-  {name:'Freeskd',      role:'DPS',    guildRole:null},
-  {name:'Gitalex',      role:'DPS',    guildRole:null},
-  {name:'Hagun',        role:'DPS',    guildRole:null},
-  {name:'Igris',        role:'DPS',    guildRole:null},
-  {name:'ilenia',       role:'DPS',    guildRole:null},
-  {name:'Krithh',       role:'DPS',    guildRole:null},
-  {name:'Lven',         role:'DPS',    guildRole:null},
-  {name:'McQuay',       role:'DPS',    guildRole:null},
-  {name:'Nyxゞ',         role:'DPS',    guildRole:null},
-  {name:'Orcianna',     role:'DPS',    guildRole:null},
-  {name:'Ricchan',      role:'DPS',    guildRole:null},
-  {name:'Sinbian',      role:'DPS',    guildRole:null},
-  {name:'vapx',         role:'DPS',    guildRole:null},
-  {name:'Zhorkiven',    role:'DPS',    guildRole:null},
+  {name:'BuffDaddy',role:'TANK',guildRole:null},{name:'Cakoぞ゜',role:'TANK',guildRole:null},
+  {name:'Corvixus',role:'TANK',guildRole:null},{name:'D0ug1as',role:'TANK',guildRole:null},
+  {name:'dauvang',role:'TANK',guildRole:null},{name:'FastKiller01',role:'TANK',guildRole:null},
+  {name:'HdPwNer',role:'TANK',guildRole:'Leader'},{name:'HenryTurker',role:'TANK',guildRole:null},
+  {name:'LazyLello',role:'TANK',guildRole:null},{name:'Loelialoy',role:'TANK',guildRole:null},
+  {name:'Oggy',role:'TANK',guildRole:null},{name:'Orianae',role:'TANK',guildRole:null},
+  {name:'Pablo13',role:'TANK',guildRole:null},{name:'PaoloBrosio',role:'TANK',guildRole:null},
+  {name:'Soimu',role:'TANK',guildRole:null},{name:'Stormyial',role:'TANK',guildRole:null},
+  {name:'wwatts0n',role:'TANK',guildRole:'Leader'},{name:'Xin9 Nova',role:'TANK',guildRole:null},
+  {name:'XSt3fR0',role:'TANK',guildRole:null},{name:'XxBubblesxX',role:'TANK',guildRole:null},
+  {name:'くZava',role:'TANK',guildRole:null},
+  {name:'・Jabber・',role:'HEALER',guildRole:null},{name:'AirMouz',role:'HEALER',guildRole:null},
+  {name:'Askadras',role:'HEALER',guildRole:null},{name:'Bagyytzuuh',role:'HEALER',guildRole:null},
+  {name:'Buldoza',role:'HEALER',guildRole:null},{name:'Cklioz',role:'HEALER',guildRole:null},
+  {name:'Dareoner',role:'HEALER',guildRole:null},{name:'Enelyye',role:'HEALER',guildRole:null},
+  {name:'Exowinargo',role:'HEALER',guildRole:null},{name:'Ezary',role:'HEALER',guildRole:null},
+  {name:'Flawless〆',role:'HEALER',guildRole:null},{name:'Funky33',role:'HEALER',guildRole:null},
+  {name:'gogurm',role:'HEALER',guildRole:null},{name:'Haloran',role:'HEALER',guildRole:null},
+  {name:'LuvEv3',role:'HEALER',guildRole:null},{name:'Mezzy•',role:'HEALER',guildRole:null},
+  {name:'MiniMoSk',role:'HEALER',guildRole:'On Leave'},{name:'Nicrooz',role:'HEALER',guildRole:null},
+  {name:'Ricki',role:'HEALER',guildRole:null},{name:'Selene•',role:'HEALER',guildRole:null},
+  {name:'Shimunbg',role:'HEALER',guildRole:null},{name:'shinrage',role:'HEALER',guildRole:null},
+  {name:'Skarrgan',role:'HEALER',guildRole:null},{name:'Starshiptrooper',role:'HEALER',guildRole:null},
+  {name:'TinySpark',role:'HEALER',guildRole:null},{name:'Valkerynメ',role:'HEALER',guildRole:null},
+  {name:'xxBladde',role:'HEALER',guildRole:null},{name:'Yacoob',role:'HEALER',guildRole:'Advisor'},
+  {name:'alkais',role:'DPS',guildRole:null},{name:'BilalBlc',role:'DPS',guildRole:null},
+  {name:'Boomie',role:'DPS',guildRole:'Advisor'},{name:'DevilNorielll',role:'DPS',guildRole:null},
+  {name:'Firebang',role:'DPS',guildRole:null},{name:'Freeskd',role:'DPS',guildRole:null},
+  {name:'Gitalex',role:'DPS',guildRole:null},{name:'Hagun',role:'DPS',guildRole:null},
+  {name:'Igris',role:'DPS',guildRole:null},{name:'ilenia',role:'DPS',guildRole:null},
+  {name:'Krithh',role:'DPS',guildRole:null},{name:'Lven',role:'DPS',guildRole:null},
+  {name:'McQuay',role:'DPS',guildRole:null},{name:'Nyxゞ',role:'DPS',guildRole:null},
+  {name:'Orcianna',role:'DPS',guildRole:null},{name:'Ricchan',role:'DPS',guildRole:null},
+  {name:'Sinbian',role:'DPS',guildRole:null},{name:'vapx',role:'DPS',guildRole:null},
+  {name:'Zhorkiven',role:'DPS',guildRole:null}
 ];
 
-var TLGM_MEMBERS = []; // populated in init() from API or DEFAULT_MEMBERS
+var TLGM_MEMBERS = [];
 
 // ═══════════════════════════════════════════════════════
 //  API CONFIG
 // ═══════════════════════════════════════════════════════
-var API_BASE = ''; // URL relativ — frontend si API pe acelasi origin (Dokploy)
-
-function apiHeaders(isAdmin){
+function apiHeaders(isAdmin) {
   var h = {'Content-Type':'application/json'};
-  if(isAdmin){
-    var s = localStorage.getItem('nova_admin_secret')||'';
-    if(s) h['X-Admin-Secret'] = s;
+  if (isAdmin) {
+    var s = localStorage.getItem('nova_admin_secret') || '';
+    if (s) h['X-Admin-Secret'] = s;
   }
   return h;
 }
 
-// In-memory cache
-var _warsCache   = null;
+var _warsCache = null;
 var _rosterCache = null;
 var _mAliasCache = null;
 
@@ -265,15 +390,14 @@ var _mAliasCache = null;
 //  APP STATE
 // ═══════════════════════════════════════════════════════
 var appState = {
-  filter: 'All',
+  tab: 'active',       // 'active' | 'archived'
+  filter: 'All',       // 'All' | 'TANK' | 'HEALER' | 'DPS'
   search: '',
-  aliases: {},           // { normalizedName: aliasString }
-  screenshots: [],       // [{ id, dataUrl, label }]
-  scanResults: {},       // { screenshotId: [{ extracted, matched, confidence, status }] }
-  scanning: {},          // { screenshotId: true } — in-progress flags
-  pendingAssign: null,   // { ssId, rowIdx } | null — selected unmatched pill waiting for a member click
-  activeProfile: null,   // idx into TLGM_MEMBERS | null
-  syncPanelOpen: false,  // true = screenshots panel visible in col 4
+  aliases: {},
+  screenshots: [],
+  scanResults: {},
+  scanning: {},
+  pendingAssign: null,
 };
 
 // ═══════════════════════════════════════════════════════
@@ -281,7 +405,7 @@ var appState = {
 // ═══════════════════════════════════════════════════════
 function normalizeName(n) {
   return (n || '').toLowerCase()
-    .replace(/[✗•↗↙✦·メ〆ぞ゜・]/g, '')
+    .replace(/[✗•↗↙✦·メ〆ぞ゜・ゞ]/g, '')
     .replace(/[^\w\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -291,6 +415,14 @@ function memberKey(m) {
   return normalizeName(m.name);
 }
 
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escId(s) {
+  return s.replace(/[^a-z0-9]/g, '_');
+}
+
 function showWarn(msg) {
   var el = document.getElementById('warn-banner');
   el.textContent = msg;
@@ -298,71 +430,32 @@ function showWarn(msg) {
   setTimeout(function(){ el.classList.remove('visible'); }, 5000);
 }
 
-// ═══════════════════════════════════════════════════════
-//  WARS — read war participation from war tracker
-// ═══════════════════════════════════════════════════════
-function loadWarsData(){
-  if(_warsCache !== null) return _warsCache;
-  try{ return JSON.parse(localStorage.getItem('nova_wars')||'[]'); }
-  catch(e){ return []; }
+function namesMatch(a, b) {
+  var na = normalizeName(a);
+  var nb = normalizeName(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  var shorter = na.length <= nb.length ? na : nb;
+  var longer  = na.length <= nb.length ? nb : na;
+  if (longer.startsWith(shorter + ' ') || longer.startsWith(shorter)) return true;
+  return false;
 }
-function getMemberWars(mk){
-  return loadWarsData().filter(function(w){
-    return w.parties && w.parties.some(function(p){
-      return p.members && p.members.some(function(m){ return m.tlgmKey===mk; });
+
+// ═══════════════════════════════════════════════════════
+//  WARS
+// ═══════════════════════════════════════════════════════
+function loadWarsData() {
+  if (_warsCache !== null) return _warsCache;
+  try { return JSON.parse(localStorage.getItem('nova_wars') || '[]'); }
+  catch(e) { return []; }
+}
+
+function getMemberWars(mk) {
+  return loadWarsData().filter(function(w) {
+    return w.parties && w.parties.some(function(p) {
+      return p.members && p.members.some(function(m) { return m.tlgmKey === mk; });
     });
-  });
-}
-
-function openMemberProfile(idx) {
-  appState.activeProfile = idx;
-  appState.syncPanelOpen = false;
-  document.getElementById('screenshots-inner').style.display = 'none';
-  document.getElementById('btn-sync-toggle').classList.remove('active');
-  renderMemberProfile();
-}
-
-function closeMemberProfile() {
-  appState.activeProfile = null;
-  document.getElementById('member-profile-panel').style.display = 'none';
-  document.getElementById('detail-empty-state').style.display = '';
-  document.getElementById('detail-col-title').textContent = 'Selectează un membru';
-}
-
-function toggleSyncPanel() {
-  appState.syncPanelOpen = !appState.syncPanelOpen;
-  var inner   = document.getElementById('screenshots-inner');
-  var btn     = document.getElementById('btn-sync-toggle');
-  var profile = document.getElementById('member-profile-panel');
-  var empty   = document.getElementById('detail-empty-state');
-  if (appState.syncPanelOpen) {
-    inner.style.display = '';
-    profile.style.display = 'none';
-    empty.style.display = 'none';
-    btn.classList.add('active');
-    document.getElementById('detail-col-title').textContent = 'Game Screenshots';
-  } else {
-    inner.style.display = 'none';
-    btn.classList.remove('active');
-    if (appState.activeProfile !== null) {
-      renderMemberProfile();
-    } else {
-      empty.style.display = '';
-      document.getElementById('detail-col-title').textContent = 'Selectează un membru';
-    }
-  }
-}
-
-function renderMemberProfile() {
-  var idx = appState.activeProfile;
-  var roster = TLGM_MEMBERS;
-  if (idx == null || !roster[idx]) return;
-  var m     = roster[idx];
-  var mk    = memberKey(m);
-  var alias = (appState.aliases[mk] || '').trim();
-  var wars  = getMemberWars(mk);
-
-  var warRows = wars.map(function(w) {
+  }).map(function(w) {
     var party = null, memberEntry = null;
     (w.parties || []).forEach(function(p) {
       (p.members || []).forEach(function(pm) {
@@ -371,148 +464,346 @@ function renderMemberProfile() {
     });
     return { war: w, party: party, memberEntry: memberEntry };
   });
+}
 
-  var html = '<div class="profile-header">'
-    + '<div class="profile-avatar avatar-' + m.role + '">' + ([...m.name][0]||'?').toUpperCase() + '</div>'
-    + '<div class="profile-info">'
-    +   '<div class="profile-name">' + escHtml(m.name) + '</div>'
-    +   '<div class="profile-meta">'
-    +     '<span class="role-pill role-' + m.role + '">' + m.role + '</span>'
-    +     (m.guildRole ? ' <span class="guild-badge guild-' + m.guildRole.replace(/\s/g,'') + '">' + m.guildRole + '</span>' : '')
-    +     (alias ? ' <span class="profile-alias">alias: ' + escHtml(alias) + '</span>' : '')
-    +   '</div>'
-    + '</div>'
-    + '</div>';
+function memberHasWars(mk) {
+  return loadWarsData().some(function(w) {
+    return w.parties && w.parties.some(function(p) {
+      return p.members && p.members.some(function(m) { return m.tlgmKey === mk; });
+    });
+  });
+}
 
-  // War stats table
-  if (!warRows.length) {
-    html += '<div class="profile-empty">No war participation found</div>';
+// ═══════════════════════════════════════════════════════
+//  ALIASES
+// ═══════════════════════════════════════════════════════
+function loadAliases() {
+  if (_mAliasCache !== null) return _mAliasCache;
+  try { return JSON.parse(localStorage.getItem('nova_membri_aliases') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveAliases(obj) {
+  _mAliasCache = obj;
+  fetch('/api/aliases/member', { method: 'PUT', headers: apiHeaders(true), body: JSON.stringify(obj) })
+    .catch(function(e) { showWarn('Could not save aliases: ' + e.message); });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ROSTER
+// ═══════════════════════════════════════════════════════
+function loadRoster() {
+  if (_rosterCache !== null) return _rosterCache;
+  try { var r = JSON.parse(localStorage.getItem('nova_membri_roster') || 'null'); return Array.isArray(r) && r.length ? r : null; }
+  catch(e) { return null; }
+}
+function saveRoster() {
+  _rosterCache = TLGM_MEMBERS.slice();
+  fetch('/api/roster', { method: 'PUT', headers: apiHeaders(true), body: JSON.stringify(TLGM_MEMBERS) })
+    .catch(function(e) { showWarn('Could not save roster: ' + e.message); });
+}
+
+// ═══════════════════════════════════════════════════════
+//  TABS / FILTERS / SEARCH
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  appState.tab = tab;
+  document.querySelectorAll('.members-tab').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  renderMemberList();
+}
+
+function setFilter(f) {
+  appState.filter = f;
+  document.querySelectorAll('.filter-pill').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.filter === f);
+  });
+  renderMemberList();
+}
+
+function onSearch(val) {
+  appState.search = val.trim().toLowerCase();
+  renderMemberList();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ARCHIVE / RESTORE
+// ═══════════════════════════════════════════════════════
+function archiveMember(name) {
+  var m = TLGM_MEMBERS.find(function(mem) { return mem.name === name; });
+  if (!m) return;
+  m.active = false;
+  fetch('/api/roster/' + encodeURIComponent(name), {
+    method: 'PATCH', headers: apiHeaders(true), body: JSON.stringify({ active: false })
+  }).catch(function(e) { showWarn('Archive failed: ' + e.message); });
+  saveRoster();
+  renderMemberList();
+}
+
+function restoreMember(name) {
+  var m = TLGM_MEMBERS.find(function(mem) { return mem.name === name; });
+  if (!m) return;
+  m.active = true;
+  fetch('/api/roster/' + encodeURIComponent(name), {
+    method: 'PATCH', headers: apiHeaders(true), body: JSON.stringify({ active: true })
+  }).catch(function(e) { showWarn('Restore failed: ' + e.message); });
+  saveRoster();
+  renderMemberList();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER MEMBER LIST
+// ═══════════════════════════════════════════════════════
+function renderMemberList() {
+  var isArchived = appState.tab === 'archived';
+  var filter = appState.filter;
+  var search = appState.search;
+
+  // Filter by active/archived
+  var list = TLGM_MEMBERS.filter(function(m) {
+    if (isArchived) return m.active === false;
+    return m.active !== false;
+  });
+
+  // Filter by role
+  if (filter !== 'All') {
+    list = list.filter(function(m) { return m.role === filter; });
+  }
+
+  // Filter by search
+  if (search) {
+    list = list.filter(function(m) {
+      return m.name.toLowerCase().indexOf(search) !== -1 ||
+             (appState.aliases[memberKey(m)] || '').toLowerCase().indexOf(search) !== -1;
+    });
+  }
+
+  // Sort: members with wars first (alphabetical), then without wars (alphabetical)
+  var withWars = [];
+  var withoutWars = [];
+  list.forEach(function(m) {
+    if (memberHasWars(memberKey(m))) {
+      withWars.push(m);
+    } else {
+      withoutWars.push(m);
+    }
+  });
+
+  var sortAlpha = function(a, b) { return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }); };
+  withWars.sort(sortAlpha);
+  withoutWars.sort(sortAlpha);
+
+  var html = '';
+
+  // Render members with wars
+  withWars.forEach(function(m) {
+    html += buildMemberRow(m, isArchived, false);
+  });
+
+  // Separator + members without wars
+  if (withoutWars.length && withWars.length) {
+    html += '<div class="members-separator">No war participation yet</div>';
+  } else if (withoutWars.length && !withWars.length) {
+    html += '<div class="members-separator">No war participation yet</div>';
+  }
+
+  withoutWars.forEach(function(m) {
+    html += buildMemberRow(m, isArchived, true);
+  });
+
+  if (!withWars.length && !withoutWars.length) {
+    html += '<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">'
+      + (isArchived ? 'No archived members' : 'No members found') + '</div>';
+  }
+
+  document.getElementById('member-list').innerHTML = html;
+  updateCounter();
+}
+
+function buildMemberRow(m, isArchived, dimmed) {
+  var mk = memberKey(m);
+  var alias = (appState.aliases[mk] || '').trim();
+  var initial = ([...m.name][0] || '?').toUpperCase();
+  var hasAlias = alias !== '';
+
+  var cls = 'member-item' + (dimmed ? ' dimmed' : '');
+  var html = '<div class="' + cls + '">';
+  html += '<div class="member-avatar av-' + m.role + '" onclick="openProfileModal(\'' + escHtml(mk) + '\')" title="View profile">' + initial + '</div>';
+  html += '<span class="member-name" onclick="openProfileModal(\'' + escHtml(mk) + '\')">' + escHtml(m.name) + '</span>';
+  html += '<span class="role-pill-sm rp-' + m.role + '">' + m.role + '</span>';
+  if (m.guildRole) {
+    html += '<span class="member-guild">' + escHtml(m.guildRole) + '</span>';
+  }
+  html += '<span class="member-alias' + (!hasAlias ? ' no-alias' : '') + '">' + (hasAlias ? escHtml(alias) : 'no alias') + '</span>';
+  if (!hasAlias) {
+    html += '<span class="member-status-dot" title="No alias"></span>';
+  }
+  html += '<span class="member-spacer"></span>';
+  if (isArchived) {
+    html += '<button class="member-action-btn restore-btn" onclick="event.stopPropagation();restoreMember(\'' + escHtml(m.name).replace(/'/g, "\\'") + '\')">Restore</button>';
   } else {
-    // Sort by date descending
-    warRows.sort(function(a,b){ return (b.war.date||'').localeCompare(a.war.date||''); });
+    html += '<button class="member-action-btn" onclick="event.stopPropagation();archiveMember(\'' + escHtml(m.name).replace(/'/g, "\\'") + '\')">Archive</button>';
+  }
+  html += '</div>';
+  return html;
+}
 
-    html += '<div style="padding:10px 16px 6px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">War Performance</div>';
-    html += '<div style="padding:0 10px 16px;overflow-x:auto;">';
+function updateCounter() {
+  var active = TLGM_MEMBERS.filter(function(m) { return m.active !== false; }).length;
+  var archived = TLGM_MEMBERS.filter(function(m) { return m.active === false; }).length;
+  var el = document.getElementById('members-count');
+  el.textContent = active + ' active' + (archived ? ' · ' + archived + ' archived' : '');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROFILE MODAL
+// ═══════════════════════════════════════════════════════
+function openProfileModal(mk) {
+  var m = TLGM_MEMBERS.find(function(mem) { return memberKey(mem) === mk; });
+  if (!m) return;
+
+  var alias = (appState.aliases[mk] || '').trim();
+  var warRows = getMemberWars(mk);
+  warRows.sort(function(a, b) { return (b.war.date || '').localeCompare(a.war.date || ''); });
+
+  var initial = ([...m.name][0] || '?').toUpperCase();
+
+  var html = '<div class="profile-top">';
+  html += '<div class="profile-avatar-lg av-' + m.role + '" style="background:' + avatarBg(m.role) + ';">' + initial + '</div>';
+  html += '<div class="profile-info">';
+  html += '<div class="profile-name-lg">' + escHtml(m.name) + '</div>';
+  html += '<div class="profile-meta-row">';
+  html += '<span class="role-pill-sm rp-' + m.role + '">' + m.role + '</span>';
+  if (m.guildRole) html += '<span class="member-guild">' + escHtml(m.guildRole) + '</span>';
+  if (alias) html += '<span class="profile-alias-text">alias: ' + escHtml(alias) + '</span>';
+  html += '</div></div></div>';
+
+  // War Performance
+  if (!warRows.length) {
+    html += '<div class="profile-empty">No war participation found.</div>';
+  } else {
+    html += '<div class="profile-section-title">War Performance</div>';
+    html += '<div class="profile-table-wrap">';
     html += '<table class="data-table" style="font-size:12px;">';
-    html += '<thead><tr><th style="text-align:left;">War</th><th style="text-align:left;">Date</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th><th class="num">TAKEN</th><th class="num">HEAL</th><th style="width:30px;"></th></tr></thead>';
+    html += '<thead><tr><th style="text-align:left;">War</th><th style="text-align:left;">Date</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th><th class="num">TAKEN</th><th class="num">HEAL</th><th style="width:30px;">Trend</th></tr></thead>';
     html += '<tbody>';
 
-    var totK=0, totA=0, totD=0, totT=0, totH=0;
-    warRows.forEach(function(r, idx){
+    var totK = 0, totA = 0, totD = 0, totT = 0, totH = 0;
+    warRows.forEach(function(r, idx) {
       var me = r.memberEntry || {};
-      var k = me.defeat||0, a = me.assist||0, d = me.dmg_dealt||0, t = me.dmg_taken||0, h = me.healed||0;
-      totK+=k; totA+=a; totD+=d; totT+=t; totH+=h;
+      var k = me.defeat || 0, a = me.assist || 0, d = me.dmg_dealt || 0, t = me.dmg_taken || 0, h = me.healed || 0;
+      totK += k; totA += a; totD += d; totT += t; totH += h;
 
-      // Trend: compare with previous war (next in array = older)
       var trend = '';
-      if(idx < warRows.length - 1){
-        var prev = warRows[idx+1].memberEntry || {};
+      if (idx < warRows.length - 1) {
+        var prev = warRows[idx + 1].memberEntry || {};
         var curPerf = k + a;
-        var prevPerf = (prev.defeat||0) + (prev.assist||0);
-        if(curPerf > prevPerf) trend = '<span style="color:var(--heal);font-weight:700;">↑</span>';
-        else if(curPerf < prevPerf) trend = '<span style="color:var(--dps);font-weight:700;">↓</span>';
+        var prevPerf = (prev.defeat || 0) + (prev.assist || 0);
+        if (curPerf > prevPerf) trend = '<span style="color:var(--heal);font-weight:700;">&#8593;</span>';
+        else if (curPerf < prevPerf) trend = '<span style="color:var(--dps);font-weight:700;">&#8595;</span>';
         else trend = '<span style="color:var(--muted);">—</span>';
       } else {
         trend = '<span style="color:var(--muted);">—</span>';
       }
 
       html += '<tr>'
-        +'<td style="font-weight:600;color:var(--text);white-space:nowrap;">vs '+escHtml(r.war.opponent)+'</td>'
-        +'<td style="color:var(--muted);font-size:11px;white-space:nowrap;">'+escHtml(r.war.date)+'</td>'
-        +'<td class="num num-k">'+k+'</td>'
-        +'<td class="num">'+a+'</td>'
-        +'<td class="num num-dmg">'+(d?d.toLocaleString():'0')+'</td>'
-        +'<td class="num num-taken">'+(t?t.toLocaleString():'0')+'</td>'
-        +'<td class="num num-heal">'+(h?h.toLocaleString():'0')+'</td>'
-        +'<td style="text-align:center;">'+trend+'</td>'
-        +'</tr>';
+        + '<td style="font-weight:600;color:var(--text);white-space:nowrap;">vs ' + escHtml(r.war.opponent) + '</td>'
+        + '<td style="color:var(--muted);font-size:11px;white-space:nowrap;">' + escHtml(r.war.date) + '</td>'
+        + '<td class="num num-k">' + k + '</td>'
+        + '<td class="num">' + a + '</td>'
+        + '<td class="num num-dmg">' + (d ? d.toLocaleString() : '0') + '</td>'
+        + '<td class="num num-taken">' + (t ? t.toLocaleString() : '0') + '</td>'
+        + '<td class="num num-heal">' + (h ? h.toLocaleString() : '0') + '</td>'
+        + '<td style="text-align:center;">' + trend + '</td>'
+        + '</tr>';
     });
 
-    // Totals row
     html += '</tbody><tbody><tr class="total-row">'
-      +'<td colspan="2">Total ('+warRows.length+' wars)</td>'
-      +'<td class="num num-k">'+totK+'</td>'
-      +'<td class="num">'+totA+'</td>'
-      +'<td class="num num-dmg">'+totD.toLocaleString()+'</td>'
-      +'<td class="num num-taken">'+totT.toLocaleString()+'</td>'
-      +'<td class="num num-heal">'+totH.toLocaleString()+'</td>'
-      +'<td></td>'
-      +'</tr></tbody>';
+      + '<td colspan="2">Total (' + warRows.length + ' wars)</td>'
+      + '<td class="num num-k">' + totK + '</td>'
+      + '<td class="num">' + totA + '</td>'
+      + '<td class="num num-dmg">' + totD.toLocaleString() + '</td>'
+      + '<td class="num num-taken">' + totT.toLocaleString() + '</td>'
+      + '<td class="num num-heal">' + totH.toLocaleString() + '</td>'
+      + '<td></td>'
+      + '</tr></tbody>';
 
     html += '</table></div>';
   }
 
-  var panel = document.getElementById('member-profile-panel');
-  panel.innerHTML = html;
-  panel.style.display = 'flex';
-  panel.style.flexDirection = 'column';
-  document.getElementById('detail-empty-state').style.display = 'none';
-  document.getElementById('detail-col-title').textContent = m.name;
+  document.getElementById('profile-body').innerHTML = html;
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+function avatarBg(role) {
+  if (role === 'TANK') return '#3a5fb8';
+  if (role === 'HEALER') return '#2d8a4e';
+  if (role === 'DPS') return '#b83a3a';
+  return '#555';
 }
 
 // ═══════════════════════════════════════════════════════
-//  ALIASES — API + cache
+//  ADD MEMBER
 // ═══════════════════════════════════════════════════════
-function loadAliases() {
-  if(_mAliasCache !== null) return _mAliasCache;
-  try { return JSON.parse(localStorage.getItem('nova_membri_aliases') || '{}'); }
-  catch(e) { return {}; }
+function openAddForm() {
+  document.getElementById('add-name-input').value = '';
+  document.getElementById('add-role-select').value = 'TANK';
+  document.getElementById('add-guild-select').value = '';
+  document.getElementById('add-form-overlay').classList.add('open');
+  setTimeout(function() { document.getElementById('add-name-input').focus(); }, 100);
 }
-function saveAliases(obj) {
-  _mAliasCache = obj;
-  fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(true),body:JSON.stringify(obj)})
-    .catch(function(e){ showWarn('Could not save aliases: '+e.message); });
+function closeAddForm() {
+  document.getElementById('add-form-overlay').classList.remove('open');
+}
+function confirmAddMember() {
+  var name = document.getElementById('add-name-input').value.trim();
+  var role = document.getElementById('add-role-select').value;
+  var guildRole = document.getElementById('add-guild-select').value || null;
+  if (!name) { showWarn('Name is required.'); return; }
+  var key = normalizeName(name);
+  if (TLGM_MEMBERS.find(function(m) { return memberKey(m) === key; })) {
+    showWarn('"' + name + '" already exists in the roster.');
+    return;
+  }
+  TLGM_MEMBERS.push({ name: name, role: role, guildRole: guildRole });
+  saveRoster();
+  closeAddForm();
+  renderMemberList();
 }
 
 // ═══════════════════════════════════════════════════════
-//  ROSTER — API + cache
-// ═══════════════════════════════════════════════════════
-function loadRoster() {
-  if(_rosterCache !== null) return _rosterCache;
-  try { var r = JSON.parse(localStorage.getItem('nova_membri_roster') || 'null'); return Array.isArray(r) && r.length ? r : null; }
-  catch(e) { return null; }
-}
-function saveRoster() {
-  _rosterCache = TLGM_MEMBERS.slice();
-  fetch('/api/roster',{method:'PUT',headers:apiHeaders(true),body:JSON.stringify(TLGM_MEMBERS)})
-    .catch(function(e){ showWarn('Could not save roster: '+e.message); });
-}
-
-// ═══════════════════════════════════════════════════════
-//  PARSE TLGM TEXT
+//  ROSTER MODAL
 // ═══════════════════════════════════════════════════════
 function parseTlgmText(text) {
-  var lines   = text.split('\n');
-  var result  = [];
+  var lines = text.split('\n');
+  var result = [];
   var curRole = null;
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i].trim();
     if (!line) continue;
-    // Section header detection
     if (/tank/i.test(line) && /#+/.test(line)) { curRole = 'TANK'; continue; }
     if (/healer/i.test(line) && /#+/.test(line)) { curRole = 'HEALER'; continue; }
     if (/dps/i.test(line) && /#+/.test(line)) { curRole = 'DPS'; continue; }
     if (!curRole) continue;
-    // Table row: must start with |
     if (line.charAt(0) !== '|') continue;
-    var cols = line.split('|').map(function(s){ return s.trim(); }).filter(Boolean);
+    var cols = line.split('|').map(function(s) { return s.trim(); }).filter(Boolean);
     if (cols.length < 2) continue;
     var rawName = cols[0].replace(/\*\*/g, '').trim();
     var rawRole = cols[1] || '';
-    // Skip header/separator rows
     if (!rawName || rawName === 'Nume' || /^-+$/.test(rawName)) continue;
     var guildRole = null;
-    if (/Leader/i.test(rawRole))   guildRole = 'Leader';
-    else if (/Advisor/i.test(rawRole))  guildRole = 'Advisor';
+    if (/Leader/i.test(rawRole)) guildRole = 'Leader';
+    else if (/Advisor/i.test(rawRole)) guildRole = 'Advisor';
     else if (/On Leave/i.test(rawRole)) guildRole = 'On Leave';
     result.push({ name: rawName, role: curRole, guildRole: guildRole });
   }
   return result;
 }
 
-// ═══════════════════════════════════════════════════════
-//  MODAL — Edit Roster (paste full text)
-// ═══════════════════════════════════════════════════════
 var _parsedPreview = null;
 
 function openRosterModal() {
@@ -534,108 +825,32 @@ function previewParsed() {
     document.getElementById('btn-modal-apply').classList.remove('ready');
     return;
   }
-  var tanks   = _parsedPreview.filter(function(m){ return m.role==='TANK'; }).length;
-  var healers = _parsedPreview.filter(function(m){ return m.role==='HEALER'; }).length;
-  var dps     = _parsedPreview.filter(function(m){ return m.role==='DPS'; }).length;
-  prev.innerHTML = '<span style="color:var(--heal)">✓ ' + _parsedPreview.length + ' members</span>'
+  var tanks = _parsedPreview.filter(function(m) { return m.role === 'TANK'; }).length;
+  var healers = _parsedPreview.filter(function(m) { return m.role === 'HEALER'; }).length;
+  var dps = _parsedPreview.filter(function(m) { return m.role === 'DPS'; }).length;
+  prev.innerHTML = '<span style="color:var(--heal)">' + _parsedPreview.length + ' members</span>'
     + ' — <span style="color:var(--tank)">' + tanks + ' Tank</span>'
     + ' · <span style="color:var(--heal)">' + healers + ' Healer</span>'
-    + ' · <span style="color:var(--dps)">'  + dps     + ' DPS</span>';
+    + ' · <span style="color:var(--dps)">' + dps + ' DPS</span>';
   document.getElementById('btn-modal-apply').classList.add('ready');
 }
 function applyRosterUpdate() {
   if (!_parsedPreview || !_parsedPreview.length) return;
   TLGM_MEMBERS.length = 0;
-  _parsedPreview.forEach(function(m){ TLGM_MEMBERS.push(m); });
+  _parsedPreview.forEach(function(m) { TLGM_MEMBERS.push(m); });
   saveRoster();
   closeRosterModal();
   renderMemberList();
-  updateCounters();
 }
 
 // ═══════════════════════════════════════════════════════
-//  ADD MEMBER
+//  SYNC / SCREENSHOT PANEL
 // ═══════════════════════════════════════════════════════
-function toggleAddForm() {
-  var form = document.getElementById('add-member-form');
-  if (form.classList.contains('visible')) {
-    form.classList.remove('visible');
-  } else {
-    document.getElementById('add-name-input').value = '';
-    document.getElementById('add-role-select').value = 'TANK';
-    document.getElementById('add-guild-select').value = '';
-    form.classList.add('visible');
-    document.getElementById('add-name-input').focus();
-  }
+function openSyncPanel() {
+  document.getElementById('sync-overlay').classList.add('open');
 }
-function cancelAddMember() {
-  document.getElementById('add-member-form').classList.remove('visible');
-}
-function confirmAddMember() {
-  var name      = document.getElementById('add-name-input').value.trim();
-  var role      = document.getElementById('add-role-select').value;
-  var guildRole = document.getElementById('add-guild-select').value || null;
-  if (!name) { showWarn('Name is required.'); return; }
-  var key = normalizeName(name);
-  if (TLGM_MEMBERS.find(function(m){ return memberKey(m) === key; })) {
-    showWarn('"' + name + '" already exists in the roster.');
-    return;
-  }
-  TLGM_MEMBERS.push({ name: name, role: role, guildRole: guildRole });
-  saveRoster();
-  cancelAddMember();
-  renderMemberList();
-  updateCounters();
-}
-
-// ═══════════════════════════════════════════════════════
-//  PER-ROW EDIT
-// ═══════════════════════════════════════════════════════
-function onNameEdit(input, idx) {
-  var newName = input.value.trim();
-  var member  = TLGM_MEMBERS[idx];
-  if (!member) return;
-  if (!newName) { input.value = member.name; return; } // revert if cleared
-  if (newName === member.name) return;                   // no change
-  var oldKey = memberKey(member);
-  var newKey = normalizeName(newName);
-  // Migrate alias
-  if (appState.aliases[oldKey]) {
-    appState.aliases[newKey] = appState.aliases[oldKey];
-    delete appState.aliases[oldKey];
-    saveAliases(appState.aliases);
-  }
-  member.name = newName;
-  saveRoster();
-  renderMemberList();
-  updateCounters();
-}
-
-function cycleRole(idx) {
-  var member = TLGM_MEMBERS[idx];
-  if (!member) return;
-  var roles = ['TANK','HEALER','DPS'];
-  var next  = roles[(roles.indexOf(member.role) + 1) % roles.length];
-  member.role = next;
-  saveRoster();
-  renderMemberList();
-}
-
-function cycleGuildRole(idx) {
-  var member = TLGM_MEMBERS[idx];
-  if (!member) return;
-  var options = [null,'Leader','Advisor','On Leave'];
-  var cur  = options.indexOf(member.guildRole);
-  member.guildRole = options[(cur + 1) % options.length];
-  saveRoster();
-  renderMemberList();
-}
-
-function deleteMember(idx) {
-  TLGM_MEMBERS.splice(idx, 1);
-  saveRoster();
-  renderMemberList();
-  updateCounters();
+function closeSyncPanel() {
+  document.getElementById('sync-overlay').classList.remove('open');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -650,31 +865,31 @@ function openDB(cb) {
     e.target.result.createObjectStore('screenshots', { keyPath: 'id' });
   };
   req.onsuccess = function(e) { DB = e.target.result; cb(null); };
-  req.onerror   = function(e) { cb(e.target.error); };
+  req.onerror = function(e) { cb(e.target.error); };
 }
 
 function dbPut(item, cb) {
   if (!DB) { cb && cb(); return; }
   var tx = DB.transaction('screenshots', 'readwrite');
   tx.objectStore('screenshots').put(item);
-  tx.oncomplete = function(){ cb && cb(); };
-  tx.onerror    = function(e){ cb && cb(e.target.error); };
+  tx.oncomplete = function() { cb && cb(); };
+  tx.onerror = function(e) { cb && cb(e.target.error); };
 }
 
 function dbGetAll(cb) {
   if (!DB) { cb([]); return; }
   var tx = DB.transaction('screenshots', 'readonly');
   var req = tx.objectStore('screenshots').getAll();
-  req.onsuccess = function(){ cb(req.result || []); };
-  req.onerror   = function(){ cb([]); };
+  req.onsuccess = function() { cb(req.result || []); };
+  req.onerror = function() { cb([]); };
 }
 
 function dbDelete(id, cb) {
   if (!DB) { cb && cb(); return; }
   var tx = DB.transaction('screenshots', 'readwrite');
   tx.objectStore('screenshots').delete(id);
-  tx.oncomplete = function(){ cb && cb(); };
-  tx.onerror    = function(){ cb && cb(); };
+  tx.oncomplete = function() { cb && cb(); };
+  tx.onerror = function() { cb && cb(); };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -682,7 +897,7 @@ function dbDelete(id, cb) {
 // ═══════════════════════════════════════════════════════
 function compressImage(dataUrl, maxWidth, quality) {
   maxWidth = maxWidth || 1280;
-  quality  = quality  || 0.78;
+  quality = quality || 0.78;
   return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
@@ -746,33 +961,19 @@ async function extractNamesFromScreenshot(dataUrl) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  NAME MATCHING
+//  NAME MATCHING + SCAN ACTIONS
 // ═══════════════════════════════════════════════════════
-function namesMatch(a, b) {
-  var na = normalizeName(a);
-  var nb = normalizeName(b);
-  if (!na || !nb) return false;
-  if (na === nb) return true;
-  var shorter = na.length <= nb.length ? na : nb;
-  var longer  = na.length <= nb.length ? nb : na;
-  if (longer.startsWith(shorter + ' ') || longer.startsWith(shorter)) return true;
-  return false;
-}
-
 function autoMatch(extractedNames) {
   return extractedNames.map(function(extracted) {
     var norm = normalizeName(extracted);
-    var exact = TLGM_MEMBERS.find(function(m){ return memberKey(m) === norm; });
+    var exact = TLGM_MEMBERS.find(function(m) { return memberKey(m) === norm; });
     if (exact) return { extracted: extracted, matched: exact, confidence: 'exact' };
-    var fuzzy = TLGM_MEMBERS.find(function(m){ return namesMatch(extracted, m.name); });
+    var fuzzy = TLGM_MEMBERS.find(function(m) { return namesMatch(extracted, m.name); });
     if (fuzzy) return { extracted: extracted, matched: fuzzy, confidence: 'fuzzy' };
     return { extracted: extracted, matched: null, confidence: 'none' };
   });
 }
 
-// ═══════════════════════════════════════════════════════
-//  SCAN ACTIONS
-// ═══════════════════════════════════════════════════════
 function acceptMatch(ssId, rowIdx) {
   var rows = appState.scanResults[ssId];
   if (!rows || !rows[rowIdx] || !rows[rowIdx].matched) return;
@@ -781,21 +982,16 @@ function acceptMatch(ssId, rowIdx) {
   appState.aliases[key] = row.extracted;
   saveAliases(appState.aliases);
   row.status = 'accepted';
-  // Surgical update: dot + alias input
-  var dot = document.getElementById('dot-' + escId(key));
-  if (dot) { dot.className = 'status-dot matched'; dot.title = 'Alias set: ' + row.extracted; }
-  document.querySelectorAll('.alias-input[data-key="' + key + '"]').forEach(function(inp){ inp.value = row.extracted; });
-  updateCounters();
   renderScanRow(ssId, rowIdx);
   refreshApplyBtn(ssId);
   renderUnresolvedSection(ssId);
+  renderMemberList();
 }
 
 function skipMatch(ssId, rowIdx) {
   var rows = appState.scanResults[ssId];
   if (!rows || !rows[rowIdx]) return;
   rows[rowIdx].status = 'skipped';
-  // Clear pending if it was this row
   if (appState.pendingAssign && appState.pendingAssign.ssId === ssId && appState.pendingAssign.rowIdx === rowIdx) {
     appState.pendingAssign = null;
   }
@@ -807,11 +1003,11 @@ function skipMatch(ssId, rowIdx) {
 function assignFromSelect(ssId, rowIdx, sel) {
   var mk = sel.value;
   if (!mk) return;
-  var member = TLGM_MEMBERS.find(function(m){ return memberKey(m) === mk; });
+  var member = TLGM_MEMBERS.find(function(m) { return memberKey(m) === mk; });
   if (!member) return;
   var rows = appState.scanResults[ssId];
   if (!rows || !rows[rowIdx]) return;
-  rows[rowIdx].matched    = member;
+  rows[rowIdx].matched = member;
   rows[rowIdx].confidence = 'manual';
   acceptMatch(ssId, rowIdx);
 }
@@ -824,17 +1020,16 @@ function applyAllMatches(ssId) {
 }
 
 function refreshApplyBtn(ssId) {
-  var rows    = appState.scanResults[ssId] || [];
-  var pending = rows.filter(function(r){ return r.status === 'pending' && r.matched; }).length;
+  var rows = appState.scanResults[ssId] || [];
+  var pending = rows.filter(function(r) { return r.status === 'pending' && r.matched; }).length;
   var btn = document.getElementById('apply-btn-' + ssId);
   if (btn) { btn.style.display = pending ? 'inline-block' : 'none'; }
 }
 
-// ── Unresolved / Suggestions Panel ──
 function selectForAssign(ssId, rowIdx) {
   var pa = appState.pendingAssign;
   if (pa && pa.ssId === ssId && pa.rowIdx === rowIdx) {
-    appState.pendingAssign = null; // deselect on second click
+    appState.pendingAssign = null;
   } else {
     appState.pendingAssign = { ssId: ssId, rowIdx: rowIdx };
   }
@@ -844,84 +1039,64 @@ function selectForAssign(ssId, rowIdx) {
 function assignToMember(ssId, mk) {
   if (!appState.pendingAssign || appState.pendingAssign.ssId !== ssId) return;
   var rowIdx = appState.pendingAssign.rowIdx;
-  var member = TLGM_MEMBERS.find(function(m){ return memberKey(m) === mk; });
+  var member = TLGM_MEMBERS.find(function(m) { return memberKey(m) === mk; });
   if (!member) return;
   var rows = appState.scanResults[ssId];
   if (!rows || !rows[rowIdx]) return;
-  rows[rowIdx].matched    = member;
+  rows[rowIdx].matched = member;
   rows[rowIdx].confidence = 'manual';
-  appState.pendingAssign  = null;
-  acceptMatch(ssId, rowIdx); // saves alias, updates dot, calls renderUnresolvedSection
+  appState.pendingAssign = null;
+  acceptMatch(ssId, rowIdx);
 }
 
 function renderUnresolvedSection(ssId) {
   var container = document.getElementById('scan-unresolved-' + ssId);
   if (!container) return;
-
   var rows = appState.scanResults[ssId] || [];
-
-  // Unmatched = no auto-match AND not yet skipped
-  var unmatched = rows.filter(function(r){
+  var unmatched = rows.filter(function(r) {
     return r.confidence === 'none' && r.status !== 'skipped' && r.status !== 'accepted';
   });
-
-  // Unaliased TLGM members
-  var unaliased = TLGM_MEMBERS.filter(function(m){
+  var unaliased = TLGM_MEMBERS.filter(function(m) {
     return !(appState.aliases[memberKey(m)] || '').trim();
   });
-
   if (!unmatched.length || !unaliased.length) {
     container.style.display = 'none';
     return;
   }
-
-  var pa         = appState.pendingAssign;
-  var hasSelected= pa && pa.ssId === ssId;
-  var selRowIdx  = hasSelected ? pa.rowIdx : -1;
-
+  var pa = appState.pendingAssign;
+  var hasSelected = pa && pa.ssId === ssId;
+  var selRowIdx = hasSelected ? pa.rowIdx : -1;
   var html = '<div class="unresolved-header">Unresolved Names</div>'
     + '<div class="unresolved-hint">'
-    + (hasSelected ? '✦ Now click a member below to assign the selected name' : 'Click a name, then click a member to assign')
+    + (hasSelected ? 'Now click a member below to assign the selected name' : 'Click a name, then click a member to assign')
     + '</div>'
     + '<div class="extracted-pills">';
-
   unmatched.forEach(function(row) {
     var origIdx = rows.indexOf(row);
-    var isSel   = origIdx === selRowIdx;
+    var isSel = origIdx === selRowIdx;
     html += '<span class="extracted-pill' + (isSel ? ' selected' : '') + '" '
       + 'onclick="selectForAssign(\'' + ssId + '\',' + origIdx + ')">'
-      + escHtml(row.extracted)
-      + '</span>';
+      + escHtml(row.extracted) + '</span>';
   });
-
-  // Also show skipped pills greyed out (for reference)
-  var skipped = rows.filter(function(r){ return r.confidence === 'none' && r.status === 'skipped'; });
+  var skipped = rows.filter(function(r) { return r.confidence === 'none' && r.status === 'skipped'; });
   skipped.forEach(function(row) {
     html += '<span class="extracted-pill skipped-pill" title="Skipped">' + escHtml(row.extracted) + '</span>';
   });
-
   html += '</div>';
-
-  // Unaliased members grouped by role
-  ['TANK','HEALER','DPS'].forEach(function(role) {
-    var group = unaliased.filter(function(m){ return m.role === role; });
+  ['TANK', 'HEALER', 'DPS'].forEach(function(role) {
+    var group = unaliased.filter(function(m) { return m.role === role; });
     if (!group.length) return;
-    var labels = {TANK:'🛡 Tank','HEALER':'💚 Healer','DPS':'⚔ DPS'};
+    var labels = { TANK: 'Tank', HEALER: 'Healer', DPS: 'DPS' };
     html += '<div class="unresolved-role-group">'
-      + '<div class="unresolved-role-label unresolved-role-' + role + '">'
-      + labels[role] + ' <span style="opacity:.5;font-size:9px;">' + group.length + ' unaliased</span>'
-      + '</div>';
+      + '<div class="unresolved-role-label">' + labels[role] + ' <span style="opacity:.5;font-size:9px;">' + group.length + ' unaliased</span></div>';
     group.forEach(function(m) {
       var mk = memberKey(m);
       html += '<button class="member-assign-btn' + (hasSelected ? ' assign-ready' : '') + '" '
-        + 'onclick="' + (hasSelected ? 'assignToMember(\'' + ssId + '\',\'' + escHtml(mk) + '\')' : 'void(0)') + '" '
-        + 'title="' + escHtml(m.name) + (m.guildRole ? ' — '+m.guildRole : '') + '">'
-        + escHtml(m.name)
-        + '</button>';
+        + 'onclick="' + (hasSelected ? 'assignToMember(\'' + ssId + '\',\'' + escHtml(mk) + '\')' : 'void(0)') + '">'
+        + escHtml(m.name) + '</button>';
     });
     html += '</div>';
   });
-
   container.innerHTML = html;
   container.style.display = 'block';
 }
@@ -931,32 +1106,29 @@ function buildScanRowHtml(ssId, idx, row) {
   var matchCell;
   if (row.matched) {
     matchCell = '<div class="scan-match-cell">'
-      + '<span class="role-pill role-' + row.matched.role + '" style="font-size:8px;padding:1px 4px;">' + row.matched.role + '</span>'
+      + '<span class="role-pill-sm rp-' + row.matched.role + '">' + row.matched.role + '</span>'
       + '<span class="scan-match-name">' + escHtml(row.matched.name) + '</span>'
       + '</div>';
   } else {
     matchCell = '<span class="scan-no-match">— no match</span>';
   }
-
   var actionsCell;
   if (row.status === 'accepted' || alreadySet) {
-    actionsCell = '<span class="scan-done">✓ set</span>';
+    actionsCell = '<span class="scan-done">set</span>';
   } else if (row.status === 'skipped') {
     actionsCell = '<span class="scan-skipped">skipped</span>';
   } else if (row.matched) {
     actionsCell = '<div class="scan-actions">'
-      + '<button class="scan-btn-accept" onclick="acceptMatch(\'' + ssId + '\',' + idx + ')">✓ Accept</button>'
-      + '<button class="scan-btn-skip"   onclick="skipMatch(\'' + ssId + '\',' + idx + ')">✕</button>'
+      + '<button class="scan-btn-accept" onclick="acceptMatch(\'' + ssId + '\',' + idx + ')">Accept</button>'
+      + '<button class="scan-btn-skip" onclick="skipMatch(\'' + ssId + '\',' + idx + ')">Skip</button>'
       + '</div>';
   } else {
-    // No match — handled in the role-grouped suggestions panel below
     actionsCell = '<div class="scan-actions">'
-      + '<span class="scan-no-match-hint">↓ assign below</span>'
-      + '<button class="scan-btn-skip" onclick="skipMatch(\'' + ssId + '\',' + idx + ')">✕</button>'
+      + '<span class="scan-no-match" style="font-size:10px;">assign below</span>'
+      + '<button class="scan-btn-skip" onclick="skipMatch(\'' + ssId + '\',' + idx + ')">Skip</button>'
       + '</div>';
   }
-
-  return '<td class="scan-name" title="' + escHtml(row.extracted) + '">' + escHtml(row.extracted) + '</td>'
+  return '<td class="scan-name">' + escHtml(row.extracted) + '</td>'
     + '<td>' + matchCell + '</td>'
     + '<td>' + actionsCell + '</td>';
 }
@@ -972,22 +1144,19 @@ function renderScanResults(ssId) {
   if (!container) return;
   var rows = appState.scanResults[ssId];
   if (!rows || !rows.length) { container.style.display = 'none'; return; }
-
-  var total    = rows.length;
-  var nmatched = rows.filter(function(r){ return r.matched; }).length;
+  var total = rows.length;
+  var nmatched = rows.filter(function(r) { return r.matched; }).length;
   var nunmatched = total - nmatched;
-  var pending  = rows.filter(function(r){ return r.status === 'pending' && r.matched; }).length;
-
+  var pending = rows.filter(function(r) { return r.status === 'pending' && r.matched; }).length;
   var html = '<div class="scan-summary">'
     + '<span>' + total + ' names · <span style="color:var(--heal)">' + nmatched + ' matched</span>'
     + (nunmatched ? ' · <span style="color:var(--muted)">' + nunmatched + ' unmatched</span>' : '')
     + '</span>'
     + '<button class="btn-apply-all" id="apply-btn-' + ssId + '" '
-    +   'onclick="applyAllMatches(\'' + ssId + '\')" '
-    +   'style="display:' + (pending ? 'inline-block' : 'none') + '">✓ Apply All</button>'
+    + 'onclick="applyAllMatches(\'' + ssId + '\')" '
+    + 'style="display:' + (pending ? 'inline-block' : 'none') + '">Apply All</button>'
     + '</div>'
     + '<table class="scan-table"><tbody>';
-
   rows.forEach(function(row, idx) {
     html += '<tr id="scan-row-' + ssId + '-' + idx + '">' + buildScanRowHtml(ssId, idx, row) + '</tr>';
   });
@@ -1000,208 +1169,99 @@ function renderScanResults(ssId) {
 
 async function scanScreenshot(id) {
   if (appState.scanning[id]) return;
-  var ss = appState.screenshots.find(function(s){ return s.id === id; });
+  var ss = appState.screenshots.find(function(s) { return s.id === id; });
   if (!ss) return;
   var container = document.getElementById('scan-results-' + id);
   var btn = document.getElementById('scan-btn-' + id);
-
   if (!loadApiKey()) {
     if (container) {
-      container.innerHTML = '<div class="scan-error">No API key — set it in <a href="../nova_war_tracker_v2.html" style="color:var(--gold)">War Tracker → Settings</a></div>';
+      container.innerHTML = '<div class="scan-error">No API key — set it in Settings.</div>';
       container.style.display = 'block';
     }
     return;
   }
-
   appState.scanning[id] = true;
-  if (btn) { btn.disabled = true; btn.textContent = '…'; }
-  if (container) { container.innerHTML = '<div class="scan-spinning">🔍 Scanning…</div>'; container.style.display = 'block'; }
-
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  if (container) { container.innerHTML = '<div class="scan-spinning">Scanning...</div>'; container.style.display = 'block'; }
   try {
-    var names   = await extractNamesFromScreenshot(ss.dataUrl);
+    var names = await extractNamesFromScreenshot(ss.dataUrl);
     var results = autoMatch(names);
-    results.forEach(function(r){ r.status = 'pending'; });
+    results.forEach(function(r) { r.status = 'pending'; });
     appState.scanResults[id] = results;
     renderScanResults(id);
   } catch(err) {
     var msg = err.message === 'no-key'
-      ? 'No API key — set it in <a href="../nova_war_tracker_v2.html" style="color:var(--gold)">War Tracker → Settings</a>'
+      ? 'No API key — set it in Settings.'
       : 'Scan failed: ' + escHtml(String(err.message));
     if (container) { container.innerHTML = '<div class="scan-error">' + msg + '</div>'; container.style.display = 'block'; }
   } finally {
     appState.scanning[id] = false;
-    if (btn) { btn.disabled = false; btn.textContent = '🔍 Scan'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Scan'; }
   }
 }
 
 async function scanAll() {
   var screenshots = appState.screenshots;
   if (!screenshots.length) return;
-
-  var btn       = document.getElementById('btn-scan-all');
+  var btn = document.getElementById('btn-scan-all');
   var container = document.getElementById('scan-results-combined');
-
   if (!loadApiKey()) {
     if (container) {
-      container.innerHTML = '<div class="scan-error">No API key — set it in <a href="../nova_war_tracker_v2.html" style="color:var(--gold)">War Tracker → Settings</a></div>';
+      container.innerHTML = '<div class="scan-error">No API key — set it in Settings.</div>';
       container.style.display = 'block';
     }
     return;
   }
-
-  // Reset previous results
   appState.scanResults['combined'] = null;
   appState.pendingAssign = null;
-
-  if (btn) { btn.disabled = true; btn.textContent = 'Scanning…'; }
-
+  if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
   var allNames = [];
-  var total    = screenshots.length;
-  var errors   = [];
-
+  var total = screenshots.length;
+  var errors = [];
   for (var i = 0; i < total; i++) {
     var ss = screenshots[i];
-    // Progress indicator
     if (container) {
-      container.innerHTML = '<div class="scan-spinning">🔍 Scanning screenshot ' + (i + 1) + ' of ' + total + '…</div>';
+      container.innerHTML = '<div class="scan-spinning">Scanning screenshot ' + (i + 1) + ' of ' + total + '...</div>';
       container.style.display = 'block';
     }
     try {
       var names = await extractNamesFromScreenshot(ss.dataUrl);
-      allNames  = allNames.concat(names);
+      allNames = allNames.concat(names);
     } catch(err) {
       errors.push((ss.label || ('Screenshot ' + (i + 1))) + ': ' + String(err.message));
     }
   }
-
   if (!allNames.length) {
     if (container) {
       var errMsg = errors.length ? '<br><span style="font-size:10px;opacity:.6">' + errors.map(escHtml).join('<br>') + '</span>' : '';
       container.innerHTML = '<div class="scan-error">No names extracted.' + errMsg + '</div>';
       container.style.display = 'block';
     }
-    if (btn) { btn.disabled = false; btn.textContent = '🔍 Scan All'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Scan All'; }
     return;
   }
-
-  // Deduplicate by normalized name (keep first occurrence / original casing)
-  var seen   = {};
+  var seen = {};
   var unique = allNames.filter(function(n) {
     var k = normalizeName(n);
     if (!k || seen[k]) return false;
     seen[k] = true;
     return true;
   });
-
   var results = autoMatch(unique);
-  results.forEach(function(r){ r.status = 'pending'; });
+  results.forEach(function(r) { r.status = 'pending'; });
   appState.scanResults['combined'] = results;
-
   renderScanResults('combined');
-
-  // Show any errors as a small notice after results
   if (errors.length && container) {
     var notice = document.createElement('div');
-    notice.style.cssText = 'padding:6px 10px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);';
-    notice.textContent = '⚠ ' + errors.length + ' screenshot(s) failed to scan: ' + errors.join('; ');
+    notice.style.cssText = 'padding:6px 10px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-subtle);';
+    notice.textContent = errors.length + ' screenshot(s) failed to scan: ' + errors.join('; ');
     container.appendChild(notice);
   }
-
-  if (btn) { btn.disabled = false; btn.textContent = '🔍 Scan All'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Scan All'; }
 }
 
 // ═══════════════════════════════════════════════════════
-//  RENDERING — ROLE COLUMNS
-// ═══════════════════════════════════════════════════════
-function renderRoleColumns() {
-  var aliases = appState.aliases;
-  ['DPS','TANK','HEALER'].forEach(function(role) {
-    var members = TLGM_MEMBERS.filter(function(m){ return m.role === role; });
-    var html = '';
-    members.forEach(function(m) {
-      var idx = TLGM_MEMBERS.indexOf(m);
-      html += renderMemberRow(m, aliases[memberKey(m)] || '', idx);
-    });
-    document.getElementById('col-'+role).innerHTML = html || '<div class="list-empty">—</div>';
-    var cnt = document.getElementById('col-count-'+role);
-    if (cnt) cnt.textContent = members.length;
-  });
-}
-
-// Keep as alias for callers
-function renderMemberList() { renderRoleColumns(); }
-
-function renderMemberRow(m, alias, idx) {
-  var key        = memberKey(m);
-  var initial    = ([...m.name][0] || '?').toUpperCase();
-  var matched    = alias.trim() !== '';
-  var dotClass   = matched ? 'matched' : 'unmatched';
-  var guildBadge = '';
-  if (m.guildRole) {
-    var gc = m.guildRole.replace(/\s/g,'');
-    guildBadge = '<span class="guild-badge guild-' + gc + ' guild-badge-btn" title="Click to change guild role" onclick="cycleGuildRole(' + idx + ')">' + m.guildRole + '</span>';
-  } else {
-    guildBadge = '<span class="guild-badge guild-badge-btn" title="Click to set guild role" onclick="cycleGuildRole(' + idx + ')" style="color:var(--border2);font-size:9px;">—</span>';
-  }
-  return '<div class="member-row" data-idx="' + idx + '">'
-    + '<div class="member-avatar avatar-' + m.role + ' avatar-clickable" onclick="openMemberProfile(' + idx + ')" title="View profile">' + initial + '</div>'
-    + '<input class="name-edit-input" type="text" value="' + escHtml(m.name) + '" '
-    +   'title="Click to rename" onblur="onNameEdit(this,' + idx + ')">'
-    + guildBadge
-    + '<input class="alias-input" type="text" value="' + escHtml(alias) + '" '
-    +   'placeholder="in-game name…" data-key="' + escHtml(key) + '" '
-    +   'onblur="onAliasChange(this)">'
-    + '<div class="status-dot ' + dotClass + '" id="dot-' + escId(key) + '" '
-    +   'title="' + (matched ? 'Alias set: '+escHtml(alias) : 'No alias') + '"></div>'
-    + '<button class="btn-del-member" title="Remove member" onclick="deleteMember(' + idx + ')">✕</button>'
-    + '</div>';
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function escId(s) {
-  return s.replace(/[^a-z0-9]/g,'_');
-}
-
-// ═══════════════════════════════════════════════════════
-//  COUNTER PILL
-// ═══════════════════════════════════════════════════════
-function updateCounters() {
-  var aliases   = appState.aliases;
-  var total     = TLGM_MEMBERS.length;
-  var matched   = TLGM_MEMBERS.filter(function(m){ return (aliases[memberKey(m)]||'').trim() !== ''; }).length;
-  var unmatched = total - matched;
-  document.getElementById('cnt-total').textContent    = total + ' members';
-  document.getElementById('cnt-matched').textContent  = matched + ' matched';
-  document.getElementById('cnt-unmatched').textContent= unmatched + ' unmatched';
-}
-
-// ═══════════════════════════════════════════════════════
-//  EVENTS — ALIAS
-// ═══════════════════════════════════════════════════════
-function onAliasChange(input) {
-  var key   = input.dataset.key;
-  var value = input.value.trim();
-
-  if (value) {
-    appState.aliases[key] = value;
-  } else {
-    delete appState.aliases[key];
-  }
-  saveAliases(appState.aliases);
-
-  // Surgical update: just the dot
-  var dot = document.getElementById('dot-' + escId(key));
-  if (dot) {
-    dot.className = 'status-dot ' + (value ? 'matched' : 'unmatched');
-    dot.title     = value ? 'Alias set: ' + value : 'No alias';
-  }
-  updateCounters();
-}
-
-// ═══════════════════════════════════════════════════════
-//  EVENTS — SCREENSHOT UPLOAD
+//  SCREENSHOT UPLOAD / GALLERY
 // ═══════════════════════════════════════════════════════
 function onDragOver(e) {
   e.preventDefault();
@@ -1213,7 +1273,7 @@ function onDragLeave(e) {
 function onDrop(e) {
   e.preventDefault();
   document.getElementById('upload-zone').classList.remove('drag-active');
-  var files = Array.from(e.dataTransfer.files).filter(function(f){ return f.type.startsWith('image/'); });
+  var files = Array.from(e.dataTransfer.files).filter(function(f) { return f.type.startsWith('image/'); });
   files.forEach(processScreenshotFile);
 }
 function onFileSelect(e) {
@@ -1236,17 +1296,13 @@ function processScreenshotFile(file) {
 }
 
 function storeScreenshot(dataUrl, filename) {
-  var id   = Date.now() + '_' + Math.random().toString(36).slice(2);
+  var id = Date.now() + '_' + Math.random().toString(36).slice(2);
   var item = { id: id, dataUrl: dataUrl, label: filename || '' };
   appState.screenshots.push(item);
   dbPut(item, function(err) {
     if (err) {
-      // Fallback: try localStorage for just this item
-      try {
-        localStorage.setItem('nova_membri_ss_' + id, dataUrl);
-      } catch(e2) {
-        showWarn('Storage full — screenshot shown but won\'t persist on reload.');
-      }
+      try { localStorage.setItem('nova_membri_ss_' + id, dataUrl); }
+      catch(e2) { showWarn('Storage full — screenshot shown but won\'t persist on reload.'); }
     }
   });
   saveMeta();
@@ -1254,16 +1310,13 @@ function storeScreenshot(dataUrl, filename) {
 }
 
 function saveMeta() {
-  var meta = appState.screenshots.map(function(s){ return {id:s.id, label:s.label}; });
+  var meta = appState.screenshots.map(function(s) { return { id: s.id, label: s.label }; });
   try { localStorage.setItem('nova_membri_screenshots_meta', JSON.stringify(meta)); }
   catch(e) {}
 }
 
-// ═══════════════════════════════════════════════════════
-//  EVENTS — SCREENSHOT LABEL & REMOVE
-// ═══════════════════════════════════════════════════════
 function onLabelChange(id, value) {
-  var item = appState.screenshots.find(function(s){ return s.id === id; });
+  var item = appState.screenshots.find(function(s) { return s.id === id; });
   if (!item) return;
   item.label = value;
   dbPut(item);
@@ -1271,91 +1324,96 @@ function onLabelChange(id, value) {
 }
 
 function removeScreenshot(id) {
-  appState.screenshots = appState.screenshots.filter(function(s){ return s.id !== id; });
+  appState.screenshots = appState.screenshots.filter(function(s) { return s.id !== id; });
   dbDelete(id);
-  // Also remove from localStorage fallback if present
   localStorage.removeItem('nova_membri_ss_' + id);
   saveMeta();
   renderScreenshotGallery();
 }
 
-// ═══════════════════════════════════════════════════════
-//  RENDERING — GALLERY
-// ═══════════════════════════════════════════════════════
 function renderScreenshotGallery() {
-  var gallery  = document.getElementById('screenshot-gallery');
-  var scanAll  = document.getElementById('btn-scan-all');
-  var label    = document.getElementById('gallery-label');
-  var count    = appState.screenshots.length;
-  if (scanAll) scanAll.style.display = count ? 'inline-block' : 'none';
-  if (label)   label.textContent     = count ? count + ' screenshot' + (count > 1 ? 's' : '') : '';
-  if (!count) {
-    gallery.innerHTML = '';
-    return;
-  }
+  var gallery = document.getElementById('screenshot-gallery');
+  var scanAllBtn = document.getElementById('btn-scan-all');
+  var label = document.getElementById('gallery-label');
+  var count = appState.screenshots.length;
+  if (scanAllBtn) scanAllBtn.style.display = count ? 'inline-block' : 'none';
+  if (label) label.textContent = count ? count + ' screenshot' + (count > 1 ? 's' : '') : '';
+  if (!count) { gallery.innerHTML = ''; return; }
   gallery.innerHTML = appState.screenshots.map(function(s) {
     return '<div class="screenshot-card" id="sc-' + s.id + '">'
       + '<img src="' + s.dataUrl + '" alt="' + escHtml(s.label) + '" loading="lazy">'
       + '<div class="screenshot-card-footer">'
       + '<input class="screenshot-label-input" type="text" value="' + escHtml(s.label) + '" '
-      +   'placeholder="label…" '
-      +   'onblur="onLabelChange(\'' + s.id + '\', this.value)">'
-      + '<button class="btn-remove" onclick="removeScreenshot(\'' + s.id + '\')" title="Remove">✕</button>'
-      + '</div>'
-      + '</div>';
+      + 'placeholder="label..." onblur="onLabelChange(\'' + s.id + '\', this.value)">'
+      + '<button class="btn-remove" onclick="removeScreenshot(\'' + s.id + '\')" title="Remove">&times;</button>'
+      + '</div></div>';
   }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SETTINGS (admin secret prompt)
+// ═══════════════════════════════════════════════════════
+function promptPin() {
+  var current = localStorage.getItem('nova_admin_secret') || '';
+  var val = prompt('Admin secret:', current);
+  if (val !== null) {
+    localStorage.setItem('nova_admin_secret', val);
+  }
+  var apiKey = localStorage.getItem('nova_api_key') || '';
+  var keyVal = prompt('Claude API key (for screenshot scanning):', apiKey);
+  if (keyVal !== null) {
+    localStorage.setItem('nova_api_key', keyVal);
+  }
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
 }
 
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
 async function init() {
-  // Load API base URL from localStorage
-  // Load data from API
-  try{
+  try {
     var results = await Promise.all([
-      fetch('/api/roster').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
-      fetch('/api/aliases/member').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
-      fetch('/api/wars').then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; })
+      fetch('/api/roster').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+      fetch('/api/aliases/member').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+      fetch('/api/wars').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; })
     ]);
-    if(results[0]) _rosterCache = results[0];
-    if(results[1]) _mAliasCache = results[1];
-    if(results[2]) _warsCache   = results[2];
-  } catch(e){ console.warn('API init failed, using localStorage fallback',e); }
+    if (results[0]) _rosterCache = results[0];
+    if (results[1]) _mAliasCache = results[1];
+    if (results[2]) _warsCache = results[2];
+  } catch(e) { console.warn('API init failed, using localStorage fallback', e); }
 
-  // Load roster (or fall back to hardcoded defaults)
   var saved = loadRoster();
   if (saved && saved.length) {
-    saved.forEach(function(m){ TLGM_MEMBERS.push(m); });
+    saved.forEach(function(m) { TLGM_MEMBERS.push(m); });
   } else {
-    DEFAULT_MEMBERS.forEach(function(m){ TLGM_MEMBERS.push(m); });
+    DEFAULT_MEMBERS.forEach(function(m) { TLGM_MEMBERS.push(m); });
   }
   appState.aliases = loadAliases();
 
   openDB(function(err) {
     if (err) {
-      // IDB failed — try localStorage fallback for screenshots
       var meta = [];
-      try { meta = JSON.parse(localStorage.getItem('nova_membri_screenshots_meta') || '[]'); } catch(e){}
+      try { meta = JSON.parse(localStorage.getItem('nova_membri_screenshots_meta') || '[]'); } catch(e) {}
       appState.screenshots = meta.map(function(m) {
         var dataUrl = localStorage.getItem('nova_membri_ss_' + m.id) || '';
         return { id: m.id, dataUrl: dataUrl, label: m.label || '' };
-      }).filter(function(s){ return s.dataUrl; });
+      }).filter(function(s) { return s.dataUrl; });
       renderScreenshotGallery();
     } else {
       dbGetAll(function(items) {
-        // Restore order from metadata
         var meta = [];
-        try { meta = JSON.parse(localStorage.getItem('nova_membri_screenshots_meta') || '[]'); } catch(e){}
+        try { meta = JSON.parse(localStorage.getItem('nova_membri_screenshots_meta') || '[]'); } catch(e) {}
         var byId = {};
-        items.forEach(function(i){ byId[i.id] = i; });
+        items.forEach(function(i) { byId[i.id] = i; });
         if (meta.length) {
-          appState.screenshots = meta.map(function(m){
-            return byId[m.id] ? Object.assign({}, byId[m.id], {label: m.label}) : null;
+          appState.screenshots = meta.map(function(m) {
+            return byId[m.id] ? Object.assign({}, byId[m.id], { label: m.label }) : null;
           }).filter(Boolean);
-          // include any orphaned IDB entries not in meta
-          items.forEach(function(i){
-            if (!appState.screenshots.find(function(s){ return s.id === i.id; })) {
+          items.forEach(function(i) {
+            if (!appState.screenshots.find(function(s) { return s.id === i.id; })) {
               appState.screenshots.push(i);
             }
           });
@@ -1368,14 +1426,10 @@ async function init() {
   });
 
   renderMemberList();
-  updateCounters();
 }
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
-    </div><!-- /.page-container -->
-  </main>
-</div><!-- /.app-shell -->
 </body>
 </html>
