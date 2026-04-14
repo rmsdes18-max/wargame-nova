@@ -1222,6 +1222,9 @@ function renderStatsMatchingV3(results){
     +'@keyframes sm3pulse{0%,100%{box-shadow:0 0 0 0 rgba(62,207,110,.4);}50%{box-shadow:0 0 0 10px rgba(62,207,110,0);}}'
     +'.sm3-btn-secondary{background:transparent;border:1px solid #333;color:#888;border-radius:8px;padding:14px 20px;font-size:13px;cursor:pointer;}'
     +'.sm3-btn-secondary:hover{border-color:#888;color:#e0e0e0;}'
+    +'.sm3-editable-stat{cursor:pointer;padding:1px 3px;border-radius:3px;transition:background .15s;}'
+    +'.sm3-editable-stat:hover{background:rgba(240,192,64,.15);}'
+    +'.sm3-party-role-badge:hover span{filter:brightness(1.3);}'
     +'</style>';
 
   // ── MATCHED BANNER (green gradient, collapsed by default) ──
@@ -1239,7 +1242,7 @@ function renderStatsMatchingV3(results){
     +'</div>'
   +'</div>';
 
-  // ── MATCHED LIST (hidden by default) ──
+  // ── MATCHED LIST (hidden by default, with editable stats) ──
   html += '<div class="sm3-matched-list" id="sm3-matched-list">';
   var maxShow = 7;
   results.matched.forEach(function(m, mi){
@@ -1248,13 +1251,45 @@ function renderStatsMatchingV3(results){
     html += '<div class="sm3-matched-item">'
       +roleBadge(role)
       +'<span style="font-weight:600;min-width:100px;">'+escHtml(m.member.name)+'</span>'
-      +'<span style="color:#888;font-size:11px;font-family:monospace;margin-left:auto;">K:'+(m.stats.defeat||0)+' A:'+(m.stats.assist||0)+' D:'+fmtS(m.stats.dmg_dealt||0)+' H:'+fmtS(m.stats.healed||0)+'</span>'
+      +'<span style="color:#888;font-size:11px;font-family:monospace;margin-left:auto;">'
+        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'defeat\',this)" title="Click to edit">K:'+(m.stats.defeat||0)+'</span> '
+        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'assist\',this)" title="Click to edit">A:'+(m.stats.assist||0)+'</span> '
+        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'dmg_dealt\',this)" title="Click to edit">D:'+fmtS(m.stats.dmg_dealt||0)+'</span> '
+        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'healed\',this)" title="Click to edit">H:'+fmtS(m.stats.healed||0)+'</span>'
+      +'</span>'
     +'</div>';
   });
   if(results.matched.length > maxShow){
     html += '<div style="padding:10px 16px;text-align:center;color:#888;font-size:12px;">+ '+(results.matched.length - maxShow)+' more players</div>';
   }
   html += '</div>';
+
+  // ── STATS SUMMARY TOTALS ──
+  var totalKills=0, totalAssists=0, totalDamage=0, totalHealed=0;
+  results.matched.forEach(function(m){
+    totalKills += (m.stats.defeat||0);
+    totalAssists += (m.stats.assist||0);
+    totalDamage += (m.stats.dmg_dealt||0);
+    totalHealed += (m.stats.healed||0);
+  });
+  html += '<div id="sm3-summary-totals" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
+    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
+      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Kills</div>'
+      +'<div style="font-size:20px;font-weight:700;color:#e84040;font-family:monospace;" id="sm3-total-kills">'+fmtS(totalKills)+'</div>'
+    +'</div>'
+    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
+      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Assists</div>'
+      +'<div style="font-size:20px;font-weight:700;color:#c9a06a;font-family:monospace;" id="sm3-total-assists">'+fmtS(totalAssists)+'</div>'
+    +'</div>'
+    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
+      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Damage</div>'
+      +'<div style="font-size:20px;font-weight:700;color:#f0c040;font-family:monospace;" id="sm3-total-damage">'+fmtS(totalDamage)+'</div>'
+    +'</div>'
+    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
+      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Healed</div>'
+      +'<div style="font-size:20px;font-weight:700;color:#3ecf6e;font-family:monospace;" id="sm3-total-healed">'+fmtS(totalHealed)+'</div>'
+    +'</div>'
+  +'</div>';
 
   // ── NEEDS YOUR ATTENTION section ──
   html += '<div class="sm3-attention-section" id="sm3-attention-section">';
@@ -1359,32 +1394,63 @@ function renderStatsMatchingV3(results){
   +'</div>';
   html += '<div class="sm3-party-grid">';
   var partyDotColors = ['#5b8fff','#3ecf6e','#e84040','#f0c040','#8B5CF6','#f97316','#0891b2'];
+  // Build a lookup of matched stats by member name for party breakdown
+  var matchedStatsLookup = {};
+  results.matched.forEach(function(m){
+    matchedStatsLookup[m.member.name] = m.stats;
+    // Also index by normalized name for fuzzy matching
+    matchedStatsLookup[normalizeName(m.member.name)] = m.stats;
+  });
+
   state.parties.forEach(function(party,pi){
     if(party._isExtras || party.name==='_Extras') return;
     var dotColor = partyDotColors[pi % partyDotColors.length];
-    // Find members in this party from matched results
-    var pMembers = [];
-    results.matched.forEach(function(m){
-      // Find party assignment via state.parties member list
-      var inParty = party.members.some(function(pm){ return pm.name === m.member.name || namesMatch(pm.name, m.member.name); });
-      if(inParty) pMembers.push({name:m.member.name, role:m.member.role||'DPS', stats:m.stats, isNew:false});
-    });
+    var matchedCount = 0;
 
     html += '<div class="sm3-party-card">'
       +'<div class="sm3-party-card-header">'
         +'<span class="sm3-party-card-title"><span class="sm3-party-dot" style="background:'+dotColor+';"></span> '+escHtml(party.name)+(party.label?' &#8212; '+escHtml(party.label):'')+'</span>'
-        +'<span style="font-size:11px;color:#888;">'+pMembers.length+'/'+party.members.length+'</span>'
+        +'<span style="font-size:11px;color:#888;" id="sm3-party-count-'+pi+'"></span>'
       +'</div>'
       +'<div style="display:flex;flex-direction:column;gap:6px;" id="sm3-party-members-'+pi+'">';
-    pMembers.forEach(function(pm){
-      html += '<div class="sm3-party-member'+(pm.isNew?' new-match':'')+'">'
-        +roleBadge(pm.role)
+
+    // Show ALL party members, with stats for those who are matched
+    party.members.forEach(function(pm, mi){
+      var memberStats = matchedStatsLookup[pm.name] || matchedStatsLookup[normalizeName(pm.name)] || null;
+      // Also try to find via matched array with namesMatch
+      if(!memberStats){
+        for(var k=0;k<results.matched.length;k++){
+          if(namesMatch(pm.name, results.matched[k].member.name)){
+            memberStats = results.matched[k].stats;
+            break;
+          }
+        }
+      }
+      if(memberStats) matchedCount++;
+      var memberRole = pm.role||'DPS';
+      var isNew = !!window._v3ManuallyAssigned[pm.name];
+      html += '<div class="sm3-party-member'+(isNew?' new-match':'')+'">'
+        +'<span class="sm3-party-role-badge" onclick="cyclePartyRoleV3('+pi+','+mi+')" title="Click to cycle role" style="cursor:pointer;">'
+          +roleBadge(memberRole)
+        +'</span>'
         +'<span class="name">'+escHtml(pm.name)+'</span>'
-        +'<span class="stats">K:'+(pm.stats.defeat||0)+' D:'+fmtS(pm.stats.dmg_dealt||0)+'</span>'
+        +(memberStats
+          ?'<span class="stats">K:'+(memberStats.defeat||0)+' D:'+fmtS(memberStats.dmg_dealt||0)+' H:'+fmtS(memberStats.healed||0)+'</span>'
+          :'<span class="stats" style="color:#555;">--</span>')
+        +(isNew?'<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>':'')
       +'</div>';
     });
-    if(!pMembers.length) html += '<div style="font-size:11px;color:#888;padding:4px 0;">No stats yet</div>';
+
+    if(!party.members.length) html += '<div style="font-size:11px;color:#888;padding:4px 0;">No members</div>';
     html += '</div></div>';
+
+    // Inject count after render via setTimeout
+    setTimeout((function(idx, mc, total){
+      return function(){
+        var el = document.getElementById('sm3-party-count-'+idx);
+        if(el) el.textContent = mc+'/'+total;
+      };
+    })(pi, matchedCount, party.members.length), 10);
   });
   html += '</div></div>';
 
@@ -1603,36 +1669,128 @@ function updatePartyPreviewV3(){
       +'">'+label+'</span>';
   };
 
+  // Build matched stats lookup
+  var matchedStatsLookup = {};
+  window._currentMatchResults.matched.forEach(function(m){
+    matchedStatsLookup[m.member.name] = m.stats;
+    matchedStatsLookup[normalizeName(m.member.name)] = m.stats;
+  });
+
   state.parties.forEach(function(party,pi){
     if(party._isExtras || party.name==='_Extras') return;
     var container = document.getElementById('sm3-party-members-'+pi);
     if(!container) return;
 
-    var pMembers = [];
-    window._currentMatchResults.matched.forEach(function(m){
-      var inParty = party.members.some(function(pm){ return pm.name === m.member.name || namesMatch(pm.name, m.member.name); });
-      if(inParty){
-        pMembers.push({name:m.member.name, role:m.member.role||'DPS', stats:m.stats, isNew:!!window._v3ManuallyAssigned[m.member.name]});
-      }
-    });
-
+    var matchedCount = 0;
     var html = '';
-    pMembers.forEach(function(pm){
-      html += '<div class="sm3-party-member'+(pm.isNew?' new-match':'')+'">'
-        +roleBadge(pm.role)
+    party.members.forEach(function(pm, mi){
+      var memberStats = matchedStatsLookup[pm.name] || matchedStatsLookup[normalizeName(pm.name)] || null;
+      if(!memberStats){
+        for(var k=0;k<window._currentMatchResults.matched.length;k++){
+          if(namesMatch(pm.name, window._currentMatchResults.matched[k].member.name)){
+            memberStats = window._currentMatchResults.matched[k].stats;
+            break;
+          }
+        }
+      }
+      if(memberStats) matchedCount++;
+      var memberRole = pm.role||'DPS';
+      var isNew = !!window._v3ManuallyAssigned[pm.name];
+      html += '<div class="sm3-party-member'+(isNew?' new-match':'')+'">'
+        +'<span class="sm3-party-role-badge" onclick="cyclePartyRoleV3('+pi+','+mi+')" title="Click to cycle role" style="cursor:pointer;">'
+          +roleBadge(memberRole)
+        +'</span>'
         +'<span class="name">'+escHtml(pm.name)+'</span>'
-        +'<span class="stats">K:'+(pm.stats.defeat||0)+' D:'+fmtS(pm.stats.dmg_dealt||0)+'</span>'
-        +(pm.isNew?'<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>':'')
+        +(memberStats
+          ?'<span class="stats">K:'+(memberStats.defeat||0)+' D:'+fmtS(memberStats.dmg_dealt||0)+' H:'+fmtS(memberStats.healed||0)+'</span>'
+          :'<span class="stats" style="color:#555;">--</span>')
+        +(isNew?'<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>':'')
       +'</div>';
     });
-    if(!pMembers.length) html = '<div style="font-size:11px;color:#888;padding:4px 0;">No stats yet</div>';
 
+    if(!party.members.length) html = '<div style="font-size:11px;color:#888;padding:4px 0;">No members</div>';
     container.innerHTML = html;
 
     // Update count
+    var countEl = document.getElementById('sm3-party-count-'+pi);
+    if(countEl) countEl.textContent = matchedCount+'/'+party.members.length;
+    // Also try the old selector as fallback
     var headerEl = container.parentElement.querySelector('.sm3-party-card-header span:last-child');
-    if(headerEl) headerEl.textContent = pMembers.length+'/'+party.members.length;
+    if(headerEl) headerEl.textContent = matchedCount+'/'+party.members.length;
   });
+
+  // Also update summary totals
+  updateSummaryTotalsV3();
+}
+
+// ── V3: Cycle role on party member badge (DPS→TANK→HEALER→DPS) ──
+function cyclePartyRoleV3(partyIdx, memberIdx){
+  var party = state.parties[partyIdx];
+  if(!party || !party.members[memberIdx]) return;
+  var m = party.members[memberIdx];
+  var cur = m.role||'DPS';
+  var next = cur==='DPS'?'TANK':cur==='TANK'?'HEALER':'DPS';
+  m.role = next;
+  // Also update in matched results if present
+  if(window._currentMatchResults){
+    window._currentMatchResults.matched.forEach(function(mr){
+      if(mr.member.name===m.name || namesMatch(mr.member.name, m.name)){
+        mr.member.role = next;
+      }
+    });
+  }
+  updatePartyPreviewV3();
+}
+
+// ── V3: Edit stat value inline in matched list ──
+function editStatV3(matchIdx, field, spanEl){
+  if(!window._currentMatchResults) return;
+  var m = window._currentMatchResults.matched[matchIdx];
+  if(!m) return;
+  var labels = {defeat:'K',assist:'A',dmg_dealt:'D',healed:'H'};
+  var label = labels[field]||field;
+  var curVal = m.stats[field]||0;
+  var input = document.createElement('input');
+  input.type = 'number';
+  input.value = curVal;
+  input.style.cssText = 'width:60px;background:#252525;border:1px solid #f0c040;border-radius:4px;color:#e0e0e0;font-size:11px;font-family:monospace;padding:2px 4px;text-align:right;';
+  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
+  var commit = function(){
+    var val = parseInt(input.value)||0;
+    if(val<0) val=0;
+    m.stats[field] = val;
+    spanEl.textContent = label+':'+fmtS(val);
+    updateSummaryTotalsV3();
+    updatePartyPreviewV3();
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ e.preventDefault(); commit(); }
+    if(e.key==='Escape'){ spanEl.textContent = label+':'+fmtS(curVal); }
+  });
+  spanEl.textContent = '';
+  spanEl.appendChild(document.createTextNode(label+':'));
+  spanEl.appendChild(input);
+  input.focus();
+  input.select();
+}
+
+// ── V3: Update summary totals from current matched results ──
+function updateSummaryTotalsV3(){
+  if(!window._currentMatchResults) return;
+  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
+  var totalKills=0, totalAssists=0, totalDamage=0, totalHealed=0;
+  window._currentMatchResults.matched.forEach(function(m){
+    totalKills += (m.stats.defeat||0);
+    totalAssists += (m.stats.assist||0);
+    totalDamage += (m.stats.dmg_dealt||0);
+    totalHealed += (m.stats.healed||0);
+  });
+  var el;
+  el = document.getElementById('sm3-total-kills');   if(el) el.textContent = fmtS(totalKills);
+  el = document.getElementById('sm3-total-assists'); if(el) el.textContent = fmtS(totalAssists);
+  el = document.getElementById('sm3-total-damage');  if(el) el.textContent = fmtS(totalDamage);
+  el = document.getElementById('sm3-total-healed');  if(el) el.textContent = fmtS(totalHealed);
 }
 
 // ── Save War V3: builds confirmed state from match results ──
