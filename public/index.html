@@ -118,9 +118,11 @@ input[type=number]{-moz-appearance:textfield;}
       </a>
     </nav>
     <div class="sidebar-footer">
-      <a class="sidebar-footer-btn" id="guild-settings-tab" onclick="showPage('guild-settings');closeSidebar()" style="display:none;cursor:pointer;">
-        <span class="sidebar-item-icon">&#x2699;</span><span>Settings</span>
-      </a>
+      <div id="guild-settings-tab" style="display:none;">
+        <a class="sidebar-footer-btn" onclick="showPage('guild-settings');closeSidebar()" style="cursor:pointer;">
+          <span class="sidebar-item-icon">&#x2699;</span><span>Settings</span>
+        </a>
+      </div>
       <div class="sidebar-version">v1.0</div>
     </div>
   </aside>
@@ -1161,11 +1163,12 @@ function renderWarsList(){
   var el = document.getElementById('wars-list');
   if(!wars.length){
     var isEditor = _userRole === 'admin' || _userRole === 'editor';
-    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
-      +'<div style="font-size:48px;opacity:.2;margin-bottom:16px;">⚔</div>'
-      +'<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">No wars recorded yet</div>'
-      +'<div style="font-size:13px;color:var(--text-muted);max-width:300px;margin-bottom:20px;">'+t('noWars')+'</div>'
-      +(isEditor?'<button onclick="startNewWar()" class="btn btn-primary" style="padding:10px 24px;font-size:14px;">+ Add First War</button>':'')
+    el.className = '';
+    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;">'
+      +'<div style="font-size:56px;opacity:.15;margin-bottom:20px;">⚔</div>'
+      +'<div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:8px;">No wars recorded yet</div>'
+      +'<div style="font-size:13px;color:var(--text-muted);max-width:320px;margin-bottom:24px;">Upload a party screenshot to start tracking your guild wars and stats.</div>'
+      +(isEditor?'<button onclick="startNewWar()" class="btn btn-primary" style="padding:12px 28px;font-size:14px;">+ Add First War</button>':'')
       +'</div>';
     return;
   }
