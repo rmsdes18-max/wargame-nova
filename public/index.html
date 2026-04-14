@@ -2339,6 +2339,7 @@ async function initGuildSettings(){
 
 // ── MEMBERS PAGE ──
 var _membersTab = 'active';
+var _membersEditMode = false;
 var _rosterData = [];
 var _memberAliases = {}; // key: normalizedTlgmName → value: inGameName
 
@@ -2408,17 +2409,19 @@ function renderMembersList(){
         +'<div style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(m.name)+'</div>'
         +(m.guildRole?'<div style="font-size:10px;color:var(--text-muted);">'+escHtml(m.guildRole)+'</div>':'')
       +'</div>'
-      +'<div style="min-width:120px;text-align:right;">'
-        +(inGameName
-          ? '<span style="font-size:12px;color:var(--gold);">'+escHtml(inGameName)+'</span>'
-          : '<span style="font-size:11px;color:rgba(255,255,255,.15);">—</span>')
+      +'<div style="min-width:140px;text-align:right;">'
+        +(_membersEditMode
+          ? '<input id="alias-'+safeName+'" value="'+escHtml(inGameName||'')+'" placeholder="—" style="width:110px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--gold);font-size:11px;text-align:right;outline:none;">'
+            +'<button onclick="saveInlineAlias(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:14px;padding:2px;" title="Save">&#x2713;</button>'
+          : (inGameName
+            ? '<span style="font-size:12px;color:var(--gold);">'+escHtml(inGameName)+'</span>'
+            : '<span style="font-size:11px;color:rgba(255,255,255,.15);">—</span>'))
       +'</div>'
-      +(isEditor
+      +(_membersEditMode
         ? '<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;" title="Click to change role">'+m.role+'</span>'
         : '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+m.role+'</span>')
-      +(isEditor && !showArchived ? '<button onclick="editMember(\''+safeName+'\',\''+escHtml(inGameName||'')+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:4px;" title="Edit alias">&#x270E;</button>' : '')
-      +(isEditor && !showArchived ? '<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;" title="Archive">Archive</button>' : '')
-      +(isEditor && showArchived ? '<button onclick="restoreMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:11px;padding:4px 8px;" title="Restore">Restore</button>' : '')
+      +(_membersEditMode && !showArchived ? '<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;" title="Archive">Archive</button>' : '')
+      +(_membersEditMode && showArchived ? '<button onclick="restoreMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:11px;padding:4px 8px;" title="Restore">Restore</button>' : '')
       +'</div>';
   });
   var header = '<div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">'
@@ -2429,6 +2432,22 @@ function renderMembersList(){
     +(isEditor?'<div style="min-width:55px;"></div>':'')
     +'</div>';
   container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+header+html+'</div>';
+}
+
+function toggleMembersEditMode(){
+  _membersEditMode = !_membersEditMode;
+  var btn = document.getElementById('members-edit-btn');
+  var tools = document.getElementById('members-edit-tools');
+  if(_membersEditMode){
+    btn.textContent = 'Done';
+    btn.className = 'btn btn-secondary btn-sm';
+    tools.style.display = 'flex';
+  } else {
+    btn.textContent = 'Edit';
+    btn.className = 'btn btn-primary btn-sm';
+    tools.style.display = 'none';
+  }
+  renderMembersList();
 }
 
 function switchMembersTab(tab){
@@ -2772,20 +2791,17 @@ function renderAliasSyncPreview(){
   container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">'+html+'</div>';
 }
 
-function editMember(encodedName, currentAlias){
+function saveInlineAlias(encodedName){
   var name = decodeURIComponent(encodedName);
-  var newAlias = prompt('In-Game Name for "'+name+'":', currentAlias);
-  if(newAlias === null) return; // cancelled
-  newAlias = newAlias.trim();
+  var input = document.getElementById('alias-'+encodedName);
+  if(!input) return;
+  var newAlias = input.value.trim();
   var key = name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
   var aliases = Object.assign({}, _memberAliases);
-  if(newAlias){
-    aliases[key] = newAlias;
-  } else {
-    delete aliases[key];
-  }
+  if(newAlias) aliases[key] = newAlias;
+  else delete aliases[key];
   fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
-    .then(function(r){ if(r.ok) renderMembersPage(); else alert('Failed to save alias'); })
+    .then(function(r){ if(r.ok){ _memberAliases = aliases; input.style.borderColor='var(--heal)'; setTimeout(function(){input.style.borderColor='';},800); } else alert('Failed'); })
     .catch(function(e){ alert(e.message); });
 }
 
@@ -2811,9 +2827,30 @@ async function applyAliasSync(){
       aliases[key] = game;
     }
   });
+  // Collect unmatched game names that weren't assigned (still visible, no selection)
+  var unmatchedToAdd = [];
+  document.querySelectorAll('[id^="unmatched-"]').forEach(function(sel){
+    if(!sel.value && sel.closest('div').style.display !== 'none'){
+      var game = sel.getAttribute('data-game');
+      if(game) unmatchedToAdd.push(game);
+    }
+  });
+
   try{
+    // Save aliases
     var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
     if(!r.ok) throw new Error('Failed to save aliases');
+
+    // Add unmatched as new roster members
+    if(unmatchedToAdd.length){
+      var merged = _rosterData.slice();
+      unmatchedToAdd.forEach(function(gn){
+        var exists = merged.some(function(m){ return m.name.toLowerCase() === gn.toLowerCase(); });
+        if(!exists) merged.unshift({name:gn, role:'DPS', guildRole:null, active:true});
+      });
+      await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(merged)});
+    }
+
     window._pendingAliases = null;
     renderMembersPage();
   }catch(e){ alert('Error: '+e.message); }
@@ -3755,15 +3792,18 @@ async function goStep3WithVision(){
       <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
     </div>
     <div id="members-actions" style="display:none;gap:8px;flex-wrap:wrap;">
-      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-        Import TLGM CSV
-        <input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;">
-      </label>
-      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-        Sync TL Game
-        <input type="file" accept="image/*" multiple onchange="syncTlGameAliases(this)" style="display:none;">
-      </label>
-      <button onclick="showAddMemberForm()" class="btn btn-primary btn-sm">+ Add</button>
+      <div id="members-edit-tools" style="display:none;gap:8px;flex-wrap:wrap;">
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+          Import TLGM CSV
+          <input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;">
+        </label>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+          Sync TL Game
+          <input type="file" accept="image/*" multiple onchange="syncTlGameAliases(this)" style="display:none;">
+        </label>
+        <button onclick="showAddMemberForm()" class="btn btn-secondary btn-sm">+ Add</button>
+      </div>
+      <button id="members-edit-btn" onclick="toggleMembersEditMode()" class="btn btn-primary btn-sm">Edit</button>
     </div>
   </div>
   <!-- Add member form (hidden) -->
