@@ -2561,20 +2561,40 @@ function importTlgmCsv(input){
 }
 
 async function syncTlGameAliases(input){
-  var file = input.files[0]; if(!file) return;
+  var files = Array.from(input.files); if(!files.length) return;
+  if(files.length > 10){ alert('Max 10 screenshots at once.'); input.value=''; return; }
   if(!_rosterData.length){ alert('Import TLGM CSV first to set up your roster.'); input.value=''; return; }
-  var reader = new FileReader();
-  reader.onload = async function(ev){
-    var container = document.getElementById('members-list-container');
-    container.innerHTML = '<div style="padding:20px;text-align:center;"><div class="processing"><span class="spin">◌</span> Reading in-game names from screenshot...</div></div>';
-    try{
-      var prompt = 'You are reading a screenshot from TL Guild Manager (Throne & Liberty). It shows party cards with player names.\n\nExtract ALL player names visible in the image. Each party card has a header like "Party 1 (Main)" and rows of players.\n\nReturn ONLY a JSON array of unique player names, no duplicates:\n["PlayerName1","PlayerName2","PlayerName3"]';
-      var raw = await callClaude(prompt, ev.target.result);
+
+  var container = document.getElementById('members-list-container');
+  container.innerHTML = '<div style="padding:20px;text-align:center;"><div class="processing"><span class="spin">◌</span> Reading in-game names from '+files.length+' screenshot'+(files.length>1?'s':'')+'...</div></div>';
+
+  try{
+    // Read all files as dataURLs
+    var dataUrls = await Promise.all(files.map(function(f){
+      return new Promise(function(resolve,reject){
+        var reader = new FileReader();
+        reader.onload = function(e){ resolve(e.target.result); };
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+    }));
+
+    // Process each image sequentially, collect all names
+    var allGameNames = [];
+    var prompt = 'You are reading a screenshot from TL Guild Manager (Throne & Liberty). It shows party cards with player names.\n\nExtract ALL player names visible in the image. Each party card has a header like "Party 1 (Main)" and rows of players.\n\nReturn ONLY a JSON array of unique player names, no duplicates:\n["PlayerName1","PlayerName2","PlayerName3"]';
+
+    for(var i=0; i<dataUrls.length; i++){
+      container.innerHTML = '<div style="padding:20px;text-align:center;"><div class="processing"><span class="spin">◌</span> Processing screenshot '+(i+1)+' of '+dataUrls.length+'...</div></div>';
+      var raw = await callClaude(prompt, dataUrls[i]);
       var clean = raw.replace(/```json\n?|```/g,'').trim();
       var match = clean.match(/\[[\s\S]*\]/);
       if(match) clean = match[0];
-      var gameNames = JSON.parse(clean);
-      if(!Array.isArray(gameNames)||!gameNames.length) throw new Error('No names detected');
+      var names = JSON.parse(clean);
+      if(Array.isArray(names)) names.forEach(function(n){ if(n && allGameNames.indexOf(n)===-1) allGameNames.push(n); });
+    }
+
+    var gameNames = allGameNames;
+    if(!gameNames.length) throw new Error('No names detected in '+dataUrls.length+' screenshots');
 
       // Auto-match: for each game name, find closest TLGM name
       var rosterNames = _rosterData.filter(function(m){return m.active!==false;}).map(function(m){return m.name;});
@@ -2623,8 +2643,6 @@ async function syncTlGameAliases(input){
       container.innerHTML = '<div style="padding:14px;color:#e84040;font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
       setTimeout(function(){ renderMembersPage(); },3000);
     }
-  };
-  reader.readAsDataURL(file);
   input.value='';
 }
 
@@ -3585,7 +3603,7 @@ async function goStep3WithVision(){
       </label>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
         Sync TL Game
-        <input type="file" accept="image/*" onchange="syncTlGameAliases(this)" style="display:none;">
+        <input type="file" accept="image/*" multiple onchange="syncTlGameAliases(this)" style="display:none;">
       </label>
       <button onclick="showAddMemberForm()" class="btn btn-primary btn-sm">+ Add</button>
     </div>
