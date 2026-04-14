@@ -1406,7 +1406,9 @@ function viewWar(warId){
     } else {
       html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
     }
-    html += '<div class="party-meta">'+p.members.length+' members</div>';
+    html += '<div class="party-meta">'+p.members.length+' members'
+      +(_vwEditMode ? ' <button onclick="deletePartyFromWar('+w.id+','+pi+')" style="background:transparent;border:none;color:#e84040;cursor:pointer;font-size:11px;margin-left:8px;" title="Delete party">\u2715 Delete</button>' : '')
+      +'</div>';
     html += '</div>';
 
     html += '<div style="overflow-x:auto;">';
@@ -1881,6 +1883,15 @@ function updatePartyNameInWar(warId, pi, newName){
 function updatePlayerNameInWar(warId, pi, mi, newName){
   var w = getWar(warId);
   if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
+}
+
+function deletePartyFromWar(warId, partyIndex){
+  var war = _warsCache.find(function(w){ return w.id === warId; });
+  if(!war) return;
+  var partyName = war.parties[partyIndex] ? war.parties[partyIndex].name : 'Party';
+  if(!confirm('Delete '+partyName+'? Members will be removed from this war.')) return;
+  war.parties.splice(partyIndex, 1);
+  viewWar(warId); // re-render
 }
 
 function enterEditMode(warId){
@@ -3841,13 +3852,21 @@ async function handlePartyUploadWithVision(e){
   reader.readAsDataURL(file);
 }
 
+function deleteParty(index){
+  if(!confirm('Delete '+state.parties[index].name+'?')) return;
+  state.parties.splice(index, 1);
+  renderPartyEditorFromData(state.parties);
+}
+
 function renderPartyEditorFromData(parties){
   var partyDotColors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
   var html = '';
   parties.forEach(function(p,pi){
     var dotColor = partyDotColors[pi % partyDotColors.length];
     html += '<div class="party-edit-card">';
-    html += '<div class="party-edit-header"><div class="party-color-dot" style="background:'+dotColor+';width:10px;height:10px;border-radius:3px;"></div>'+escHtml(p.name)+'</div>';
+    html += '<div class="party-edit-header" style="display:flex;align-items:center;gap:8px;"><div class="party-color-dot" style="background:'+dotColor+';width:10px;height:10px;border-radius:3px;"></div><span style="flex:1;">'+escHtml(p.name)+'</span>'
+      +(p.members.length===0||pi>=4 ? '<button onclick="deleteParty('+pi+')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;opacity:.6;" title="Delete party">\u2715</button>' : '')
+      +'</div>';
     p.members.forEach(function(m,mi){
       var role = m.role||'DPS';
       var roleClass = role==='TANK'?'tank':role==='HEALER'?'heal':'dps';
