@@ -2433,39 +2433,46 @@ function renderMembersList(){
     availableGameNames.sort(function(a,b){ return a.localeCompare(b); });
 
     output += '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:14px;margin-bottom:16px;">';
-    output += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:14px;">⚠</span><span style="font-size:13px;font-weight:600;color:var(--gold);">'+unmatchedMembers.length+' members need in-game name</span></div>';
-    // Header
-    output += '<div style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">'
-      +'<div style="min-width:55px;">Role</div>'
-      +'<div style="flex:1;">TLGM Name</div>'
-      +'<div style="width:140px;">Manual Input</div>'
-      +'<div style="width:160px;">Or Select</div>'
-      +'<div style="width:90px;"></div>'
+    output += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:14px;">⚠</span><span style="font-size:13px;font-weight:600;color:var(--gold);">'+unmatchedMembers.length+' members need in-game name</span>'
+      +(!_membersEditMode ? '<span style="font-size:11px;color:var(--text-muted);margin-left:8px;">Click Edit to assign names</span>' : '')
       +'</div>';
-    unmatchedMembers.forEach(function(m){
-      var color = roleColors[m.role] || 'var(--text-muted)';
-      var safeName = encodeURIComponent(m.name);
-      var roles = ['TANK','HEALER','DPS'];
-      var nextRole = roles[(roles.indexOf(m.role)+1)%3];
-      var opts = '<option value="">-- Select --</option>';
-      availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
 
-      output += '<div id="unmatched-row-'+safeName+'" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
-        // ROLE
-        +(_membersEditMode&&isEditor
-          ? '<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
-          : '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';min-width:55px;text-align:center;">'+m.role+'</span>')
-        // TLGM NAME
-        +'<span style="font-size:13px;font-weight:600;color:#fff;flex:1;">'+escHtml(m.name)+'</span>'
-        // MANUAL INPUT
-        +'<input id="manual-'+safeName+'" placeholder="Insert name" style="width:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
-        // DROPDOWN
-        +'<select id="dropdown-'+safeName+'" onchange="refreshUnmatchedDropdowns()" style="width:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;">'+opts+'</select>'
-        // SAVE + ARCHIVE
-        +'<button onclick="saveUnmatchedMember(\''+safeName+'\')" class="btn btn-primary" style="padding:3px 10px;font-size:11px;">Save</button>'
-        +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
+    if(_membersEditMode){
+      // Edit mode: show inputs + dropdowns
+      output += '<div style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">'
+        +'<div style="min-width:55px;">Role</div>'
+        +'<div style="flex:1;">TLGM Name</div>'
+        +'<div style="width:140px;">Manual Input</div>'
+        +'<div style="width:160px;">Or Select</div>'
+        +'<div style="width:90px;"></div>'
         +'</div>';
-    });
+      unmatchedMembers.forEach(function(m){
+        var color = roleColors[m.role] || 'var(--text-muted)';
+        var safeName = encodeURIComponent(m.name);
+        var roles = ['TANK','HEALER','DPS'];
+        var nextRole = roles[(roles.indexOf(m.role)+1)%3];
+        var opts = '<option value="">-- Select --</option>';
+        availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
+        output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
+          +'<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
+          +'<span style="font-size:13px;font-weight:600;color:#fff;flex:1;">'+escHtml(m.name)+'</span>'
+          +'<input id="manual-'+safeName+'" placeholder="Insert name" style="width:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
+          +'<select id="dropdown-'+safeName+'" onchange="refreshUnmatchedDropdowns()" style="width:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;">'+opts+'</select>'
+          +'<button onclick="saveUnmatchedMember(\''+safeName+'\')" class="btn btn-primary" style="padding:3px 10px;font-size:11px;">Save</button>'
+          +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
+          +'</div>';
+      });
+    } else {
+      // View mode: just list names
+      output += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">';
+      unmatchedMembers.forEach(function(m){
+        var color = roleColors[m.role] || 'var(--text-muted)';
+        output += '<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
+          +'<span style="width:6px;height:6px;border-radius:50%;background:'+color+';"></span>'
+          +escHtml(m.name)+'</span>';
+      });
+      output += '</div>';
+    }
     output += '</div>';
   }
 
