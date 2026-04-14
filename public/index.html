@@ -2422,16 +2422,14 @@ function renderMembersList(){
 
   // ── UNMATCHED SECTION (warning box) ──
   if(unmatchedMembers.length && !showArchived){
-    // Build list of available game names (from aliases values, not yet used as alias for anyone)
+    // Build list of available game names for dropdown (unmatched from Sync TL Game, minus already assigned)
     var usedAliasValues = {};
     Object.values(_memberAliases).forEach(function(v){ usedAliasValues[v.toLowerCase()] = true; });
-    // Collect all known game names from sync (stored in _memberAliases values + unmatched game names)
     var availableGameNames = [];
-    if(window._unmatchedNames){
-      window._unmatchedNames.forEach(function(gn){
-        if(!usedAliasValues[gn.toLowerCase()]) availableGameNames.push(gn);
-      });
-    }
+    var sources = window._unmatchedGameNames || window._unmatchedNames || [];
+    sources.forEach(function(gn){
+      if(!usedAliasValues[gn.toLowerCase()]) availableGameNames.push(gn);
+    });
     availableGameNames.sort(function(a,b){ return a.localeCompare(b); });
 
     output += '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:14px;margin-bottom:16px;">';
@@ -2928,6 +2926,10 @@ function saveUnmatchedMember(encodedName){
   var key = name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
   var aliases = Object.assign({}, _memberAliases);
   aliases[key] = gameName;
+  // Remove used game name from available pool
+  if(window._unmatchedGameNames){
+    window._unmatchedGameNames = window._unmatchedGameNames.filter(function(gn){ return gn.toLowerCase() !== gameName.toLowerCase(); });
+  }
   fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
     .then(function(r){ if(r.ok){ _memberAliases = aliases; renderMembersList(); } else alert('Failed'); })
     .catch(function(e){ alert(e.message); });
@@ -2980,34 +2982,20 @@ async function applyAliasSync(){
       aliases[key] = game;
     }
   });
-  // Collect unmatched game names that weren't assigned (still visible, no selection)
-  var unmatchedToAdd = [];
+  // Store unmatched game names for dropdown use in Members page
+  var remainingGameNames = [];
   document.querySelectorAll('[id^="unmatched-"]').forEach(function(sel){
-    if(!sel.value && sel.closest('div').style.display !== 'none'){
+    if(!sel.value){
       var game = sel.getAttribute('data-game');
-      if(game) unmatchedToAdd.push(game);
+      if(game) remainingGameNames.push(game);
     }
   });
+  window._unmatchedGameNames = remainingGameNames;
 
   try{
-    // Save aliases
+    // Save aliases only (do NOT add unmatched game names to roster)
     var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
     if(!r.ok) throw new Error('Failed to save aliases');
-
-    // Add unmatched as new roster members + set their game name as alias
-    if(unmatchedToAdd.length){
-      var merged = _rosterData.slice();
-      unmatchedToAdd.forEach(function(gn){
-        var exists = merged.some(function(m){ return m.name.toLowerCase() === gn.toLowerCase(); });
-        if(!exists){
-          merged.unshift({name:gn, role:'DPS', guildRole:null, active:true});
-          // Self-alias: game name IS the in-game name
-          var key = gn.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
-          aliases[key] = gn;
-        }
-      });
-      await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(merged)});
-    }
 
     window._pendingAliases = null;
     renderMembersPage();
