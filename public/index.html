@@ -1491,9 +1491,25 @@ function viewWar(warId){
     html += '<div class="extras-panel">';
     html += '<div class="extras-panel-header">Extra Players'+(extrasMembers.length?' ('+extrasMembers.length+')':'')+'</div>';
     extrasMembers.forEach(function(ex, ei){
+      // Try to find role from roster (by name or alias)
+      var extraRole = ex.role || 'DPS';
+      if(_rosterCache){
+        var rosterMatch = _rosterCache.find(function(r){ return namesMatch(r.name, ex.name); });
+        if(!rosterMatch){
+          // Try alias reverse lookup
+          for(var ak in _memberAliases){
+            if(namesMatch(_memberAliases[ak], ex.name)){
+              rosterMatch = _rosterCache.find(function(r){ return normalizeName(r.name) === ak; });
+              if(rosterMatch) break;
+            }
+          }
+        }
+        if(rosterMatch) extraRole = rosterMatch.role || extraRole;
+      }
+      var extraSafeName = encodeURIComponent(ex.name);
       html += '<div class="extra-player-card" draggable="true" data-extra-idx="'+ei+'">'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
-          +'<span class="role-dot" style="background:'+roleColor(ex.role)+';"></span>'
+          +'<span class="role-dot" style="background:'+roleColor(extraRole)+';cursor:pointer;" onclick="cycleExtraRole('+JSON.stringify(w.id)+','+ei+')" title="Click to change role"></span>'
           +'<span style="font-weight:600;color:#fff;font-size:13px;">'+escHtml(ex.name)+'</span>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
@@ -1891,6 +1907,17 @@ function updatePartyNameInWar(warId, pi, newName){
 function updatePlayerNameInWar(warId, pi, mi, newName){
   var w = getWar(warId);
   if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
+}
+
+function cycleExtraRole(warId, extraIdx){
+  var war = _warsCache.find(function(w){ return w.id === warId; });
+  if(!war) return;
+  var extras = war.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  if(!extras || !extras.members[extraIdx]) return;
+  var roles = ['TANK','HEALER','DPS'];
+  var cur = extras.members[extraIdx].role || 'DPS';
+  extras.members[extraIdx].role = roles[(roles.indexOf(cur)+1)%3];
+  viewWar(warId);
 }
 
 function deletePartyFromWar(warId, partyIndex){
