@@ -11,6 +11,13 @@ function slugify(text) {
 // ── GET /api/guilds — list current user's guilds ──
 router.get('/', requireAuth, async (req, res) => {
   try {
+    // Auto-fix: ensure guild owners always have admin role
+    await pool.query(`
+      UPDATE guild_members gm SET role = 'admin'
+      FROM guilds g
+      WHERE gm.guild_id = g.id AND gm.user_id = g.owner_id AND gm.role != 'admin' AND gm.user_id = $1
+    `, [req.user.id]);
+
     const { rows } = await pool.query(
       `SELECT g.id, g.name, g.slug, g.tier, g.invite_code, gm.role,
               (SELECT COUNT(*)::int FROM guild_members WHERE guild_id = g.id) as member_count

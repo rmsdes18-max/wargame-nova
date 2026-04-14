@@ -141,6 +141,18 @@ router.get('/debug', checkSuperAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// POST /api/sudo/fix-owner-roles — ensure all guild owners are admin in guild_members
+router.post('/fix-owner-roles', checkSuperAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query(`
+      UPDATE guild_members gm SET role = 'admin'
+      FROM guilds g
+      WHERE gm.guild_id = g.id AND gm.user_id = g.owner_id AND gm.role != 'admin'
+    `);
+    res.json({ success: true, fixed: rowCount });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // POST /api/sudo/reset-all-data — wipe all guild data, keep user accounts
 router.post('/reset-all-data', checkSuperAdmin, async (req, res) => {
   try {
