@@ -4087,11 +4087,16 @@ async function extractAllScoreboards(){
 
   var tableHtml = '<div style="overflow-x:auto;">';
 
-  // Group confirmed by party
+  // Group confirmed by party (skip 0-stats when new matching UI is active)
+  var hasNewUI = _rosterCache && _rosterCache.length;
   state.parties.forEach(function(party){
     var partyPlayers = [];
     state.novaPlayers.forEach(function(p,i){
-      if(p.party === party.name && p.status === 'confirmed') partyPlayers.push({p:p,i:i});
+      if(p.party === party.name && p.status === 'confirmed'){
+        // Skip members with all-zero stats when new UI handles them
+        if(hasNewUI && !(p.defeat||p.assist||p.dmg_dealt||p.healed)) return;
+        partyPlayers.push({p:p,i:i});
+      }
     });
     if(!partyPlayers.length) return;
     partyPlayers.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
