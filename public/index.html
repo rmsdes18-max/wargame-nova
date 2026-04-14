@@ -2621,24 +2621,16 @@ STEP 2 - FOR EACH PARTY CARD, read TOP to BOTTOM:
 - The player name is the text AFTER the circular avatar icon
 - Read the EXACT name visible in THAT specific card column — do NOT use names from other columns
 
-STEP 3 - ROLE DETECTION BY ROW BACKGROUND COLOR:
-This is the MOST IMPORTANT step. Each player row has a solid colored background strip.
-There are ONLY 3 possible colors — determine role by the ROW BACKGROUND COLOR:
+STEP 3 - ROLE DETECTION BY LEFT VERTICAL COLOR BAR:
+Each player row has a thin VERTICAL COLOR BAR on its LEFT EDGE.
+Do NOT look at the row background color. Look ONLY at this left-side vertical bar.
 
-PURPLE/VIOLET row background (dark purple, like #3a2060, #2d1b55, #352060) → role: "TANK"
-  - This is a clearly PURPLE/VIOLET tinted row — NOT blue, NOT gray
+There are exactly 3 possible bar colors:
+- PURPLE / VIOLET bar (#8B5CF6) → role: "TANK"
+- GREEN bar (#22C55E) → role: "HEALER"
+- RED / BROWN bar (#EF4444) → role: "DPS"
 
-GREEN row background (dark green, like #1a4020, #1e3d1e, #254d25) → role: "HEALER"
-  - This is a clearly GREEN tinted row — forest green, NOT yellow-green
-
-RED/MAROON row background (dark red, like #4a1515, #3d1a1a, #501818) → role: "DPS"
-  - This is a clearly RED/WINE/MAROON tinted row — NOT brown, NOT orange
-
-HOW TO DETERMINE: Look at the DOMINANT TINT of each row's background stripe:
-- If the row looks purplish/violet → TANK
-- If the row looks greenish → HEALER
-- If the row looks reddish/maroon → DPS
-- When in doubt, compare to other rows in the same card — the color difference is always clear
+The bar is a thin colored stripe on the very left of each player row. It is always clearly visible.
 
 CRITICAL RULES:
 - Process ONE card/column at a time, left to right
