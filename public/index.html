@@ -2340,6 +2340,7 @@ async function initGuildSettings(){
 // ── MEMBERS PAGE ──
 var _membersTab = 'active';
 var _membersEditMode = false;
+var _membersRoleFilter = 'ALL';
 var _rosterData = [];
 var _memberAliases = {}; // key: normalizedTlgmName → value: inGameName
 
@@ -2369,7 +2370,11 @@ function renderMembersList(){
   var countEl = document.getElementById('members-count');
   var isEditor = _userRole === 'admin' || _userRole === 'editor';
   var showArchived = _membersTab === 'archived';
-  var filtered = _rosterData.filter(function(m){ return showArchived ? m.active === false : m.active !== false; });
+  var filtered = _rosterData.filter(function(m){
+    var tabMatch = showArchived ? m.active === false : m.active !== false;
+    var roleMatch = _membersRoleFilter === 'ALL' || m.role === _membersRoleFilter;
+    return tabMatch && roleMatch;
+  });
 
   var activeCount = _rosterData.filter(function(m){ return m.active !== false; }).length;
   var archivedCount = _rosterData.filter(function(m){ return m.active === false; }).length;
@@ -2460,6 +2465,22 @@ function toggleMembersEditMode(){
     btn.className = 'btn btn-primary btn-sm';
     tools.style.display = 'none';
   }
+  renderMembersList();
+}
+
+function setRoleFilter(role){
+  _membersRoleFilter = role;
+  ['ALL','TANK','HEALER','DPS'].forEach(function(r){
+    var btn = document.getElementById('rf-'+r);
+    if(!btn) return;
+    if(r===role){
+      btn.style.background = r==='ALL'?'var(--gold)':r==='TANK'?'#8B5CF6':r==='HEALER'?'#3ecf6e':'#e84040';
+      btn.style.color = r==='ALL'?'#000':'#fff';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = r==='ALL'?'var(--text-muted)':r==='TANK'?'#8B5CF6':r==='HEALER'?'#3ecf6e':'#e84040';
+    }
+  });
   renderMembersList();
 }
 
@@ -3855,9 +3876,15 @@ async function goStep3WithVision(){
     <div id="add-member-error" style="display:none;color:#e84040;font-size:11px;margin-top:6px;"></div>
   </div>
   <!-- Tabs: Active / Archived -->
-  <div id="members-tabs" style="display:flex;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--border);">
+  <div id="members-tabs" style="display:flex;align-items:center;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
     <button id="members-tab-active" onclick="switchMembersTab('active')" style="background:none;border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 0;border-bottom:2px solid var(--gold);cursor:pointer;">Active</button>
     <button id="members-tab-archived" onclick="switchMembersTab('archived')" style="background:none;border:none;color:var(--text-muted);font-size:13px;padding:8px 0;border-bottom:2px solid transparent;cursor:pointer;">Archived</button>
+    <div style="margin-left:auto;display:flex;gap:6px;" id="members-role-filters">
+      <button onclick="setRoleFilter('ALL')" id="rf-ALL" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:var(--gold);color:#000;font-weight:600;cursor:pointer;">All</button>
+      <button onclick="setRoleFilter('TANK')" id="rf-TANK" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:#8B5CF6;font-weight:600;cursor:pointer;">Tank</button>
+      <button onclick="setRoleFilter('HEALER')" id="rf-HEALER" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:#3ecf6e;font-weight:600;cursor:pointer;">Healer</button>
+      <button onclick="setRoleFilter('DPS')" id="rf-DPS" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:#e84040;font-weight:600;cursor:pointer;">DPS</button>
+    </div>
   </div>
   <div id="members-list-container"></div>
 </div>
