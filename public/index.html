@@ -2611,31 +2611,39 @@ async function callClaude(prompt, imageDataUrl){
 async function extractPartiesFromImage(dataUrl){
   var prompt = `You are analyzing a screenshot from TL Guild Manager (Throne & Liberty game).
 
-The image shows party cards in a 4-column grid. Each card has:
-- A header: "Party N (Label)" e.g. "Party 1 (Main)" or "Party 5 (Main/Cap)"
-- 5-6 player rows, each with a colored background
+The image shows party cards arranged in a GRID of columns. Each column is ONE party card.
 
-CRITICAL - ROLE DETECTION BY ROW BACKGROUND COLOR:
-The row background colors are VERY specific - look carefully at each row:
-- DARK PURPLE / VIOLET rows (like #3a2060 or #2d1d55) → role: "TANK"
-- DARK GREEN rows (like #1a4020 or #1e3d1e) → role: "HEALER"  
-- DARK RED / MAROON rows (like #4a1515 or #3d1a1a) → role: "DPS"
+STEP 1 - IDENTIFY EACH PARTY CARD:
+- Each party card has a header at the top: "Party N (Label)" e.g. "Party 1 (Mainball)" or "Party 5 (Main/Cap)"
+- Cards are arranged LEFT to RIGHT in columns
+- Process each column/card INDEPENDENTLY — do NOT mix players between cards
 
-In each row you can see: [dots] [avatar] [PlayerName] [number in circle] [icons] [...]
-Read the PlayerName exactly — may include: letters, numbers, dots, ✗, ✦, ·, ↗, ✦, Japanese chars
+STEP 2 - FOR EACH PARTY CARD, read TOP to BOTTOM:
+- Each row is ONE player
+- The player name is the text AFTER the circular avatar icon
+- Read the EXACT name visible in THAT specific card column — do NOT use names from other columns
 
-IMPORTANT RULES:
-- Skip any "Not Assigned" players (they appear below a "Not Assigned:" label)
+STEP 3 - ROLE DETECTION BY ROW BACKGROUND COLOR:
+Look at each row's background color CAREFULLY:
+- DARK PURPLE / VIOLET background → role: "TANK"
+- DARK GREEN background → role: "HEALER"
+- DARK RED / MAROON background → role: "DPS"
+
+CRITICAL RULES:
+- Process ONE card/column at a time, left to right
+- Each player name belongs ONLY to the card they appear in — never copy names between cards
+- Read names character by character from the image — names may include: letters, numbers, dots, ✗, ✦, ·, Japanese chars
+- Skip any "Not Assigned" section at the bottom of a card
 - The party label is in parentheses: "Party 3 (Portal Camp)" → label = "Portal Camp"
-- Usually 6 players per party (first row = TANK most often, then HEALERs, then DPS at bottom)
+- Usually 5-6 players per party
 - Return ALL parties visible in the image
 
-Respond with ONLY a JSON array, nothing else:
+Respond with ONLY a JSON array, no markdown, no explanation:
 [
-  {"name":"Party 1","label":"Main","members":[
-    {"name":"PaoloBrosio","role":"TANK"},
-    {"name":"Enelyye","role":"HEALER"},
-    {"name":"ilenia","role":"DPS"}
+  {"name":"Party 1","label":"Mainball","members":[
+    {"name":"ExactPlayerName","role":"TANK"},
+    {"name":"AnotherPlayer","role":"HEALER"},
+    {"name":"ThirdPlayer","role":"DPS"}
   ]},
   {"name":"Party 2","label":"Main","members":[...]}
 ]`;
