@@ -1432,20 +1432,35 @@ function viewWar(warId){
     html += '<tbody data-pi="'+pi+'" class="vw-party-body">';
 
     p.members.forEach(function(m, mi){
-      var rc = roleColor(m.role);
-      var nc = roleClass(m.role);
+      // Auto-detect role from roster if not set
+      var memberRole = m.role || 'DPS';
+      if(!m.role && _rosterCache){
+        var rMatch = _rosterCache.find(function(r){ return namesMatch(r.name, m.name); });
+        if(!rMatch){
+          for(var ak in _memberAliases){
+            if(namesMatch(_memberAliases[ak], m.name)){
+              rMatch = _rosterCache.find(function(r){ return normalizeName(r.name)===ak; });
+              if(rMatch) break;
+            }
+          }
+        }
+        if(rMatch) memberRole = rMatch.role;
+      }
+      var rc = roleColor(memberRole);
+      var nc = roleClass(memberRole);
+      var roleLabel = memberRole==='TANK'?'TANK':memberRole==='HEALER'?'HEAL':'DPS';
       var isDimmed = !(m.defeat||m.assist||m.dmg_dealt);
 
       html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="'+(_vwEditMode?'true':'false')+'" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">';
 
-      // Player name cell
+      // Player name cell with role badge
       html += '<td>';
       html += '<div class="player-cell">';
       if(_vwEditMode){
-        html += '<span class="role-dot" style="background:'+rc+';cursor:pointer;" onclick="cycleRole('+w.id+','+pi+','+mi+')"></span>';
+        html += '<span onclick="cycleWarMemberRole('+w.id+','+pi+','+mi+')" style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'22;color:'+rc+';cursor:pointer;margin-right:6px;" title="Click to change role">'+roleLabel+'</span>';
         html += '<span class="player-name '+nc+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
       } else {
-        html += '<span class="role-dot" style="background:'+rc+';"></span>';
+        html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'22;color:'+rc+';margin-right:6px;">'+roleLabel+'</span>';
         html += '<span class="player-name '+nc+'">'+escHtml(m.name)+'</span>';
       }
       html += '</div></td>';
@@ -1909,6 +1924,15 @@ function updatePartyNameInWar(warId, pi, newName){
 function updatePlayerNameInWar(warId, pi, mi, newName){
   var w = getWar(warId);
   if(w && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = newName.trim();
+}
+
+function cycleWarMemberRole(warId, pi, mi){
+  var war = _warsCache.find(function(w){ return w.id === warId; });
+  if(!war || !war.parties[pi] || !war.parties[pi].members[mi]) return;
+  var roles = ['TANK','HEALER','DPS'];
+  var cur = war.parties[pi].members[mi].role || 'DPS';
+  war.parties[pi].members[mi].role = roles[(roles.indexOf(cur)+1)%3];
+  viewWar(warId);
 }
 
 function cycleExtraRole(warId, extraIdx){
