@@ -730,20 +730,28 @@ function findStatsByNameOrAlias(confirmed, memberName){
   var direct = confirmed.find(function(c){ return namesMatch(c.name, memberName); });
   if(direct) return direct;
   // 2. Match via alias: member's alias value = confirmed player's name
-  var key = memberName.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+  var key = normalizeName(memberName);
   var alias = _memberAliases[key];
   if(alias){
     var aliasMatch = confirmed.find(function(c){ return namesMatch(c.name, alias); });
     if(aliasMatch) return aliasMatch;
   }
-  // 3. Reverse: confirmed name is an alias value pointing to this member
+  // 3. Try all aliases — find any alias value that matches a confirmed name
   for(var k in _memberAliases){
-    if(namesMatch(_memberAliases[k], memberName)){
-      // k is the TLGM key — does any confirmed match this alias value?
-      // Already covered by case 2 above for the right direction
+    if(normalizeName(k) === key || namesMatch(k, memberName)){
+      var val = _memberAliases[k];
+      var found = confirmed.find(function(c){ return namesMatch(c.name, val); });
+      if(found) return found;
     }
-    if(k === key) continue;
-    // Check if any confirmed player name matches an alias that maps to our member
+  }
+  // 4. Reverse: confirmed name is an alias value, find which TLGM member it maps to
+  for(var k2 in _memberAliases){
+    var v = _memberAliases[k2];
+    if(namesMatch(v, memberName)){
+      // This alias maps to us — find confirmed by the alias value
+      var found2 = confirmed.find(function(c){ return namesMatch(c.name, v) || namesMatch(c.name, k2); });
+      if(found2) return found2;
+    }
   }
   return null;
 }
@@ -3883,19 +3891,37 @@ function renderPartyEditorFromData(parties){
 // ── NAME NORMALIZATION ────────────────────────────────────────────────────
 function normalizeName(n){
   return (n||'').toLowerCase()
-    .replace(/[^\w\s]/g,'')   // șterge ✗ • ↗ ↙ ✦ · メ și orice char special
+    .replace(/[^\w\s\u3000-\u9fff\uff00-\uffef]/g,'')  // keep alphanumeric + CJK + fullwidth
     .replace(/\s+/g,' ')
     .trim();
 }
+// Aggressive normalize for fuzzy CJK matching — strips everything except core chars
+function normalizeAggressive(n){
+  return (n||'').toLowerCase()
+    .replace(/[\s\|\u4e28\-\_\:\.\,\·\•\✗\✦\↗\↙\/\\]/g,'')  // remove separators
+    .replace(/[\uff01-\uff5e]/g, function(c){ return String.fromCharCode(c.charCodeAt(0)-0xFEE0); }) // fullwidth→ascii
+    .trim();
+}
 function namesMatch(a, b){
+  if(!a || !b) return false;
   var na = normalizeName(a);
   var nb = normalizeName(b);
-  if(!na || !nb) return false;
-  if(na === nb) return true;
-  var shorter = na.length <= nb.length ? na : nb;
-  var longer  = na.length <= nb.length ? nb : na;
-  // "Xin9 Guild" ↔ "Xin9"  sau  "Yacoob" ↔ "yacoobb"
-  if(longer.startsWith(shorter+' ') || longer.startsWith(shorter)) return true;
+  if(na && nb && na === nb) return true;
+  // Aggressive match for CJK names
+  var aa = normalizeAggressive(a);
+  var ab = normalizeAggressive(b);
+  if(aa && ab && aa === ab) return true;
+  // Prefix/contains match
+  if(na && nb){
+    var shorter = na.length <= nb.length ? na : nb;
+    var longer  = na.length <= nb.length ? nb : na;
+    if(longer.startsWith(shorter+' ') || longer.startsWith(shorter)) return true;
+  }
+  if(aa && ab){
+    var shorter2 = aa.length <= ab.length ? aa : ab;
+    var longer2  = aa.length <= ab.length ? ab : aa;
+    if(longer2.startsWith(shorter2)) return true;
+  }
   return false;
 }
 
