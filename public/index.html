@@ -2460,7 +2460,7 @@ function renderMembersList(){
         // MANUAL INPUT
         +'<input id="manual-'+safeName+'" placeholder="Insert name" style="width:140px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
         // DROPDOWN
-        +'<select id="dropdown-'+safeName+'" style="width:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;">'+opts+'</select>'
+        +'<select id="dropdown-'+safeName+'" onchange="refreshUnmatchedDropdowns()" style="width:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;">'+opts+'</select>'
         // SAVE + ARCHIVE
         +'<button onclick="saveUnmatchedMember(\''+safeName+'\')" class="btn btn-primary" style="padding:3px 10px;font-size:11px;">Save</button>'
         +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
@@ -2915,6 +2915,35 @@ async function clearAllMembersAndAliases(){
     await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({})});
     renderMembersPage();
   }catch(e){ alert('Error: '+e.message); }
+}
+
+function refreshUnmatchedDropdowns(){
+  // Get all currently selected values
+  var selected = {};
+  document.querySelectorAll('[id^="dropdown-"]').forEach(function(sel){
+    if(sel.value) selected[sel.value.toLowerCase()] = sel.id;
+  });
+  // Get base pool
+  var usedAliasValues = {};
+  Object.values(_memberAliases).forEach(function(v){ usedAliasValues[v.toLowerCase()] = true; });
+  var sources = window._unmatchedGameNames || window._unmatchedNames || [];
+  var basePool = sources.filter(function(gn){ return !usedAliasValues[gn.toLowerCase()]; });
+
+  // Rebuild each dropdown excluding other dropdowns' selections
+  document.querySelectorAll('[id^="dropdown-"]').forEach(function(sel){
+    var currentVal = sel.value;
+    var available = basePool.filter(function(gn){
+      var key = gn.toLowerCase();
+      // Keep if: not selected by another dropdown, OR is this dropdown's current value
+      return !selected[key] || selected[key] === sel.id;
+    });
+    available.sort(function(a,b){ return a.localeCompare(b); });
+    var opts = '<option value="">-- Select --</option>';
+    available.forEach(function(gn){
+      opts += '<option value="'+escHtml(gn)+'"'+(gn===currentVal?' selected':'')+'>'+escHtml(gn)+'</option>';
+    });
+    sel.innerHTML = opts;
+  });
 }
 
 function saveUnmatchedMember(encodedName){
