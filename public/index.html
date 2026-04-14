@@ -2898,9 +2898,9 @@ function renderAliasSyncPreview(){
       }
 
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
-        +'<div style="flex:1;font-size:12px;color:var(--gold);font-weight:600;">'+escHtml(gn)+'</div>'
-        +'<div style="width:20px;color:var(--text-muted);font-size:10px;text-align:center;">→</div>'
         +'<select id="unmatched-'+idx+'" data-game="'+escHtml(gn)+'" onchange="renderAliasSyncPreview()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;">'+opts+'</select>'
+        +'<div style="width:20px;color:var(--text-muted);font-size:10px;text-align:center;">→</div>'
+        +'<div style="flex:1;font-size:12px;color:var(--gold);font-weight:600;">'+escHtml(gn)+'</div>'
         +'<div style="width:50px;text-align:right;"><button onclick="this.closest(\'div\').parentElement.style.display=\'none\'" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:10px;">Skip</button></div>'
         +'</div>';
     });
