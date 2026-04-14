@@ -723,15 +723,40 @@ function startNewWar(){
 // ── STEP NAV (single-step wizard — no-op) ─────────────────────────────────
 function goStep(n){ /* single-step wizard */ }
 
+// ── ALIAS-AWARE MATCHING ──────────────────────────────────────────────────
+function findStatsByNameOrAlias(confirmed, memberName){
+  if(!confirmed || !confirmed.length) return null;
+  // 1. Direct name match
+  var direct = confirmed.find(function(c){ return namesMatch(c.name, memberName); });
+  if(direct) return direct;
+  // 2. Match via alias: member's alias value = confirmed player's name
+  var key = memberName.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+  var alias = _memberAliases[key];
+  if(alias){
+    var aliasMatch = confirmed.find(function(c){ return namesMatch(c.name, alias); });
+    if(aliasMatch) return aliasMatch;
+  }
+  // 3. Reverse: confirmed name is an alias value pointing to this member
+  for(var k in _memberAliases){
+    if(namesMatch(_memberAliases[k], memberName)){
+      // k is the TLGM key — does any confirmed match this alias value?
+      // Already covered by case 2 above for the right direction
+    }
+    if(k === key) continue;
+    // Check if any confirmed player name matches an alias that maps to our member
+  }
+  return null;
+}
+
 // ── SAVE WAR (simplified) ─────────────────────────────────────────────────
 async function saveWarSimple(){
   var opp = (document.getElementById('opponent-input').value||'').trim() || 'Unknown';
   var dt  = document.getElementById('date-input').value || new Date().toLocaleDateString('ro-RO');
-  // Merge stats din confirmed players înapoi în parties
+  // Merge stats din confirmed players înapoi în parties (match by name + alias)
   if(state.confirmed && state.confirmed.length){
     state.parties.forEach(function(p){
       p.members.forEach(function(m){
-        var stats = state.confirmed.find(function(c){ return namesMatch(c.name, m.name); });
+        var stats = findStatsByNameOrAlias(state.confirmed, m.name);
         if(stats){
           m.defeat    = stats.defeat    || 0;
           m.assist    = stats.assist    || 0;
@@ -1107,7 +1132,7 @@ function renderMatchPreview(){
   var html='';
   state.parties.forEach(function(p){
     var matched = p.members.map(function(m){
-      var stats = state.confirmed.find(function(c){return c.name.toLowerCase().trim()===m.name.toLowerCase().trim();});
+      var stats = findStatsByNameOrAlias(state.confirmed, m.name);
       return Object.assign({},m,stats||{defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0});
     });
     var tot_def = matched.reduce(function(a,m){return a+m.defeat;},0);
@@ -1117,7 +1142,7 @@ function renderMatchPreview(){
     html += '<div style="margin-left:auto;display:flex;gap:16px;align-items:center;">';
     p.members.forEach(function(m){
       var dot={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[m.role];
-      var has = state.confirmed.find(function(c){return c.name.toLowerCase().trim()===m.name.toLowerCase().trim();});
+      var has = findStatsByNameOrAlias(state.confirmed, m.name);
       html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'#ddd':'var(--muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
     });
     html += '</div>';
@@ -1140,7 +1165,7 @@ function renderPreview(){
   var html='';
   state.parties.forEach(function(p){
     var members = p.members.map(function(m){
-      var s = state.confirmed.find(function(c){return c.name.toLowerCase().trim()===m.name.toLowerCase().trim();});
+      var s = findStatsByNameOrAlias(state.confirmed, m.name);
       return Object.assign({},m,s||{defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0});
     });
     var td=members.reduce(function(a,m){return a+m.defeat;},0);
@@ -3532,6 +3557,8 @@ async function extractAllScoreboards(){
     guildNames.push(m.name);
     if(m.tlgmName) guildNames.push(m.tlgmName);
   }); });
+  // Also add all alias values (in-game names) to matching pool
+  Object.values(_memberAliases).forEach(function(v){ if(v && guildNames.indexOf(v)===-1) guildNames.push(v); });
   var mAliases = loadMembriAliases(); // {normalizedName: "GameName with ✗"}
   var wAliases = loadAliases();       // war aliases
 
