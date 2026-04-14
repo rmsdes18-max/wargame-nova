@@ -2432,7 +2432,7 @@ function renderMembersList(){
         +(m.guildRole?'<div style="font-size:10px;color:var(--text-muted);">'+escHtml(m.guildRole)+'</div>':'')
       +'</div>'
       // In-Game Name column — editable in edit mode
-      +'<div style="min-width:140px;">'
+      +'<div style="min-width:140px;text-align:left;">'
         +(_membersEditMode
           ? '<input id="alias-'+safeName+'" value="'+escHtml(inGameName||'')+'" placeholder="—" style="width:120px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--gold);font-size:11px;outline:none;">'
             +'<button onclick="saveInlineAlias(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:14px;padding:2px;" title="Save alias">&#x2713;</button>'
@@ -2451,9 +2451,9 @@ function renderMembersList(){
   });
   var header = '<div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">'
     +'<div style="width:32px;"></div>'
-    +'<div style="flex:1;">TLGM Name</div>'
-    +'<div style="min-width:140px;">In-Game Name</div>'
-    +'<div style="min-width:50px;">Role</div>'
+    +'<div style="flex:1;text-align:left;">TLGM Name</div>'
+    +'<div style="min-width:140px;text-align:left;">In-Game Name</div>'
+    +'<div style="min-width:60px;text-align:left;">Role</div>'
     +(isEditor?'<div style="min-width:55px;"></div>':'')
     +'</div>';
   container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+header+html+'</div>';
