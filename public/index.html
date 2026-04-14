@@ -1100,6 +1100,7 @@ function renderStatsRow(p, i){
 }
 
 function renderStatsList(){
+  console.log('[renderStatsList] _rosterCache:', _rosterCache?_rosterCache.length:'null', 'novaPlayers:', state.novaPlayers?state.novaPlayers.length:'null', '_memberAliases keys:', Object.keys(_memberAliases).length);
   // Use new matching engine if roster is available
   if(_rosterCache && _rosterCache.length && state.novaPlayers && state.novaPlayers.length){
     var matchResults = matchOcrToMembers(state.novaPlayers, _rosterCache, _memberAliases);
@@ -2470,7 +2471,7 @@ async function loadGuildData(){
     if(results[0]) _warsCache   = results[0];
     if(results[1]) _aliasCache  = results[1];
     if(results[2]) _rosterCache = results[2];
-    if(results[3]) _mAliasCache = results[3];
+    if(results[3]){ _mAliasCache = results[3]; _memberAliases = results[3]; }
   }catch(e){ console.warn('Failed to load guild data',e); }
   renderWarsList();
 }
