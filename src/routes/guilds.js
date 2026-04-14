@@ -2,7 +2,14 @@ const { Router } = require('express');
 const { pool }   = require('../db');
 const { requireAuth, guildContext, requireGuildRole, checkFreeTierLimits } = require('../middleware/guildContext');
 const { logActivity } = require('../services/activityLog');
+const { fetchServerStatus } = require('../services/serverStatus');
 const router = Router();
+
+// GET /api/guilds/servers — TL server list with status
+router.get('/servers', async (req, res) => {
+  const data = await fetchServerStatus();
+  res.json(data);
+});
 
 // Slugify helper
 function slugify(text) {
@@ -34,7 +41,7 @@ router.get('/', requireAuth, async (req, res) => {
 
 // ── POST /api/guilds — create new guild ──
 router.post('/', requireAuth, async (req, res) => {
-  const { name, invite_code } = req.body;
+  const { name, invite_code, region, server } = req.body;
   if (!name || !name.trim()) return res.status(400).json({ error: 'Guild name required' });
 
   const slug = slugify(name);
@@ -50,11 +57,13 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    const inviteCode = (invite_code || '').trim() || undefined; // let DB generate if empty
+    const inviteCode = (invite_code || '').trim() || undefined;
+    const r = region || null;
+    const s = server || null;
     const insertQ = inviteCode
-      ? 'INSERT INTO guilds (name, slug, owner_id, invite_code) VALUES ($1, $2, $3, $4) RETURNING *'
-      : 'INSERT INTO guilds (name, slug, owner_id) VALUES ($1, $2, $3) RETURNING *';
-    const insertP = inviteCode ? [name.trim(), slug, req.user.id, inviteCode] : [name.trim(), slug, req.user.id];
+      ? 'INSERT INTO guilds (name, slug, owner_id, invite_code, region, server) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *'
+      : 'INSERT INTO guilds (name, slug, owner_id, region, server) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+    const insertP = inviteCode ? [name.trim(), slug, req.user.id, inviteCode, r, s] : [name.trim(), slug, req.user.id, r, s];
 
     const { rows } = await client.query(insertQ, insertP);
     const guild = rows[0];

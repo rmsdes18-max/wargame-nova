@@ -49,7 +49,7 @@ router.get('/stats', checkSuperAdmin, async (req, res) => {
 router.get('/guilds', checkSuperAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT g.id, g.name, g.slug, g.tier, g.created_at, g.invite_code,
+      SELECT g.id, g.name, g.slug, g.tier, g.region, g.server, g.created_at, g.invite_code,
              u.username as owner_username,
              (SELECT COUNT(*)::int FROM roster_members WHERE guild_id = g.id AND active = true) as member_count,
              (SELECT COUNT(*)::int FROM wars WHERE guild_id = g.id) as wars_count

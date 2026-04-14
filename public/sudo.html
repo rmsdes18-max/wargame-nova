@@ -126,7 +126,7 @@ async function load(){
 
     // Guilds table
     if(guilds && guilds.length){
-      var html='<table><tr><th>Name</th><th>Slug</th><th>Tier</th><th>Members</th><th>Wars</th><th>Created</th><th>Owner</th><th>Actions</th></tr>';
+      var html='<table><tr><th>Name</th><th>Region / Server</th><th>Tier</th><th>Members</th><th>Wars</th><th>Created</th><th>Owner</th><th>Actions</th></tr>';
       guilds.forEach(function(g){
         var d=new Date(g.created_at);
         var date=d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
@@ -134,7 +134,7 @@ async function load(){
         var otherTier=g.tier==='pro'?'free':'pro';
         html+='<tr>'
           +'<td style="font-weight:600;color:#fff;">'+esc(g.name)+'</td>'
-          +'<td style="font-family:JetBrains Mono,monospace;font-size:11px;color:#8b8d94;">'+esc(g.slug)+'</td>'
+          +'<td style="font-size:11px;color:#8b8d94;">'+(g.region?esc(g.region):'—')+(g.server?' / '+esc(g.server):'')+'</td>'
           +'<td><button class="badge '+tierClass+'" onclick="toggleTier(\''+g.id+'\',\''+otherTier+'\')">'+g.tier.toUpperCase()+'</button></td>'
           +'<td>'+g.member_count+'</td>'
           +'<td>'+g.wars_count+'</td>'

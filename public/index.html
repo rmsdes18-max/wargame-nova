@@ -245,13 +245,39 @@ input[type=number]{-moz-appearance:textfield;}
           <div style="font-size:12px;color:var(--text-muted);">I have an invite code</div>
         </div>
       </div>
-      <!-- Create Form (hidden) -->
+      <!-- Create Form (hidden) — 3 steps -->
       <div id="onboard-create-form" style="display:none;margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;">
-        <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;">Create your guild</div>
-        <input id="create-guild-name" type="text" placeholder="Guild name" style="width:100%;margin-bottom:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
-        <input id="create-guild-code" type="text" placeholder="Custom invite code (leave blank for random)" style="width:100%;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;">
-        <div id="create-guild-error" style="display:none;font-size:12px;color:#e84040;margin-bottom:10px;"></div>
-        <button onclick="doCreateGuild()" class="btn btn-primary" style="width:100%;padding:10px;font-size:14px;">Create Guild</button>
+        <!-- Step 1: Region -->
+        <div id="create-step-1">
+          <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Step 1: Select Region</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Choose your Throne & Liberty server region</div>
+          <select id="create-guild-region" onchange="loadServersForRegion()" style="width:100%;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+            <option value="">Loading regions...</option>
+          </select>
+          <button onclick="showCreateStep(2)" class="btn btn-primary" style="width:100%;padding:10px;font-size:14px;" id="create-next-1" disabled>Next</button>
+        </div>
+        <!-- Step 2: Server -->
+        <div id="create-step-2" style="display:none;">
+          <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Step 2: Select Server</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Which server does your guild play on?</div>
+          <select id="create-guild-server" style="width:100%;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+            <option value="">Select server...</option>
+          </select>
+          <div style="display:flex;gap:8px;">
+            <button onclick="showCreateStep(1)" class="btn btn-secondary" style="flex:1;padding:10px;font-size:14px;">Back</button>
+            <button onclick="showCreateStep(3)" class="btn btn-primary" style="flex:1;padding:10px;font-size:14px;">Next</button>
+          </div>
+        </div>
+        <!-- Step 3: Name + Create -->
+        <div id="create-step-3" style="display:none;">
+          <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;">Step 3: Guild Name</div>
+          <input id="create-guild-name" type="text" placeholder="Your guild name" style="width:100%;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+          <div id="create-guild-error" style="display:none;font-size:12px;color:#e84040;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="showCreateStep(2)" class="btn btn-secondary" style="flex:1;padding:10px;font-size:14px;">Back</button>
+            <button onclick="doCreateGuild()" class="btn btn-primary" style="flex:1;padding:10px;font-size:14px;">Create Guild</button>
+          </div>
+        </div>
       </div>
       <!-- Join Form (hidden) -->
       <div id="onboard-join-form" style="display:none;margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;">
@@ -2072,21 +2098,60 @@ function deleteUser(id){
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 // ── GUILD MANAGEMENT ─────────────────────────────────────────────────────
+var _tlServers = null;
+
 function showOnboardForm(type){
   document.getElementById('onboard-create-form').style.display = type==='create' ? '' : 'none';
   document.getElementById('onboard-join-form').style.display = type==='join' ? '' : 'none';
   document.getElementById('onboard-create').style.borderColor = type==='create' ? 'var(--gold)' : '';
   document.getElementById('onboard-join').style.borderColor = type==='join' ? 'var(--gold)' : '';
+  if(type==='create') loadTlServers();
+}
+
+async function loadTlServers(){
+  if(_tlServers) return;
+  try{
+    var r = await fetch('/api/guilds/servers');
+    if(r.ok) _tlServers = await r.json();
+  }catch(e){}
+  var sel = document.getElementById('create-guild-region');
+  if(!_tlServers || !_tlServers.regions){ sel.innerHTML='<option value="">Failed to load</option>'; return; }
+  sel.innerHTML = '<option value="">— Select Region —</option>';
+  _tlServers.regions.forEach(function(reg){
+    sel.innerHTML += '<option value="'+reg.slug+'">'+reg.name+' ('+reg.servers.length+' servers)</option>';
+  });
+}
+
+function loadServersForRegion(){
+  var region = document.getElementById('create-guild-region').value;
+  var btn = document.getElementById('create-next-1');
+  btn.disabled = !region;
+  var serverSel = document.getElementById('create-guild-server');
+  serverSel.innerHTML = '<option value="">Select server...</option>';
+  if(!region || !_tlServers) return;
+  var reg = _tlServers.regions.find(function(r){ return r.slug === region; });
+  if(!reg) return;
+  reg.servers.forEach(function(s){
+    var statusIcon = s.status==='online'?'🟢':s.status==='busy'?'🟡':s.status==='full'?'🔴':'⚪';
+    serverSel.innerHTML += '<option value="'+s.name+'">'+statusIcon+' '+s.name+'</option>';
+  });
+}
+
+function showCreateStep(step){
+  document.getElementById('create-step-1').style.display = step===1?'':'none';
+  document.getElementById('create-step-2').style.display = step===2?'':'none';
+  document.getElementById('create-step-3').style.display = step===3?'':'none';
 }
 
 async function doCreateGuild(){
   var name = document.getElementById('create-guild-name').value.trim();
-  var code = document.getElementById('create-guild-code').value.trim();
+  var region = document.getElementById('create-guild-region').value;
+  var server = document.getElementById('create-guild-server').value;
   var errEl = document.getElementById('create-guild-error');
   errEl.style.display='none';
   if(!name){ errEl.textContent='Guild name required'; errEl.style.display=''; return; }
   try{
-    var r = await fetch('/api/guilds',{method:'POST',headers:apiHeaders(),body:JSON.stringify({name:name,invite_code:code||undefined})});
+    var r = await fetch('/api/guilds',{method:'POST',headers:apiHeaders(),body:JSON.stringify({name:name,region:region||undefined,server:server||undefined})});
     var data = await r.json();
     if(r.status===401){ handleExpiredSession(); return; }
     if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
