@@ -3988,6 +3988,14 @@ function saveWarWithStats(){
     }
   });
   state.confirmed = state.novaPlayers.filter(function(p){ return p.status==='confirmed'; });
+
+  // Test matching engine
+  if(_rosterCache && state.confirmed.length){
+    var matchResults = matchOcrToMembers(state.confirmed, _rosterCache, _memberAliases);
+    console.log('[MatchEngine] Results:', matchResults);
+    console.log('[MatchEngine] Matched:', matchResults.matched.length, '/ Needs Review:', matchResults.needsReview.length, '/ Not in scoreboard:', matchResults.notInScoreboard.length);
+  }
+
   // Store unassigned extras on state so saveWarSimple can include them
   state._unassignedExtras = unassigned;
   saveWarSimple();
@@ -4104,6 +4112,109 @@ function namesMatch(a, b){
     if(longer2.startsWith(shorter2)) return true;
   }
   return false;
+}
+
+// ── MATCHING ENGINE ───────────────────────────────────────────────────────
+function normalizeForMatch(str){
+  if(!str) return '';
+  return str.toLowerCase()
+    .replace(/[\s\|\u4e28\-\_\:\·\•\(\)\[\]]/g,'')
+    .replace(/[\uff01-\uff5e]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);})
+    .trim();
+}
+
+function levenshteinDistance(a,b){
+  var m=[];
+  for(var i=0;i<=b.length;i++) m[i]=[i];
+  for(var j=0;j<=a.length;j++) m[0][j]=j;
+  for(var i=1;i<=b.length;i++){
+    for(var j=1;j<=a.length;j++){
+      m[i][j]=b[i-1]===a[j-1]?m[i-1][j-1]:Math.min(m[i-1][j-1]+1,m[i][j-1]+1,m[i-1][j]+1);
+    }
+  }
+  return m[b.length][a.length];
+}
+
+function similarityScore(a,b){
+  var na=normalizeForMatch(a), nb=normalizeForMatch(b);
+  if(!na||!nb) return 0;
+  if(na===nb) return 100;
+  if(na.indexOf(nb)!==-1||nb.indexOf(na)!==-1) return 85;
+  var d=levenshteinDistance(na,nb);
+  var maxLen=Math.max(na.length,nb.length);
+  return Math.max(0,Math.round(100-(d/maxLen*100)));
+}
+
+function findSuggestions(ocrName,roster,aliases,usedIds){
+  var suggestions=[];
+  roster.forEach(function(m){
+    if(usedIds[m.name]) return;
+    var score=similarityScore(m.name,ocrName);
+    if(score>40) suggestions.push({member:m,score:score,matchedOn:'tlgm_name'});
+  });
+  for(var k in aliases){
+    var score=similarityScore(aliases[k],ocrName);
+    if(score>40){
+      var m=roster.find(function(r){return normalizeName(r.name)===k;});
+      if(m && !usedIds[m.name] && !suggestions.find(function(s){return s.member.name===m.name;})){
+        suggestions.push({member:m,score:score,matchedOn:'alias'});
+      }
+    }
+  }
+  return suggestions.sort(function(a,b){return b.score-a.score;}).slice(0,3);
+}
+
+function matchOcrToMembers(ocrResults,roster,aliases){
+  var matched=[], needsReview=[], usedIds={};
+
+  ocrResults.forEach(function(ocr){
+    var ocrName=ocr.name;
+    var ocrNorm=normalizeForMatch(ocrName);
+    var member=null, confidence='';
+
+    // 1. Exact match pe TLGM name
+    member=roster.find(function(m){return !usedIds[m.name]&&normalizeForMatch(m.name)===ocrNorm;});
+    if(member){matched.push({ocrName:ocrName,member:member,stats:ocr,confidence:'exact'});usedIds[member.name]=true;return;}
+
+    // 2. Exact match pe alias value
+    for(var k in aliases){
+      if(normalizeForMatch(aliases[k])===ocrNorm){
+        member=roster.find(function(m){return !usedIds[m.name]&&normalizeName(m.name)===k;});
+        if(member){matched.push({ocrName:ocrName,member:member,stats:ocr,confidence:'alias'});usedIds[member.name]=true;break;}
+      }
+    }
+    if(member) return;
+
+    // 3. Fuzzy match pe alias
+    var bestMatch=null, bestScore=0;
+    for(var k2 in aliases){
+      var score=similarityScore(aliases[k2],ocrName);
+      if(score>70&&score>bestScore){
+        var m=roster.find(function(r){return !usedIds[r.name]&&normalizeName(r.name)===k2;});
+        if(m){bestMatch=m;bestScore=score;}
+      }
+    }
+    // 4. Fuzzy match pe TLGM name
+    if(!bestMatch||bestScore<80){
+      roster.forEach(function(m){
+        if(usedIds[m.name]) return;
+        var score=similarityScore(m.name,ocrName);
+        if(score>70&&score>bestScore){bestMatch=m;bestScore=score;}
+      });
+    }
+    if(bestMatch&&bestScore>80){
+      matched.push({ocrName:ocrName,member:bestMatch,stats:ocr,confidence:'fuzzy'});usedIds[bestMatch.name]=true;return;
+    }
+
+    // 5. Needs review
+    var suggestions=findSuggestions(ocrName,roster,aliases,usedIds);
+    needsReview.push({ocrName:ocrName,stats:ocr,suggestions:suggestions});
+  });
+
+  // Members not in scoreboard
+  var notInScoreboard=roster.filter(function(m){return m.active!==false&&!usedIds[m.name];}).map(function(m){return{member:m,reason:'not_found_in_ocr'};});
+
+  return{matched:matched,needsReview:needsReview,notInScoreboard:notInScoreboard};
 }
 
 // ── UPDATED STEP 3: VISION SCOREBOARD ────────────────────────────────────
