@@ -1233,7 +1233,7 @@ function renderStatsMatchingUI(results){
 
 function assignReviewMember(idx){
   if(!window._currentMatchResults) return;
-  var sel = document.getElementById('review-select-'+idx);
+  var sel = document.getElementById('review-sel-'+idx) || document.getElementById('review-select-'+idx);
   if(!sel || !sel.value) return;
   var memberName = sel.value;
   var member = _rosterCache.find(function(m){return m.name===memberName;});
@@ -4085,66 +4085,161 @@ async function extractAllScoreboards(){
     +'<th style="'+thStyle+'">Dmg Dealt</th><th style="'+thStyle+'">Dmg Taken</th>'
     +'<th style="'+thStyle+'">Healed</th><th style="width:30px;"></th></tr>';
 
-  var tableHtml = '<div style="overflow-x:auto;">';
-
-  // Group confirmed by party
-  state.parties.forEach(function(party){
-    var partyPlayers = [];
-    state.novaPlayers.forEach(function(p,i){
-      if(p.party === party.name && p.status === 'confirmed') partyPlayers.push({p:p,i:i});
+  // ═══ NEW STATS MATCHING UI (from mockup) ═══
+  var matchResults = (_rosterCache && _rosterCache.length)
+    ? matchOcrToMembers(state.novaPlayers, _rosterCache, _memberAliases)
+    : {matched:[], needsReview:[], notInScoreboard:[]};
+  // If no roster, put all confirmed as matched, all missing/extra as review
+  if(!_rosterCache || !_rosterCache.length){
+    state.novaPlayers.forEach(function(p){
+      if(p.status==='confirmed') matchResults.matched.push({ocrName:p.name,member:{name:p.name,role:p.role||'DPS'},stats:p,confidence:'exact'});
+      else if(p.status==='extra') matchResults.needsReview.push({ocrName:p.name,stats:p,suggestions:[]});
     });
-    if(!partyPlayers.length) return;
-    partyPlayers.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
+  }
+  window._currentMatchResults = matchResults;
 
-    tableHtml += '<div style="margin-bottom:12px;">';
-    var labelTag = party.label ? ' <span style="font-size:11px;color:#9080cc;background:rgba(255,255,255,.1);padding:1px 8px;border-radius:99px;margin-left:8px;font-weight:600;">'+escHtml(party.label)+'</span>' : '';
-    var pColor = party.color || '#3a2060';
-    var piIdx = state.parties.indexOf(party);
-    var colorSelect = '<select data-score-pi="'+piIdx+'" onchange="state.parties['+piIdx+'].color=this.value;this.parentElement.style.background=this.value" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:11px;padding:3px 6px;cursor:pointer;margin-left:auto;">'
-      +'<option value="#3a2060"'+(pColor==='#3a2060'||pColor==='#1e1545'?' selected':'')+'>Mov</option>'
-      +'<option value="#4a1520"'+(pColor==='#4a1520'||pColor==='#3a1020'?' selected':'')+'>Red</option>'
-      +'<option value="#4a3a10"'+(pColor==='#4a3a10'||pColor==='#3a3010'?' selected':'')+'>Yellow</option>'
-      +'<option value="#1a3050"'+(pColor==='#1a3050'||pColor==='#102040'?' selected':'')+'>Blue</option>'
-      +'<option value="#1a4030"'+(pColor==='#1a4030'||pColor==='#103020'?' selected':'')+'>Green</option>'
-      +'</select>';
-    tableHtml += '<div style="background:'+pColor+';padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;">'+escHtml(party.name)+labelTag+colorSelect+'</div>';
-    tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
-    partyPlayers.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
-    tableHtml += '</table></div>';
-  });
+  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
+  var roleClass = function(r){ return (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps'; };
 
-  // NEW: Stats Matching UI (replaces "Fără statistici" + "Extra din scoreboard")
-  if(_rosterCache && _rosterCache.length){
-    var matchResults = matchOcrToMembers(state.novaPlayers, _rosterCache, _memberAliases);
-    window._currentMatchResults = matchResults;
-    tableHtml += renderStatsMatchingUI(matchResults);
-  } else {
-    // Fallback: old sections if no roster
-    var missingRows = [];
-    state.novaPlayers.forEach(function(p,i){ if(p.status==='missing') missingRows.push({p:p,i:i}); });
-    if(missingRows.length){
-      tableHtml += '<div style="margin-bottom:12px;">';
-      tableHtml += '<div style="background:rgba(240,192,64,.15);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);">⚠ Fără statistici ('+missingRows.length+')</div>';
-      tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.15);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
-      missingRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
-      tableHtml += '</table></div>';
-    }
-    var extraRows = [];
-    state.novaPlayers.forEach(function(p,i){ if(p.status==='extra') extraRows.push({p:p,i:i}); });
-    if(extraRows.length){
-      extraRows.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
-      tableHtml += '<div style="margin-bottom:12px;">';
-      tableHtml += '<div style="background:rgba(255,255,255,.06);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--muted);">+ Extra din scoreboard ('+extraRows.length+')</div>';
-      tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
-      extraRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
-      tableHtml += '</table></div>';
-    }
+  var out = '';
+
+  // ── Stats Summary Boxes ──
+  out += '<div style="display:flex;gap:16px;margin-bottom:24px;">';
+  out += '<div style="background:#1a1a1a;border:1px solid #333;border-left:3px solid #3ecf6e;border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;">'
+    +'<div style="font-size:24px;font-weight:700;color:#3ecf6e;">'+matchResults.matched.length+'</div>'
+    +'<div style="font-size:12px;color:#888;">Matched<br>Automat</div></div>';
+  out += '<div style="background:#1a1a1a;border:1px solid #333;border-left:3px solid #f0c040;border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;">'
+    +'<div style="font-size:24px;font-weight:700;color:#f0c040;">'+matchResults.needsReview.length+'</div>'
+    +'<div style="font-size:12px;color:#888;">Needs<br>Review</div></div>';
+  out += '<div style="background:#1a1a1a;border:1px solid #333;border-left:3px solid #e84040;border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;">'
+    +'<div style="font-size:24px;font-weight:700;color:#e84040;">'+matchResults.notInScoreboard.length+'</div>'
+    +'<div style="font-size:12px;color:#888;">Not in<br>Scoreboard</div></div>';
+  out += '</div>';
+
+  // ── NEEDS REVIEW (expanded) ──
+  if(matchResults.needsReview.length){
+    out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;overflow:hidden;" id="section-review">';
+    out += '<div onclick="var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252525;cursor:pointer;">'
+      +'<div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;"><span style="color:#f0c040;">⚠️</span> NEEDS REVIEW <span style="background:#0f0f0f;padding:2px 8px;border-radius:10px;font-size:12px;color:#888;">'+matchResults.needsReview.length+'</span></div>'
+      +'<span style="color:#888;font-size:12px;">▲</span></div>';
+    out += '<div class="sm-section-body">';
+    matchResults.needsReview.forEach(function(r,idx){
+      var availOpts = '<option value="">— Select Member —</option>';
+      if(r.suggestions && r.suggestions.length){
+        r.suggestions.forEach(function(s){ availOpts += '<option value="'+escHtml(s.member.name)+'">'+escHtml(s.member.name)+' ('+s.score+'%)</option>'; });
+        availOpts += '<option disabled>──────────</option>';
+      }
+      var usedNames = {};
+      matchResults.matched.forEach(function(m){ usedNames[m.member.name]=true; });
+      if(_rosterCache) _rosterCache.forEach(function(m){ if(m.active!==false && !usedNames[m.name]) availOpts += '<option value="'+escHtml(m.name)+'">'+escHtml(m.name)+'</option>'; });
+
+      out += '<div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(240,192,64,.03);">'
+        +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">'
+          +'<span style="font-family:monospace;color:#f0c040;font-size:14px;font-weight:600;">'+escHtml(r.ocrName)+'</span>'
+          +'<span style="color:#888;font-size:14px;">→</span>'
+          +'<select id="review-sel-'+idx+'" style="background:#252525;border:1px solid #444;border-radius:6px;padding:6px 12px;color:#e0e0e0;font-size:13px;min-width:180px;">'+availOpts+'</select>'
+          +'<button onclick="assignReviewMember('+idx+')" class="btn btn-primary" style="padding:5px 10px;font-size:11px;">Assign</button>'
+        +'</div>'
+        +'<div style="display:flex;gap:20px;font-size:12px;color:#888;margin-left:0;">'
+          +'<span>K: <strong style="color:#e84040;">'+(r.stats.defeat||0)+'</strong></span>'
+          +'<span>A: <strong>'+(r.stats.assist||0)+'</strong></span>'
+          +'<span>DMG: <strong style="color:#c9a06a;">'+fmtS(r.stats.dmg_dealt||0)+'</strong></span>'
+          +'<span>HEAL: <strong style="color:#3ecf6e;">'+fmtS(r.stats.healed||0)+'</strong></span>'
+        +'</div>'
+        +(r.suggestions&&r.suggestions.length?'<div style="margin-top:6px;font-size:11px;color:#888;">💡 Suggestions: '+r.suggestions.map(function(s){return '<strong style="color:#e0e0e0;">'+escHtml(s.member.name)+'</strong> ('+s.score+'%)';}).join(', ')+'</div>':'')
+        +'</div>';
+    });
+    out += '</div></div>';
   }
 
-  tableHtml += '</div>';
+  // ── MATCHED (collapsed) ──
+  out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;overflow:hidden;" id="section-matched">';
+  out += '<div onclick="var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';this.querySelector(\'.sm-toggle\').textContent=b.style.display===\'none\'?\'▼ Click to expand\':\'▲ Click to collapse\';" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252525;cursor:pointer;">'
+    +'<div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;"><span style="color:#3ecf6e;">✅</span> MATCHED <span style="background:#0f0f0f;padding:2px 8px;border-radius:10px;font-size:12px;color:#888;">'+matchResults.matched.length+'</span></div>'
+    +'<span class="sm-toggle" style="color:#888;font-size:12px;">▼ Click to expand</span></div>';
+  out += '<div style="display:none;">';
+  matchResults.matched.forEach(function(m){
+    var role = m.member.role||'DPS';
+    var rc = roleClass(role);
+    var confColor = m.confidence==='exact'?'#3ecf6e':m.confidence==='alias'?'#f0c040':'#5b8fff';
+    out += '<div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;">'
+      +'<span class="role-badge '+rc+'" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;min-width:44px;text-align:center;'
+        +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;border:1px solid #e84040;'
+         :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;border:1px solid #8B5CF6;'
+         :'background:rgba(62,207,110,.2);color:#3ecf6e;border:1px solid #3ecf6e;')
+      +'">'+role+'</span>'
+      +'<span style="font-weight:600;color:#e0e0e0;min-width:120px;">'+escHtml(m.member.name)+'</span>'
+      +'<span style="color:#888;font-size:14px;">←</span>'
+      +'<span style="color:#f0c040;font-family:monospace;font-size:13px;min-width:120px;">'+escHtml(m.ocrName)+'</span>'
+      +'<div style="display:flex;gap:16px;margin-left:auto;font-size:12px;font-family:monospace;">'
+        +'<span><span style="color:#888;font-size:10px;">K</span> <span style="color:#e84040;">'+(m.stats.defeat||0)+'</span></span>'
+        +'<span><span style="color:#888;font-size:10px;">A</span> <span>'+(m.stats.assist||0)+'</span></span>'
+        +'<span><span style="color:#888;font-size:10px;">DMG</span> <span style="color:#c9a06a;">'+fmtS(m.stats.dmg_dealt||0)+'</span></span>'
+        +'<span><span style="color:#888;font-size:10px;">HEAL</span> <span style="color:#3ecf6e;">'+fmtS(m.stats.healed||0)+'</span></span>'
+      +'</div>'
+      +'<span style="font-size:10px;padding:2px 6px;border-radius:3px;margin-left:8px;background:'+confColor+'33;color:'+confColor+';">'+m.confidence+'</span>'
+      +'</div>';
+  });
+  out += '</div></div>';
 
-  resultsEl.innerHTML = summaryHtml + tableHtml;
-  statusEl.innerHTML = '<span style="color:var(--heal);font-weight:600;">Extragere completă! Verifică și corectează valorile, apoi salvează.</span>';
+  // ── NOT IN SCOREBOARD (collapsed) ──
+  if(matchResults.notInScoreboard.length){
+    out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;overflow:hidden;">';
+    out += '<div onclick="var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252525;cursor:pointer;">'
+      +'<div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;"><span style="color:#e84040;">❌</span> NOT IN SCOREBOARD <span style="background:#0f0f0f;padding:2px 8px;border-radius:10px;font-size:12px;color:#888;">'+matchResults.notInScoreboard.length+'</span></div>'
+      +'<span style="color:#888;font-size:12px;">▼</span></div>';
+    out += '<div style="display:none;">';
+    matchResults.notInScoreboard.forEach(function(n){
+      var role = n.member.role||'DPS';
+      var rc = roleClass(role);
+      out += '<div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;">'
+        +'<span style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;min-width:44px;text-align:center;'
+          +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;border:1px solid #e84040;'
+           :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;border:1px solid #8B5CF6;'
+           :'background:rgba(62,207,110,.2);color:#3ecf6e;border:1px solid #3ecf6e;')
+        +'">'+role+'</span>'
+        +'<span style="font-weight:600;color:#e0e0e0;">'+escHtml(n.member.name)+'</span>'
+        +'<span style="color:#888;font-style:italic;margin-left:auto;">— did not participate</span>'
+        +'</div>';
+    });
+    out += '</div></div>';
+  }
+
+  // ── Party Assignment Preview ──
+  var partyDotColors = ['#5b8fff','#3ecf6e','#e84040','#f0c040','#8B5CF6','#f97316','#0891b2'];
+  out += '<h3 style="margin:24px 0 12px;font-size:14px;color:#888;">📋 Party Assignment Preview</h3>';
+  out += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">';
+  state.parties.forEach(function(party,pi){
+    if(party._isExtras || party.name==='_Extras') return;
+    var pMembers = state.novaPlayers.filter(function(p){ return p.party===party.name && p.status==='confirmed'; });
+    var dotColor = partyDotColors[pi % partyDotColors.length];
+    out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px;">';
+    out += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #333;">'
+      +'<span style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';"></span>'+escHtml(party.name)+(party.label?' — '+escHtml(party.label):'')+'</span>'
+      +'<span style="font-size:11px;color:'+(pMembers.length>=6?'#3ecf6e':'#888')+';">'+pMembers.length+'/6</span>'
+      +'</div>';
+    out += '<div style="display:flex;flex-direction:column;gap:4px;">';
+    pMembers.forEach(function(pm){
+      var rc2 = roleClass(pm.role);
+      out += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;">'
+        +'<span style="padding:2px 5px;border-radius:4px;font-size:8px;font-weight:700;min-width:32px;text-align:center;'
+          +(rc2==='dps'?'background:rgba(232,64,64,.2);color:#e84040;'
+           :rc2==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;'
+           :'background:rgba(62,207,110,.2);color:#3ecf6e;')
+        +'">'+pm.role+'</span> '+escHtml(pm.name)+'</div>';
+    });
+    if(!pMembers.length) out += '<div style="font-size:11px;color:#888;padding:4px 0;">Empty</div>';
+    out += '</div></div>';
+  });
+  out += '</div>';
+
+  // ── Footer ──
+  out += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid #333;">'
+    +'<div style="font-size:12px;color:#888;">💾 Alias-urile noi vor fi salvate automat</div>'
+    +'</div>';
+
+  resultsEl.innerHTML = summaryHtml + out;
+  statusEl.innerHTML = '<span style="color:var(--heal);font-weight:600;">Extragere completă! Verifică matches și salvează.</span>';
 
   btn.textContent = '🔍 Extrage din nou';
   btn.disabled = false;
