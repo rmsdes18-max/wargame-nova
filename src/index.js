@@ -25,7 +25,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, l
 // Rate limiting — auth: 50 req / 15 min (anti brute-force)
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 50, standardHeaders: true, legacyHeaders: false }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // API routes (înainte de static, să nu fie interceptate)
 app.use('/api/auth',    require('./routes/auth'));
