@@ -31,7 +31,7 @@ td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:#dcddde;}
 .loading{text-align:center;padding:40px;color:#8b8d94;font-size:14px;}
 </style>
 </head>
-<body>
+<body style="opacity:0;transition:opacity .2s">
 <div class="container">
   <h1>Sudo Panel</h1>
   <div class="sub">Platform administration — wartl-app.com</div>
@@ -87,18 +87,24 @@ td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:#dcddde;}
 
 <script>
 var token = localStorage.getItem('nova_token') || '';
+if(!token){ window.location.href='/'; }
 function hdrs(){ return {'Content-Type':'application/json','Authorization':'Bearer '+token}; }
 
 async function load(){
+  // Quick auth check — redirect before showing anything
+  var authCheck = await fetch('/api/sudo/stats',{headers:hdrs()});
+  if(!authCheck.ok){ window.location.href='/'; return; }
+  document.body.style.opacity='1';
+
   try{
-    var [stats, health, guilds, users] = await Promise.all([
-      fetch('/api/sudo/stats',{headers:hdrs()}).then(r=>r.ok?r.json():null),
+    var stats = await authCheck.json();
+    var [health, guilds, users] = await Promise.all([
       fetch('/api/sudo/health',{headers:hdrs()}).then(r=>r.ok?r.json():null),
       fetch('/api/sudo/guilds',{headers:hdrs()}).then(r=>r.ok?r.json():null),
       fetch('/api/sudo/users',{headers:hdrs()}).then(r=>r.ok?r.json():null),
     ]);
 
-    if(!stats && !health){
+    if(!stats){
       window.location.href='/';
       return;
     }

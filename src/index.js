@@ -55,7 +55,7 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(publicDir, 'admin.html'));
 });
 
-// Sudo panel (super admin only — auth check is in API, page is just static)
+// Sudo panel
 app.get('/sudo', (req, res) => {
   res.sendFile(path.join(publicDir, 'sudo.html'));
 });
