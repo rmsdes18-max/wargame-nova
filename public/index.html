@@ -118,11 +118,9 @@ input[type=number]{-moz-appearance:textfield;}
       </a>
     </nav>
     <div class="sidebar-footer">
-      <div id="guild-settings-tab" style="display:none;">
-        <a class="sidebar-footer-btn" onclick="showPage('guild-settings');closeSidebar()" style="cursor:pointer;">
-          <span class="sidebar-item-icon">&#x2699;</span><span>Settings</span>
-        </a>
-      </div>
+      <a class="sidebar-footer-btn" onclick="showPage('guild-settings');closeSidebar()" style="cursor:pointer;">
+        <span class="sidebar-item-icon">&#x2699;</span><span>Settings</span>
+      </a>
       <div class="sidebar-version">v1.0</div>
     </div>
   </aside>
@@ -1937,9 +1935,7 @@ function updateUIForRole(){
   var nwBtn = document.querySelector('.topbar-actions .btn-primary');
   if(nwBtn) nwBtn.style.display = isEditor ? '' : 'none';
 
-  // Guild settings sidebar item - admin only
-  var gsTab = document.getElementById('guild-settings-tab');
-  if(gsTab) gsTab.style.display = isAdmin ? '' : 'none';
+  // Guild settings - visible for all (page handles admin-only actions)
 
   // Topbar user area
   var userEl = document.getElementById('topbar-user');
