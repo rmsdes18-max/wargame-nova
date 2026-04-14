@@ -53,25 +53,6 @@ router.post('/', requireAuth, guildContext, requireGuildRole('editor'), async (r
       [id, opponent, date, JSON.stringify(parties || []), req.guild.id]
     );
     const r = rows[0];
-
-    // Auto-sync roster: upsert all party members into roster_members
-    const partyList = Array.isArray(parties) ? parties : [];
-    let sortOrder = 0;
-    for (const party of partyList) {
-      if (party._isExtras || party.name === '_Extras') continue;
-      const members = Array.isArray(party.members) ? party.members : [];
-      for (const m of members) {
-        if (!m.name) continue;
-        const role = ['TANK', 'HEALER', 'DPS'].includes(m.role) ? m.role : 'DPS';
-        await pool.query(
-          `INSERT INTO roster_members (name, role, guild_id, sort_order)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (guild_id, name) DO UPDATE SET role = EXCLUDED.role`,
-          [m.name.trim(), role, req.guild.id, sortOrder++]
-        );
-      }
-    }
-
     res.status(201).json({ id: Number(r.id), opponent: r.opponent, date: r.date, parties: r.parties });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'War with this id already exists' });

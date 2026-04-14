@@ -2274,45 +2274,172 @@ async function initGuildSettings(){
 }
 
 // ── MEMBERS PAGE ──
+var _membersTab = 'active';
+var _rosterData = [];
+
 async function renderMembersPage(){
   var container = document.getElementById('members-list-container');
   var countEl = document.getElementById('members-count');
+  var actionsEl = document.getElementById('members-actions');
   if(!container) return;
+
+  var isEditor = _userRole === 'admin' || _userRole === 'editor';
+  if(actionsEl) actionsEl.style.display = isEditor ? 'flex' : 'none';
+
   container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Loading...</div>';
   try{
     var r = await fetch('/api/roster',{headers:apiHeaders()});
     if(!r.ok){ container.innerHTML='<div style="color:#e84040;">Failed to load roster</div>'; return; }
-    var members = await r.json();
-    if(!members.length){
-      // Empty state
-      countEl.textContent = '';
-      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
-        +'<div style="font-size:48px;opacity:.2;margin-bottom:16px;">◆</div>'
-        +'<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">No members yet</div>'
-        +'<div style="font-size:13px;color:var(--text-muted);max-width:300px;margin-bottom:20px;">Add your guild members to track war participation and stats.</div>'
-        +'<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">'
-          +'<button onclick="showPage(\'new-war\')" class="btn btn-primary" style="padding:8px 18px;font-size:13px;">Sync from Screenshot</button>'
-        +'</div>'
-        +'</div>';
-      return;
-    }
-    countEl.textContent = members.filter(function(m){return m.active!==false;}).length + ' active';
-    var roleColors = {TANK:'#8B5CF6',HEALER:'#3ecf6e',DPS:'#e84040'};
-    var html = '';
-    members.forEach(function(m){
-      if(m.active === false) return;
-      var color = roleColors[m.role] || 'var(--text-muted)';
-      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
-        +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+color+';flex-shrink:0;">'+m.name.charAt(0).toUpperCase()+'</div>'
-        +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(m.name)+'</div>'
-          +(m.guildRole?'<div style="font-size:10px;color:var(--text-muted);">'+escHtml(m.guildRole)+'</div>':'')
-        +'</div>'
-        +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+m.role+'</span>'
-        +'</div>';
-    });
-    container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+html+'</div>';
+    _rosterData = await r.json();
+    renderMembersList();
   }catch(e){ container.innerHTML='<div style="color:#e84040;">Error: '+e.message+'</div>'; }
+}
+
+function renderMembersList(){
+  var container = document.getElementById('members-list-container');
+  var countEl = document.getElementById('members-count');
+  var isEditor = _userRole === 'admin' || _userRole === 'editor';
+  var showArchived = _membersTab === 'archived';
+  var filtered = _rosterData.filter(function(m){ return showArchived ? m.active === false : m.active !== false; });
+
+  var activeCount = _rosterData.filter(function(m){ return m.active !== false; }).length;
+  var archivedCount = _rosterData.filter(function(m){ return m.active === false; }).length;
+  countEl.textContent = activeCount + ' active' + (archivedCount ? ' · ' + archivedCount + ' archived' : '');
+
+  if(!_rosterData.length && !showArchived){
+    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
+      +'<div style="font-size:48px;opacity:.15;margin-bottom:16px;">◆</div>'
+      +'<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">No members yet</div>'
+      +'<div style="font-size:13px;color:var(--text-muted);max-width:320px;margin-bottom:20px;">Upload a screenshot from TL Guild Manager to sync your roster, or add members manually.</div>'
+      +(isEditor ? '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">'
+        +'<label class="btn btn-primary" style="cursor:pointer;padding:10px 24px;font-size:14px;">Sync from Screenshot<input type="file" accept="image/*" onchange="syncRosterFromScreenshot(this)" style="display:none;"></label>'
+        +'</div>' : '')
+      +'</div>';
+    return;
+  }
+
+  if(!filtered.length){
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">No '+(showArchived?'archived':'active')+' members</div>';
+    return;
+  }
+
+  var roleColors = {TANK:'#8B5CF6',HEALER:'#3ecf6e',DPS:'#e84040'};
+  var html = '';
+  filtered.forEach(function(m){
+    var color = roleColors[m.role] || 'var(--text-muted)';
+    var safeName = encodeURIComponent(m.name);
+    var roles = ['TANK','HEALER','DPS'];
+    var nextRole = roles[(roles.indexOf(m.role)+1)%3];
+
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+color+';flex-shrink:0;">'+escHtml(m.name.charAt(0).toUpperCase())+'</div>'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(m.name)+'</div>'
+        +(m.guildRole?'<div style="font-size:10px;color:var(--text-muted);">'+escHtml(m.guildRole)+'</div>':'')
+      +'</div>'
+      +(isEditor
+        ? '<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;" title="Click to change role">'+m.role+'</span>'
+        : '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+m.role+'</span>')
+      +(isEditor && !showArchived ? '<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;" title="Archive">Archive</button>' : '')
+      +(isEditor && showArchived ? '<button onclick="restoreMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:11px;padding:4px 8px;" title="Restore">Restore</button>' : '')
+      +'</div>';
+  });
+  container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+html+'</div>';
+}
+
+function switchMembersTab(tab){
+  _membersTab = tab;
+  document.getElementById('members-tab-active').style.borderBottomColor = tab==='active' ? 'var(--gold)' : 'transparent';
+  document.getElementById('members-tab-active').style.color = tab==='active' ? '#fff' : 'var(--text-muted)';
+  document.getElementById('members-tab-archived').style.borderBottomColor = tab==='archived' ? 'var(--gold)' : 'transparent';
+  document.getElementById('members-tab-archived').style.color = tab==='archived' ? '#fff' : 'var(--text-muted)';
+  renderMembersList();
+}
+
+function showAddMemberForm(){
+  document.getElementById('add-member-form').style.display = '';
+  document.getElementById('add-member-name').focus();
+}
+
+async function addMember(){
+  var name = document.getElementById('add-member-name').value.trim();
+  var role = document.getElementById('add-member-role').value;
+  var errEl = document.getElementById('add-member-error');
+  errEl.style.display='none';
+  if(!name){ errEl.textContent='Name required'; errEl.style.display=''; return; }
+  try{
+    var r = await fetch('/api/roster',{method:'POST',headers:apiHeaders(),body:JSON.stringify({name:name,role:role})});
+    var data = await r.json();
+    if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
+    document.getElementById('add-member-name').value='';
+    document.getElementById('add-member-form').style.display='none';
+    renderMembersPage();
+  }catch(e){ errEl.textContent=e.message; errEl.style.display=''; }
+}
+
+async function cycleRole(encodedName, newRole){
+  try{
+    await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({role:newRole})});
+    renderMembersPage();
+  }catch(e){ alert(e.message); }
+}
+
+async function archiveMember(encodedName){
+  try{
+    await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({active:false})});
+    renderMembersPage();
+  }catch(e){ alert(e.message); }
+}
+
+async function restoreMember(encodedName){
+  try{
+    await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({active:true})});
+    renderMembersPage();
+  }catch(e){ alert(e.message); }
+}
+
+async function syncRosterFromScreenshot(input){
+  var file = input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(ev){
+    var container = document.getElementById('members-list-container');
+    container.innerHTML = '<div style="padding:20px;text-align:center;"><div class="processing"><span class="spin">◌</span> Reading roster from screenshot...</div></div>';
+    try{
+      var prompt = 'You are reading a screenshot from TL Guild Manager (Throne & Liberty). It shows party cards with player names and colored role bars.\n\nExtract ALL player names and their roles. Role is determined by the LEFT VERTICAL COLOR BAR:\n- Purple/violet bar = TANK\n- Green bar = HEALER\n- Red/brown bar = DPS\n\nReturn ONLY a JSON array, no explanation:\n[{"name":"PlayerName","role":"TANK"},{"name":"AnotherPlayer","role":"HEALER"}]';
+      var raw = await callClaude(prompt, ev.target.result);
+      var clean = raw.replace(/```json\n?|```/g,'').trim();
+      var match = clean.match(/\[[\s\S]*\]/);
+      if(match) clean = match[0];
+      var extracted = JSON.parse(clean);
+      if(!Array.isArray(extracted) || !extracted.length) throw new Error('No members detected');
+
+      // Merge with existing roster
+      var existing = {};
+      _rosterData.forEach(function(m){ existing[m.name.toLowerCase()] = m; });
+      var merged = _rosterData.slice(); // keep existing
+      var added = 0;
+      extracted.forEach(function(m){
+        if(!m.name) return;
+        var key = m.name.trim().toLowerCase();
+        if(!existing[key]){
+          merged.push({name:m.name.trim(), role:m.role||'DPS', guildRole:null, active:true});
+          existing[key] = true;
+          added++;
+        }
+      });
+
+      // Save merged roster
+      var r = await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(merged)});
+      if(!r.ok) throw new Error('Failed to save roster');
+      container.innerHTML = '<div style="padding:14px;color:var(--heal);font-size:13px;">Synced! '+added+' new members added ('+extracted.length+' detected total).</div>';
+      setTimeout(function(){ renderMembersPage(); }, 1500);
+    }catch(e){
+      container.innerHTML = '<div style="padding:14px;color:#e84040;font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
+      setTimeout(function(){ renderMembersPage(); }, 3000);
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }
 
 async function updateDefaultInviteRole(role){
@@ -3235,8 +3362,38 @@ async function goStep3WithVision(){
 <!-- SETTINGS PAGE -->
 <!-- ═══════════════ MEMBERS PAGE ═══════════════ -->
 <div class="page" id="page-members">
-  <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px;">Guild Members</h2>
-  <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-bottom:20px;"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div>
+      <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;">Guild Members</h2>
+      <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+    </div>
+    <div id="members-actions" style="display:none;gap:8px;flex-wrap:wrap;">
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+        Sync from Screenshot
+        <input type="file" accept="image/*" onchange="syncRosterFromScreenshot(this)" style="display:none;">
+      </label>
+      <button onclick="showAddMemberForm()" class="btn btn-primary btn-sm">+ Add</button>
+    </div>
+  </div>
+  <!-- Add member form (hidden) -->
+  <div id="add-member-form" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="add-member-name" type="text" placeholder="Player name" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;">
+      <select id="add-member-role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;">
+        <option value="TANK">Tank</option>
+        <option value="HEALER">Healer</option>
+        <option value="DPS">DPS</option>
+      </select>
+      <button onclick="addMember()" class="btn btn-primary btn-sm">Add</button>
+      <button onclick="document.getElementById('add-member-form').style.display='none'" class="btn btn-secondary btn-sm">Cancel</button>
+    </div>
+    <div id="add-member-error" style="display:none;color:#e84040;font-size:11px;margin-top:6px;"></div>
+  </div>
+  <!-- Tabs: Active / Archived -->
+  <div style="display:flex;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--border);">
+    <button id="members-tab-active" onclick="switchMembersTab('active')" style="background:none;border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 0;border-bottom:2px solid var(--gold);cursor:pointer;">Active</button>
+    <button id="members-tab-archived" onclick="switchMembersTab('archived')" style="background:none;border:none;color:var(--text-muted);font-size:13px;padding:8px 0;border-bottom:2px solid transparent;cursor:pointer;">Archived</button>
+  </div>
   <div id="members-list-container"></div>
 </div>
 
