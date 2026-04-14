@@ -2308,27 +2308,11 @@ function renderMembersList(){
 
   if(!_rosterData.length && !showArchived){
     document.getElementById('members-tabs').style.display = 'none';
-    container.innerHTML = '<div style="padding:40px 20px;">'
-      +'<div style="text-align:center;margin-bottom:28px;">'
-        +'<div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:6px;">Set up your roster</div>'
-        +'<div style="font-size:13px;color:var(--text-muted);">Import members from TLGM, then sync with in-game names</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">'
-        // Step 1: TLGM Import
-        +(isEditor ? '<div onclick="openTlgmModal()" style="flex:0 0 260px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'\'">'
-          +'<div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Step 1</div>'
-          +'<div style="font-size:24px;margin-bottom:8px;">📋</div>'
-          +'<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Import from TLGM</div>'
-          +'<div style="font-size:12px;color:var(--text-muted);">Paste your Telegram Guild Manager member list</div>'
-          +'</div>' : '')
-        // Step 2: Game Sync
-        +'<div style="flex:0 0 260px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;opacity:.4;cursor:not-allowed;">'
-          +'<div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Step 2</div>'
-          +'<div style="font-size:24px;margin-bottom:8px;">📸</div>'
-          +'<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Sync with Game</div>'
-          +'<div style="font-size:12px;color:var(--text-muted);">Upload party screenshot to map in-game names (after Step 1)</div>'
-          +'</div>'
-      +'</div>'
+    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
+      +'<div style="font-size:48px;opacity:.15;margin-bottom:16px;">◆</div>'
+      +'<div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:6px;">No members yet</div>'
+      +'<div style="font-size:13px;color:var(--text-muted);max-width:340px;margin-bottom:24px;">Export CSV from your Telegram Guild Manager bot and import it here to set up your roster.</div>'
+      +(isEditor ? '<label class="btn btn-primary" style="cursor:pointer;padding:12px 28px;font-size:14px;">Import TLGM CSV<input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;"></label>' : '')
       +'</div>';
     return;
   }
@@ -2458,75 +2442,111 @@ async function syncRosterFromScreenshot(input){
   input.value = '';
 }
 
-// ── TLGM IMPORT ──
-var _tlgmParsed = null;
+// ── CSV IMPORT ──
+var _csvMerged = null;
 
-function openTlgmModal(){
-  _tlgmParsed = null;
-  var modal = document.getElementById('tlgm-modal');
-  modal.style.display = 'flex';
-  document.getElementById('tlgm-textarea').value = '';
-  document.getElementById('tlgm-preview').innerHTML = '';
-  var applyBtn = document.getElementById('tlgm-apply-btn');
-  applyBtn.style.opacity = '.5';
-  applyBtn.style.pointerEvents = 'none';
-}
-function closeTlgmModal(){
-  document.getElementById('tlgm-modal').style.display = 'none';
+function closeCsvModal(){ document.getElementById('csv-modal').style.display='none'; }
+
+function importTlgmCsv(input){
+  var file = input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var text = ev.target.result;
+    var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+    if(lines.length<2){ alert('CSV is empty'); return; }
+
+    // Parse CSV (skip header)
+    var csvMembers = [];
+    for(var i=1;i<lines.length;i++){
+      var cols = lines[i].split(',');
+      if(cols.length<5) continue;
+      var name = cols[0].trim();
+      var role = (cols[2]||'').trim().toUpperCase();
+      var rank = (cols[3]||'').trim();
+      var status = (cols[4]||'').trim().toLowerCase();
+      if(!name) continue;
+      if(!['TANK','HEALER','DPS'].includes(role)) role='DPS';
+      var guildRole = null;
+      if(/leader/i.test(rank)) guildRole='Leader';
+      else if(/advisor/i.test(rank)) guildRole='Advisor';
+      csvMembers.push({name:name, role:role, guildRole:guildRole, active:status!=='inactive'});
+    }
+    if(!csvMembers.length){ alert('No members found in CSV'); return; }
+
+    // Compare with existing roster
+    var existingMap = {};
+    _rosterData.forEach(function(m){ existingMap[m.name.toLowerCase()] = m; });
+    var csvMap = {};
+    csvMembers.forEach(function(m){ csvMap[m.name.toLowerCase()] = m; });
+
+    var newMembers=[], roleChanged=[], reactivated=[], archived=[], unchanged=[];
+
+    // Check CSV members against roster
+    csvMembers.forEach(function(cm){
+      var key = cm.name.toLowerCase();
+      var existing = existingMap[key];
+      if(!existing){
+        newMembers.push(cm);
+      } else if(existing.active===false){
+        reactivated.push({name:cm.name, role:cm.role, guildRole:cm.guildRole});
+      } else if(existing.role!==cm.role){
+        roleChanged.push({name:cm.name, from:existing.role, to:cm.role, guildRole:cm.guildRole});
+      } else {
+        unchanged.push(cm);
+      }
+    });
+
+    // Check roster members not in CSV → archive
+    _rosterData.forEach(function(m){
+      if(m.active===false) return; // already archived
+      var key = m.name.toLowerCase();
+      if(!csvMap[key]) archived.push(m);
+    });
+
+    // Build merged roster
+    var merged = [];
+    // Keep all existing (update where needed)
+    _rosterData.forEach(function(m){
+      var key = m.name.toLowerCase();
+      var inCsv = csvMap[key];
+      if(inCsv){
+        // In CSV → active, possibly new role
+        merged.push({name:m.name, role:inCsv.role, guildRole:inCsv.guildRole||m.guildRole, active:true});
+      } else {
+        // Not in CSV → archive if active
+        merged.push({name:m.name, role:m.role, guildRole:m.guildRole, active:false});
+      }
+    });
+    // Add new members
+    newMembers.forEach(function(m){ merged.push(m); });
+
+    _csvMerged = merged;
+
+    // Show preview
+    var html = '';
+    if(newMembers.length) html += '<div style="margin-bottom:10px;"><span style="color:#3ecf6e;font-weight:600;">&#x1F7E2; '+newMembers.length+' new members</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+newMembers.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
+    if(archived.length) html += '<div style="margin-bottom:10px;"><span style="color:#e84040;font-weight:600;">&#x1F534; '+archived.length+' will be archived</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+archived.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
+    if(roleChanged.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--gold);font-weight:600;">&#x1F7E1; '+roleChanged.length+' role changes</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+roleChanged.map(function(m){return escHtml(m.name)+' ('+m.from+'→'+m.to+')';}).join(', ')+'</div></div>';
+    if(reactivated.length) html += '<div style="margin-bottom:10px;"><span style="color:#5b8fff;font-weight:600;">&#x1F504; '+reactivated.length+' reactivated</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+reactivated.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
+    if(!newMembers.length && !archived.length && !roleChanged.length && !reactivated.length) html = '<div style="color:var(--text-muted);">No changes detected — roster is already in sync.</div>';
+
+    var activeCount = merged.filter(function(m){return m.active!==false;}).length;
+    var archivedCount = merged.filter(function(m){return m.active===false;}).length;
+    html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">After sync: <b style="color:#fff;">'+activeCount+' active</b>, '+archivedCount+' archived</div>';
+
+    document.getElementById('csv-preview-content').innerHTML = html;
+    document.getElementById('csv-modal').style.display = 'flex';
+  };
+  reader.readAsText(file);
+  input.value = '';
 }
 
-function parseTlgmText(text){
-  var lines = text.split('\n');
-  var result = [];
-  var curRole = null;
-  for(var i=0;i<lines.length;i++){
-    var line = lines[i].trim();
-    if(!line) continue;
-    if(/tank/i.test(line) && /#+/.test(line)){ curRole='TANK'; continue; }
-    if(/healer/i.test(line) && /#+/.test(line)){ curRole='HEALER'; continue; }
-    if(/dps/i.test(line) && /#+/.test(line)){ curRole='DPS'; continue; }
-    if(!curRole) continue;
-    if(line.charAt(0)!=='|') continue;
-    var cols = line.split('|').map(function(s){ return s.trim(); }).filter(Boolean);
-    if(cols.length<1) continue;
-    var rawName = cols[0].replace(/\*\*/g,'').trim();
-    var rawGuild = cols.length>1 ? cols[1] : '';
-    if(!rawName || rawName==='Nume' || rawName==='Name' || /^-+$/.test(rawName)) continue;
-    var guildRole = null;
-    if(/Leader/i.test(rawGuild)) guildRole='Leader';
-    else if(/Advisor/i.test(rawGuild)) guildRole='Advisor';
-    else if(/On Leave/i.test(rawGuild)) guildRole='On Leave';
-    result.push({name:rawName, role:curRole, guildRole:guildRole, active:true});
-  }
-  return result;
-}
-
-function previewTlgm(){
-  var text = document.getElementById('tlgm-textarea').value;
-  _tlgmParsed = parseTlgmText(text);
-  var prev = document.getElementById('tlgm-preview');
-  var applyBtn = document.getElementById('tlgm-apply-btn');
-  if(!_tlgmParsed.length){
-    prev.innerHTML = '<span style="color:#e84040;">No members found — check format.</span>';
-    applyBtn.style.opacity='.5'; applyBtn.style.pointerEvents='none';
-    return;
-  }
-  var tanks = _tlgmParsed.filter(function(m){return m.role==='TANK';}).length;
-  var healers = _tlgmParsed.filter(function(m){return m.role==='HEALER';}).length;
-  var dps = _tlgmParsed.filter(function(m){return m.role==='DPS';}).length;
-  prev.innerHTML = '<span style="color:var(--heal);">'+_tlgmParsed.length+' members found</span>'
-    +' — <span style="color:var(--tank);">'+tanks+' Tank</span>'
-    +' · <span style="color:var(--heal);">'+healers+' Healer</span>'
-    +' · <span style="color:var(--dps);">'+dps+' DPS</span>';
-  applyBtn.style.opacity='1'; applyBtn.style.pointerEvents='';
-}
-
-async function applyTlgm(){
-  if(!_tlgmParsed||!_tlgmParsed.length) return;
+async function applyCsvImport(){
+  if(!_csvMerged||!_csvMerged.length) return;
   try{
-    var r = await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_tlgmParsed)});
+    var r = await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_csvMerged)});
     if(!r.ok) throw new Error('Failed to save');
-    closeTlgmModal();
+    closeCsvModal();
     renderMembersPage();
   }catch(e){ alert('Error: '+e.message); }
 }
@@ -3457,10 +3477,9 @@ async function goStep3WithVision(){
       <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
     </div>
     <div id="members-actions" style="display:none;gap:8px;flex-wrap:wrap;">
-      <button onclick="openTlgmModal()" class="btn btn-secondary btn-sm">Update Roster</button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-        Sync Aliases
-        <input type="file" accept="image/*" onchange="syncRosterFromScreenshot(this)" style="display:none;">
+        Import TLGM CSV
+        <input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;">
       </label>
       <button onclick="showAddMemberForm()" class="btn btn-primary btn-sm">+ Add</button>
     </div>
@@ -3487,20 +3506,17 @@ async function goStep3WithVision(){
   <div id="members-list-container"></div>
 </div>
 
-<!-- TLGM Import Modal -->
-<div id="tlgm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:min(560px,92vw);max-height:80vh;overflow-y:auto;">
+<!-- CSV Import Preview Modal -->
+<div id="csv-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:min(520px,92vw);max-height:80vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#fff;">Import from TLGM</div>
-      <button onclick="closeTlgmModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
+      <div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#fff;">Import Preview</div>
+      <button onclick="closeCsvModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
     </div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Paste the member list from your Telegram Guild Manager bot (markdown table format).</div>
-    <textarea id="tlgm-textarea" placeholder="### 🛡️ Tank (5 membri)&#10;| Nume | Rol în guild |&#10;| PlayerOne | Member |&#10;| GuildLeader | **Leader** |&#10;&#10;### 💚 Healer&#10;| Nume | Rol |&#10;| HealerMain | Member |&#10;&#10;### ⚔️ DPS&#10;| Nume | Rol |&#10;| DamageDealer | Member |" style="width:100%;height:200px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-size:12px;font-family:JetBrains Mono,monospace;resize:vertical;outline:none;"></textarea>
-    <div id="tlgm-preview" style="margin-top:10px;font-size:12px;min-height:20px;"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;">
-      <button onclick="previewTlgm()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Parse &amp; Preview</button>
-      <button id="tlgm-apply-btn" onclick="applyTlgm()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;opacity:.5;pointer-events:none;">Apply</button>
-      <button onclick="closeTlgmModal()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>
+    <div id="csv-preview-content"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button id="csv-apply-btn" onclick="applyCsvImport()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply Changes</button>
+      <button onclick="closeCsvModal()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>
     </div>
   </div>
 </div>
