@@ -2375,6 +2375,15 @@ function renderMembersList(){
     var roleMatch = _membersRoleFilter === 'ALL' || m.role === _membersRoleFilter;
     return tabMatch && roleMatch;
   });
+  // Sort: members without alias first (need attention), then alphabetical
+  filtered.sort(function(a,b){
+    var aKey = a.name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+    var bKey = b.name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+    var aHas = _memberAliases[aKey] ? 1 : 0;
+    var bHas = _memberAliases[bKey] ? 1 : 0;
+    if(aHas !== bHas) return aHas - bHas; // without alias first
+    return a.name.localeCompare(b.name);
+  });
 
   var activeCount = _rosterData.filter(function(m){ return m.active !== false; }).length;
   var archivedCount = _rosterData.filter(function(m){ return m.active === false; }).length;
@@ -2408,11 +2417,9 @@ function renderMembersList(){
     var aliasKey = m.name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
     var inGameName = _memberAliases[aliasKey] || '';
 
-    // Detect if this is a "game-only" member (no TLGM match — name IS the game name)
     var hasNoAlias = !inGameName;
-    var needsTlgmName = hasNoAlias && !m.guildRole; // no guild role = likely from game sync
 
-    html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);'+(hasNoAlias?'background:rgba(232,64,64,.04);':'')+';">'
       +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+color+';flex-shrink:0;">'+escHtml(m.name.charAt(0).toUpperCase())+'</div>'
       // TLGM Name column — editable in edit mode
       +'<div style="flex:1;min-width:0;">'
@@ -2895,12 +2902,17 @@ async function applyAliasSync(){
     var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
     if(!r.ok) throw new Error('Failed to save aliases');
 
-    // Add unmatched as new roster members
+    // Add unmatched as new roster members + set their game name as alias
     if(unmatchedToAdd.length){
       var merged = _rosterData.slice();
       unmatchedToAdd.forEach(function(gn){
         var exists = merged.some(function(m){ return m.name.toLowerCase() === gn.toLowerCase(); });
-        if(!exists) merged.unshift({name:gn, role:'DPS', guildRole:null, active:true});
+        if(!exists){
+          merged.unshift({name:gn, role:'DPS', guildRole:null, active:true});
+          // Self-alias: game name IS the in-game name
+          var key = gn.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+          aliases[key] = gn;
+        }
       });
       await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(merged)});
     }
