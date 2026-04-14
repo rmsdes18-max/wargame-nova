@@ -4442,56 +4442,67 @@ function findSuggestions(ocrName,roster,aliases,usedIds){
 }
 
 function matchOcrToMembers(ocrResults,roster,aliases){
-  var matched=[], needsReview=[], usedIds={};
+  var matched=[], needsReview=[];
+  var usedMembers={}, usedOcr={};
 
-  ocrResults.forEach(function(ocr){
-    var ocrName=ocr.name;
-    var ocrNorm=normalizeForMatch(ocrName);
-    var member=null, confidence='';
+  // PASUL 1: Pentru membrii cu ALIAS setat, caută alias în OCR PRIMUL
+  roster.forEach(function(member){
+    if(usedMembers[member.name] || member.active===false) return;
+    var memberKey = normalizeName(member.name);
+    var aliasValue = aliases[memberKey];
+    if(!aliasValue) return;
 
-    // 1. Exact match pe TLGM name
-    member=roster.find(function(m){return !usedIds[m.name]&&normalizeForMatch(m.name)===ocrNorm;});
-    if(member){matched.push({ocrName:ocrName,member:member,stats:ocr,confidence:'exact'});usedIds[member.name]=true;return;}
-
-    // 2. Exact match pe alias value
-    for(var k in aliases){
-      if(normalizeForMatch(aliases[k])===ocrNorm){
-        member=roster.find(function(m){return !usedIds[m.name]&&normalizeName(m.name)===k;});
-        if(member){matched.push({ocrName:ocrName,member:member,stats:ocr,confidence:'alias'});usedIds[member.name]=true;break;}
+    var aliasNorm = normalizeForMatch(aliasValue);
+    for(var oi=0; oi<ocrResults.length; oi++){
+      var ocr = ocrResults[oi];
+      if(usedOcr[ocr.name]) continue;
+      var ocrNorm = normalizeForMatch(ocr.name);
+      var score = similarityScore(aliasValue, ocr.name);
+      if(aliasNorm===ocrNorm || score>70){
+        matched.push({ocrName:ocr.name, member:member, stats:ocr, confidence:aliasNorm===ocrNorm?'alias':'fuzzy'});
+        usedMembers[member.name]=true;
+        usedOcr[ocr.name]=true;
+        break;
       }
     }
-    if(member) return;
-
-    // 3. Fuzzy match pe alias
-    var bestMatch=null, bestScore=0;
-    for(var k2 in aliases){
-      var score=similarityScore(aliases[k2],ocrName);
-      if(score>70&&score>bestScore){
-        var m=roster.find(function(r){return !usedIds[r.name]&&normalizeName(r.name)===k2;});
-        if(m){bestMatch=m;bestScore=score;}
-      }
-    }
-    // 4. Fuzzy match pe TLGM name
-    if(!bestMatch||bestScore<80){
-      roster.forEach(function(m){
-        if(usedIds[m.name]) return;
-        var score=similarityScore(m.name,ocrName);
-        if(score>70&&score>bestScore){bestMatch=m;bestScore=score;}
-      });
-    }
-    if(bestMatch&&bestScore>80){
-      matched.push({ocrName:ocrName,member:bestMatch,stats:ocr,confidence:'fuzzy'});usedIds[bestMatch.name]=true;return;
-    }
-
-    // 5. Needs review
-    var suggestions=findSuggestions(ocrName,roster,aliases,usedIds);
-    needsReview.push({ocrName:ocrName,stats:ocr,suggestions:suggestions});
   });
 
-  // Members not in scoreboard
-  var notInScoreboard=roster.filter(function(m){return m.active!==false&&!usedIds[m.name];}).map(function(m){return{member:m,reason:'not_found_in_ocr'};});
+  // PASUL 2: Pentru OCR results rămase, caută TLGM name exact
+  ocrResults.forEach(function(ocr){
+    if(usedOcr[ocr.name]) return;
+    var ocrNorm = normalizeForMatch(ocr.name);
 
-  return{matched:matched,needsReview:needsReview,notInScoreboard:notInScoreboard};
+    // Exact match pe TLGM name
+    var member = roster.find(function(m){ return !usedMembers[m.name] && m.active!==false && normalizeForMatch(m.name)===ocrNorm; });
+    if(member){
+      matched.push({ocrName:ocr.name, member:member, stats:ocr, confidence:'exact'});
+      usedMembers[member.name]=true; usedOcr[ocr.name]=true;
+      return;
+    }
+
+    // Fuzzy match pe TLGM name
+    var bestMatch=null, bestScore=0;
+    roster.forEach(function(m){
+      if(usedMembers[m.name] || m.active===false) return;
+      var score = similarityScore(m.name, ocr.name);
+      if(score>70 && score>bestScore){ bestMatch=m; bestScore=score; }
+    });
+    if(bestMatch && bestScore>80){
+      matched.push({ocrName:ocr.name, member:bestMatch, stats:ocr, confidence:'fuzzy'});
+      usedMembers[bestMatch.name]=true; usedOcr[ocr.name]=true;
+      return;
+    }
+
+    // Nu s-a găsit match → NEEDS REVIEW
+    var suggestions = findSuggestions(ocr.name, roster, aliases, usedMembers);
+    needsReview.push({ocrName:ocr.name, stats:ocr, suggestions:suggestions});
+  });
+
+  // PASUL 3: Membri din roster care nu apar în OCR
+  var notInScoreboard = roster.filter(function(m){ return m.active!==false && !usedMembers[m.name]; })
+    .map(function(m){ return{member:m, reason:'not_found_in_ocr'}; });
+
+  return{matched:matched, needsReview:needsReview, notInScoreboard:notInScoreboard};
 }
 
 // ── UPDATED STEP 3: VISION SCOREBOARD ────────────────────────────────────
