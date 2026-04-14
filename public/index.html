@@ -2622,10 +2622,23 @@ STEP 2 - FOR EACH PARTY CARD, read TOP to BOTTOM:
 - Read the EXACT name visible in THAT specific card column — do NOT use names from other columns
 
 STEP 3 - ROLE DETECTION BY ROW BACKGROUND COLOR:
-Look at each row's background color CAREFULLY:
-- DARK PURPLE / VIOLET background → role: "TANK"
-- DARK GREEN background → role: "HEALER"
-- DARK RED / MAROON background → role: "DPS"
+This is the MOST IMPORTANT step. Each player row has a solid colored background strip.
+There are ONLY 3 possible colors — determine role by the ROW BACKGROUND COLOR:
+
+PURPLE/VIOLET row background (dark purple, like #3a2060, #2d1b55, #352060) → role: "TANK"
+  - This is a clearly PURPLE/VIOLET tinted row — NOT blue, NOT gray
+
+GREEN row background (dark green, like #1a4020, #1e3d1e, #254d25) → role: "HEALER"
+  - This is a clearly GREEN tinted row — forest green, NOT yellow-green
+
+RED/MAROON row background (dark red, like #4a1515, #3d1a1a, #501818) → role: "DPS"
+  - This is a clearly RED/WINE/MAROON tinted row — NOT brown, NOT orange
+
+HOW TO DETERMINE: Look at the DOMINANT TINT of each row's background stripe:
+- If the row looks purplish/violet → TANK
+- If the row looks greenish → HEALER
+- If the row looks reddish/maroon → DPS
+- When in doubt, compare to other rows in the same card — the color difference is always clear
 
 CRITICAL RULES:
 - Process ONE card/column at a time, left to right
@@ -2633,7 +2646,7 @@ CRITICAL RULES:
 - Read names character by character from the image — names may include: letters, numbers, dots, ✗, ✦, ·, Japanese chars
 - Skip any "Not Assigned" section at the bottom of a card
 - The party label is in parentheses: "Party 3 (Portal Camp)" → label = "Portal Camp"
-- Usually 5-6 players per party
+- Usually 5-6 players per party, but can be more or fewer
 - Return ALL parties visible in the image
 
 Respond with ONLY a JSON array, no markdown, no explanation:
