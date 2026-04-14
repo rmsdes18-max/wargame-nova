@@ -281,7 +281,10 @@ input[type=number]{-moz-appearance:textfield;}
 
 <!-- ═══════════════ ALL WARS PAGE ═══════════════ -->
 <div class="page" id="page-wars">
-    <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:24px;" data-t="warHistory">War History</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;" data-t="warHistory">War History</h2>
+      <button onclick="startNewWar()" class="btn btn-primary btn-sm guild-nav" style="display:none;">+ New War</button>
+    </div>
     <div id="wars-list" class="wars-grid"></div>
 </div>
 
@@ -1157,9 +1160,12 @@ function renderWarsList(){
   var wars = loadWars();
   var el = document.getElementById('wars-list');
   if(!wars.length){
-    el.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-20 text-center">'
-      +'<div class="text-5xl mb-4 opacity-30">⚔</div>'
-      +'<div class="text-gray-500 text-sm max-w-xs" data-t="noWars">'+t('noWars')+'</div>'
+    var isEditor = _userRole === 'admin' || _userRole === 'editor';
+    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
+      +'<div style="font-size:48px;opacity:.2;margin-bottom:16px;">⚔</div>'
+      +'<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">No wars recorded yet</div>'
+      +'<div style="font-size:13px;color:var(--text-muted);max-width:300px;margin-bottom:20px;">'+t('noWars')+'</div>'
+      +(isEditor?'<button onclick="startNewWar()" class="btn btn-primary" style="padding:10px 24px;font-size:14px;">+ Add First War</button>':'')
       +'</div>';
     return;
   }
