@@ -4113,27 +4113,32 @@ async function extractAllScoreboards(){
     tableHtml += '</table></div>';
   });
 
-  // Missing players section
-  var missingRows = [];
-  state.novaPlayers.forEach(function(p,i){ if(p.status==='missing') missingRows.push({p:p,i:i}); });
-  if(missingRows.length){
-    tableHtml += '<div style="margin-bottom:12px;">';
-    tableHtml += '<div style="background:rgba(240,192,64,.15);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);">⚠ Fără statistici ('+missingRows.length+')</div>';
-    tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.15);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
-    missingRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
-    tableHtml += '</table></div>';
-  }
-
-  // Extra players section
-  var extraRows = [];
-  state.novaPlayers.forEach(function(p,i){ if(p.status==='extra') extraRows.push({p:p,i:i}); });
-  if(extraRows.length){
-    extraRows.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
-    tableHtml += '<div style="margin-bottom:12px;">';
-    tableHtml += '<div style="background:rgba(255,255,255,.06);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--muted);">+ Extra din scoreboard ('+extraRows.length+')</div>';
-    tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
-    extraRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
-    tableHtml += '</table></div>';
+  // NEW: Stats Matching UI (replaces "Fără statistici" + "Extra din scoreboard")
+  if(_rosterCache && _rosterCache.length){
+    var matchResults = matchOcrToMembers(state.novaPlayers, _rosterCache, _memberAliases);
+    window._currentMatchResults = matchResults;
+    tableHtml += renderStatsMatchingUI(matchResults);
+  } else {
+    // Fallback: old sections if no roster
+    var missingRows = [];
+    state.novaPlayers.forEach(function(p,i){ if(p.status==='missing') missingRows.push({p:p,i:i}); });
+    if(missingRows.length){
+      tableHtml += '<div style="margin-bottom:12px;">';
+      tableHtml += '<div style="background:rgba(240,192,64,.15);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold);">⚠ Fără statistici ('+missingRows.length+')</div>';
+      tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.15);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
+      missingRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
+      tableHtml += '</table></div>';
+    }
+    var extraRows = [];
+    state.novaPlayers.forEach(function(p,i){ if(p.status==='extra') extraRows.push({p:p,i:i}); });
+    if(extraRows.length){
+      extraRows.sort(function(a,b){ return (b.p.defeat||0)-(a.p.defeat||0); });
+      tableHtml += '<div style="margin-bottom:12px;">';
+      tableHtml += '<div style="background:rgba(255,255,255,.06);padding:8px 12px;border-radius:8px 8px 0 0;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--muted);">+ Extra din scoreboard ('+extraRows.length+')</div>';
+      tableHtml += '<table style="width:100%;font-size:12px;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;">'+tableHeader;
+      extraRows.forEach(function(pp){ tableHtml += renderPlayerRow(pp.p, pp.i); });
+      tableHtml += '</table></div>';
+    }
   }
 
   tableHtml += '</div>';
