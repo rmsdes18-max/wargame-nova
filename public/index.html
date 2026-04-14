@@ -24,7 +24,7 @@ tailwind.config = {
           border: '#3f4147',
           gold: '#f0c040',
           'gold-dim': '#c8950a',
-          tank: '#5b8fff',
+          tank: '#8B5CF6',
           heal: '#3ecf6e',
           dps: '#e84040',
           purple: '#2b2d31',
@@ -177,7 +177,7 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="mock-stat"><span class="lbl">Healed</span><span class="val">8.21M</span></div>
         </div>
         <div class="landing-mock-bar">
-          <span style="flex:3;background:#5b8fff;"></span>
+          <span style="flex:3;background:#8B5CF6;"></span>
           <span style="flex:2;background:#3ecf6e;"></span>
           <span style="flex:4;background:#e84040;"></span>
           <span style="flex:1;background:#f0c040;"></span>
@@ -195,7 +195,7 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="mock-stat"><span class="lbl">Healed</span><span class="val">6.44M</span></div>
         </div>
         <div class="landing-mock-bar">
-          <span style="flex:4;background:#5b8fff;"></span>
+          <span style="flex:4;background:#8B5CF6;"></span>
           <span style="flex:3;background:#3ecf6e;"></span>
           <span style="flex:2;background:#e84040;"></span>
           <span style="flex:1.5;background:#f0c040;"></span>
@@ -213,7 +213,7 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="mock-stat"><span class="lbl">Healed</span><span class="val">7.33M</span></div>
         </div>
         <div class="landing-mock-bar">
-          <span style="flex:2;background:#5b8fff;"></span>
+          <span style="flex:2;background:#8B5CF6;"></span>
           <span style="flex:3;background:#3ecf6e;"></span>
           <span style="flex:3;background:#e84040;"></span>
           <span style="flex:2;background:#f0c040;"></span>
@@ -2292,7 +2292,7 @@ async function renderMembersPage(){
       return;
     }
     countEl.textContent = members.filter(function(m){return m.active!==false;}).length + ' active';
-    var roleColors = {TANK:'#5b8fff',HEALER:'#3ecf6e',DPS:'#e84040'};
+    var roleColors = {TANK:'#8B5CF6',HEALER:'#3ecf6e',DPS:'#e84040'};
     var html = '';
     members.forEach(function(m){
       if(m.active === false) return;
