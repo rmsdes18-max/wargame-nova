@@ -1224,11 +1224,16 @@ function renderWarsList(){
 
 async function confirmDeleteWar(warId){
   try{
+    console.log('[DELETE] warId:', warId, 'guildId:', _currentGuildId);
     var r = await fetch('/api/wars/'+warId,{method:'DELETE',headers:apiHeaders(true)});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    if(_warsCache!==null) _warsCache = _warsCache.filter(function(w){ return w.id!==warId; });
+    if(!r.ok){
+      var errBody = await r.text().catch(function(){return '';});
+      console.error('[DELETE] Error:', r.status, errBody);
+      throw new Error('HTTP '+r.status+' — '+(errBody||'unknown'));
+    }
+    if(_warsCache!==null) _warsCache = _warsCache.filter(function(w){ return String(w.id)!==String(warId); });
   } catch(e){ alert('Eroare la ștergere: '+e.message); return; }
-  renderWarsList();
+  showPage('wars');
 }
 
 var _vwEditMode = false;
