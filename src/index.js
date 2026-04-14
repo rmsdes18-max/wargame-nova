@@ -55,9 +55,9 @@ app.get('/sudo', (req, res) => {
   res.sendFile(path.join(publicDir, 'sudo.html'));
 });
 
-// Catch-all → index.html
+// Catch-all → redirect to home (unknown routes)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'));
+  res.redirect('/');
 });
 
 // Run migrations on startup
