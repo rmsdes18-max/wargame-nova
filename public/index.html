@@ -150,7 +150,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="page" id="page-login" style="padding:0;max-width:none;">
   <div class="landing-page">
     <div class="landing-left">
-      <div class="landing-title">Wargame Stats<br><span>Nova</span></div>
+      <div class="landing-title">Wargame Stats<br><span>Tracker</span></div>
       <p class="landing-sub">Track your guild wars, analyze performance, and dominate the battlefield. Real-time stats for every war.</p>
       <ul class="landing-features">
         <li>Automatic scoreboard parsing from screenshots</li>
@@ -558,6 +558,7 @@ var state = {
 // ── API CONFIG ─────────────────────────────────────────────────────────────
 var API_BASE = ''; // URL relativ — frontend si API pe acelasi origin (Dokploy)
 var _currentGuildId = localStorage.getItem('nova_guild_id') || '';
+var _currentGuildName = '';
 var _guilds = []; // user's guilds list
 
 function getCurrentGuildId(){ return _currentGuildId; }
@@ -744,27 +745,13 @@ function handlePartyUpload(e){
 // Default parties extracted from the standard TL screenshot format
 // User edits these to match what they see in the image
 var DEFAULT_PARTIES = [
-  {name:'Party 1', label:'Main', members:[
-    {name:'PaoloBrosio',role:'TANK'},{name:'Enelyye',role:'HEALER'},{name:'Ricki',role:'HEALER'},
-    {name:'Skarrgan',role:'HEALER'},{name:'ilenia',role:'DPS'},{name:'Ricchan',role:'DPS'}]},
-  {name:'Party 2', label:'Main', members:[
-    {name:'wattsOn',role:'TANK'},{name:'Selene',role:'HEALER'},{name:'Flawless',role:'HEALER'},
-    {name:'gogurm',role:'HEALER'},{name:'Nyx',role:'DPS'},{name:'McQuay',role:'DPS'}]},
-  {name:'Party 3', label:'Portal Camp', members:[
-    {name:'Orianae',role:'TANK'},{name:'Stormyial',role:'HEALER'},{name:'Shimunbg',role:'HEALER'},
-    {name:'Valkeryn',role:'HEALER'},{name:'Krithh',role:'DPS'},{name:'Reeane',role:'DPS'}]},
-  {name:'Party 4', label:'Spin', members:[
-    {name:'Xin9 Nova',role:'TANK'},{name:'LazyLello',role:'TANK'},{name:'MiniMoSk',role:'HEALER'},
-    {name:'shinrage',role:'HEALER'},{name:'Starshiptrooper',role:'HEALER'},{name:'Zhorkiven',role:'DPS'}]},
-  {name:'Party 5', label:'Main/Cap', members:[
-    {name:'HenryTurker',role:'TANK'},{name:'DOug1as',role:'TANK'},{name:'Mezzy',role:'HEALER'},
-    {name:'LuvEv3',role:'HEALER'},{name:'Potaat',role:'DPS'},{name:'Sinbian',role:'DPS'}]},
-  {name:'Party 6', label:'Main', members:[
-    {name:'FastKiller01',role:'TANK'},{name:'AirMouz',role:'TANK'},{name:'TinySpark',role:'HEALER'},
-    {name:'Buldoza',role:'HEALER'},{name:'Freesk',role:'DPS'},{name:'alkais',role:'DPS'}]},
-  {name:'Party 7', label:'Main', members:[
-    {name:'Oggy',role:'TANK'},{name:'Alembicated',role:'TANK'},{name:'Yacoob',role:'HEALER'},
-    {name:'Exowinargo',role:'HEALER'},{name:'nas',role:'DPS'},{name:'Igris',role:'DPS'}]},
+  {name:'Party 1', label:'Main', members:[]},
+  {name:'Party 2', label:'Main', members:[]},
+  {name:'Party 3', label:'Support', members:[]},
+  {name:'Party 4', label:'Flex', members:[]},
+  {name:'Party 5', label:'Reserve', members:[]},
+  {name:'Party 6', label:'Reserve', members:[]},
+  {name:'Party 7', label:'Reserve', members:[]}
 ];
 
 function renderPartyEditor(){
@@ -944,7 +931,7 @@ function goStep3FromExcel(){
     s3.style.background='rgba(240,192,64,.08)';
     s3.style.borderColor='rgba(240,192,64,.2)';
     s3.style.color='var(--gold)';
-    renderNovaList();
+    renderStatsList();
     return;
   }
 
@@ -999,11 +986,11 @@ function goStep3FromExcel(){
   statusEl.style.background='rgba(10,16,32,.6)';
   statusEl.style.borderColor='rgba(255,255,255,.08)';
   statusEl.style.color='var(--text)';
-  renderNovaList();
+  renderStatsList();
 }
 
 // ── STEP 3: NOVA PLAYERS ──────────────────────────────────────────────────
-function renderNovaRow(p, i){
+function renderStatsRow(p, i){
   var dot = {TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[p.role]||'#888';
   var status = p.status || (p.extra ? 'extra' : 'missing');
 
@@ -1035,21 +1022,21 @@ function renderNovaRow(p, i){
   var html = '<div class="nova-row" style="'+rowStyle+'">';
   html += '<div class="nova-row-name" style="display:flex;align-items:center;gap:5px;">';
   html += '<div class="role-dot" style="background:'+dot+'"></div>';
-  html += '<input type="checkbox" class="nova-check" '+(p.checked?'checked':'')+' onchange="toggleNova('+i+',this.checked)">';
+  html += '<input type="checkbox" class="player-check" '+(p.checked?'checked':'')+' onchange="togglePlayer('+i+',this.checked)">';
   html += '<span style="font-size:12px;font-weight:600;color:#ddd;">'+p.name+'</span>';
   html += partyCell;
   html += statusBadge;
   html += '</div>';
-  html += '<div class="nova-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#ffcc44;font-size:12px;text-align:center;padding:3px;" onchange="setNovaStat('+i+',\'defeat\',+this.value)"></div>';
-  html += '<div class="nova-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#aaa;font-size:12px;text-align:center;padding:3px;" onchange="setNovaStat('+i+',\'assist\',+this.value)"></div>';
-  html += '<div class="nova-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#c8782a;font-size:12px;text-align:right;padding:3px;" onchange="setNovaStat('+i+',\'dmg_dealt\',+this.value)"></div>';
-  html += '<div class="nova-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#884444;font-size:12px;text-align:right;padding:3px;" onchange="setNovaStat('+i+',\'dmg_taken\',+this.value)"></div>';
-  html += '<div class="nova-num"><input type="number" min="0" value="'+p.healed+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--heal);font-size:12px;text-align:right;padding:3px;" onchange="setNovaStat('+i+',\'healed\',+this.value)"></div>';
+  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#ffcc44;font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'defeat\',+this.value)"></div>';
+  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#aaa;font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'assist\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#c8782a;font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_dealt\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#884444;font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_taken\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.healed+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--heal);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'healed\',+this.value)"></div>';
   html += '</div>';
   return html;
 }
 
-function renderNovaList(){
+function renderStatsList(){
   var hdr = '<div class="nova-list-hdr"><span>Player</span><span style="text-align:center;">Defeat</span><span style="text-align:center;">Assist</span><span style="text-align:right;">Dmg Dealt</span><span style="text-align:right;">Dmg Taken</span><span style="text-align:right;">Healed</span></div>';
 
   // Sortare: confirmed first (by defeat desc), missing, extra last
@@ -1063,7 +1050,7 @@ function renderNovaList(){
 
   var html = '<div class="nova-list">'+hdr;
   sorted.forEach(function(p){
-    html += renderNovaRow(p, state.novaPlayers.indexOf(p));
+    html += renderStatsRow(p, state.novaPlayers.indexOf(p));
   });
   html += '</div>';
   html += '<div style="margin-top:10px;font-size:11px;color:var(--muted);">✅ în party + date corecte &nbsp;·&nbsp; ⚠ în party fără date (nu a jucat sau eroare) &nbsp;·&nbsp; ➕ în scoreboard fără party (asignează sau bifează)</div>';
@@ -1076,11 +1063,11 @@ function assignExtraToParty(i, partyName){
   state.novaPlayers[i].extra   = false;
   state.novaPlayers[i].status  = 'confirmed';
   state.novaPlayers[i].checked = true;
-  renderNovaList();
+  renderStatsList();
 }
 
-function toggleNova(i,v){ state.novaPlayers[i].checked=v; }
-function setNovaStat(i,key,v){ state.novaPlayers[i][key]=v; }
+function togglePlayer(i,v){ state.novaPlayers[i].checked=v; }
+function setPlayerStat(i,key,v){ state.novaPlayers[i][key]=v; }
 
 function confirmNovaPlayers(){
   state.confirmed = state.novaPlayers.filter(function(p){return p.checked;});
@@ -1296,7 +1283,7 @@ function viewWar(warId){
   // ── War header ──
   var html = '<div class="war-header">';
   html += '<div class="war-title">';
-  html += '<h2>Nova vs '+escHtml(w.opponent)+'</h2>';
+  html += '<h2>'+escHtml(_currentGuildName)+' vs '+escHtml(w.opponent)+'</h2>';
   html += '<span class="date">'+escHtml(w.date)+'</span>';
   html += '</div>';
   html += '<div class="war-actions">';
@@ -2126,9 +2113,10 @@ async function loadGuilds(){
 
 function enterGuild(guild){
   setCurrentGuild(guild.id);
+  _currentGuildName = guild.name || 'Guild';
   // Update topbar guild name
   var nameEl = document.getElementById('topbar-guild-name');
-  if(nameEl) nameEl.textContent = guild.name || 'Dashboard';
+  if(nameEl) nameEl.textContent = _currentGuildName;
   // Show guild nav items
   document.querySelectorAll('.guild-nav').forEach(function(el){ el.style.display = ''; });
   // Find user's role in this guild
@@ -2656,7 +2644,7 @@ Respond with ONLY a JSON array, no markdown, no explanation:
 }
 
 // ── STEP 2: VISION SCOREBOARD EXTRACT ────────────────────────────────────
-async function extractScoreboardFromImage(dataUrl, novaNames){
+async function extractScoreboardFromImage(dataUrl, guildNames){
   var prompt = `You are analyzing a Throne & Liberty war scoreboard screenshot.
 
 CRITICAL: Extract EVERY visible row. Do NOT skip any player. Count the rows you see and make sure your output has the same count.
@@ -2751,17 +2739,17 @@ async function extractAllScoreboards(){
   var resultsEl = document.getElementById('score-results');
 
   // Collect party member names + aliases for matching
-  var novaNames = [];
+  var guildNames = [];
   state.parties.forEach(function(p){ p.members.forEach(function(m){
-    novaNames.push(m.name);
-    if(m.tlgmName) novaNames.push(m.tlgmName);
+    guildNames.push(m.name);
+    if(m.tlgmName) guildNames.push(m.tlgmName);
   }); });
   var mAliases = loadMembriAliases(); // {normalizedName: "GameName with ✗"}
   var wAliases = loadAliases();       // war aliases
 
-  // Helper: check if extracted name matches a nova member (including aliases)
-  function isNovaPlayer(extractedName){
-    if(novaNames.some(function(n){ return namesMatch(n, extractedName); })) return true;
+  // Helper: check if extracted name matches a guild member (including aliases)
+  function isGuildPlayer(extractedName){
+    if(guildNames.some(function(n){ return namesMatch(n, extractedName); })) return true;
     // Check aliases: any alias value matches extracted name
     var aKeys = Object.keys(mAliases);
     for(var a=0;a<aKeys.length;a++){
@@ -2780,14 +2768,15 @@ async function extractAllScoreboards(){
   for(var i=0; i<state.scoreImgs.length; i++){
     statusEl.innerHTML = '<div class="processing"><span class="spin">◌</span> Se procesează imaginea '+(i+1)+' din '+state.scoreImgs.length+'...</div>';
     try{
-      var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, novaNames);
+      var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, guildNames);
       if(!Array.isArray(players)) throw new Error('Răspuns invalid');
 
-      // Filter for Nova guild members or name matches (including aliases)
+      // Filter for guild members or name matches (including aliases)
+      var guildPattern = _currentGuildName ? new RegExp(_currentGuildName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i') : null;
       players.forEach(function(p){
-        var isNova = p.guild && /nova/i.test(p.guild);
-        var isMatch = isNovaPlayer(p.name);
-        if(!isNova && !isMatch) return;
+        var isGuild = p.guild && guildPattern && guildPattern.test(p.guild);
+        var isMatch = isGuildPlayer(p.name);
+        if(!isGuild && !isMatch) return;
 
         var key = normalizeName(p.name);
         if(!allExtracted[key]){
@@ -3064,7 +3053,7 @@ function namesMatch(a, b){
   if(na === nb) return true;
   var shorter = na.length <= nb.length ? na : nb;
   var longer  = na.length <= nb.length ? nb : na;
-  // "Xin9 Nova" ↔ "Xin9"  sau  "Yacoob" ↔ "yacoobb"
+  // "Xin9 Guild" ↔ "Xin9"  sau  "Yacoob" ↔ "yacoobb"
   if(longer.startsWith(shorter+' ') || longer.startsWith(shorter)) return true;
   return false;
 }
@@ -3091,17 +3080,17 @@ async function goStep3WithVision(){
     s3.style.background='rgba(240,192,64,.08)';
     s3.style.borderColor='rgba(240,192,64,.2)';
     s3.style.color='var(--gold)';
-    renderNovaList();
+    renderStatsList();
     return;
   }
   if(state.scoreImgs.length===0){
     document.getElementById('step3-status').textContent = '⚠ Nicio poză de scoreboard încărcată la Step 2.';
     document.getElementById('step3-status').style.display='block';
-    renderNovaList();
+    renderStatsList();
     return;
   }
 
-  var novaNames = allMembers.map(function(m){return m.name;});
+  var guildNames = allMembers.map(function(m){return m.name;});
   var allExtracted = {};
   var log = [];
 
@@ -3111,19 +3100,19 @@ async function goStep3WithVision(){
       +(log.length?'<br><small style="color:#888;">'+log.join(' | ')+'</small>':'')
       +'</div>';
     try{
-      var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, novaNames);
+      var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, guildNames);
       if(!Array.isArray(players)) throw new Error('Răspuns invalid — nu e array');
 
-      // Filtrare JS: păstrează doar jucătorii Nova (guild sau nume match)
-      var novaPlayers = players.filter(function(p){
-        var g = (p.guild||'').toLowerCase();
-        var guildIsNova = g.indexOf('nova') !== -1 || (p.guild||'').indexOf('カ') !== -1 || (p.guild||'').indexOf('ミ') !== -1;
-        var nameMatchesParty = novaNames.some(function(n){ return namesMatch(n, p.name); });
-        return guildIsNova || nameMatchesParty;
+      // Filter: keep only guild members (guild name match or party name match)
+      var guildRe = _currentGuildName ? new RegExp(_currentGuildName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i') : null;
+      var guildPlayers = players.filter(function(p){
+        var guildMatch = p.guild && guildRe && guildRe.test(p.guild);
+        var nameMatchesParty = guildNames.some(function(n){ return namesMatch(n, p.name); });
+        return guildMatch || nameMatchesParty;
       });
 
-      log.push('P'+(i+1)+': '+novaPlayers.length+'/'+players.length+' Nova');
-      novaPlayers.forEach(function(p){
+      log.push('P'+(i+1)+': '+guildPlayers.length+'/'+players.length+' guild');
+      guildPlayers.forEach(function(p){
         if(!p.name) return;
         var key = p.name.toLowerCase().trim();
         if(!allExtracted[key]) allExtracted[key] = p;
@@ -3159,7 +3148,7 @@ async function goStep3WithVision(){
     }
   });
 
-  // Jucători Nova extra — în scoreboard dar fără party
+  // Extra guild players — in scoreboard but no party assignment
   extractedKeys.forEach(function(k){
     if(!matchedKeys[k]){
       var ep = allExtracted[k];
@@ -3199,7 +3188,7 @@ async function goStep3WithVision(){
     statusEl.innerHTML =
       '<span style="color:var(--heal);">✅ '+confirmedCount+' confirmați</span>'
       +'  <span style="color:#e8a030;">⚠ '+missingCount+' lipsă</span>'
-      +'  <span style="color:var(--gold);">➕ '+extraCount+' extra Nova</span>'
+      +'  <span style="color:var(--gold);">➕ '+extraCount+' extra</span>'
       +'  <small style="color:#666;">'+log.join(' | ')+'</small>'
       +retryBtn;
     statusEl.style.background='rgba(10,16,32,.6)';
@@ -3211,7 +3200,7 @@ async function goStep3WithVision(){
     statusEl.style.borderColor='rgba(232,64,64,.2)';
     statusEl.style.color='#e84040';
   }
-  renderNovaList();
+  renderStatsList();
 }
 
 </script>

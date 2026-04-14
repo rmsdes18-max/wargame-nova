@@ -80,7 +80,7 @@ const PORT = process.env.PORT || 3000;
 
 runMigrations()
   .then(() => {
-    app.listen(PORT, () => console.log(`Wargame Nova listening on :${PORT}`));
+    app.listen(PORT, () => console.log(`Wartl API listening on :${PORT}`));
   })
   .catch(err => {
     console.error('Migration failed:', err.message, err.stack);

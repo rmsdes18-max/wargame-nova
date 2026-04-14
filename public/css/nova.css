@@ -20,11 +20,11 @@
   --text-secondary: #949ba4;
   --text-muted:     #6d6f78;
   --text-white:     #ffffff;
-  /* Accent (Nova gold) */
+  /* Accent */
   --accent-primary: #f0c040;
   --accent-hover:   #d4a830;
   --accent-dim:     #c8950a;
-  /* Role colors (Nova-specific) */
+  /* Role colors */
   --tank:     #5b8fff;
   --tank-bg:  rgba(91,143,255,.12);
   --heal:     #3ecf6e;
