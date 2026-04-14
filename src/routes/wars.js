@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { pool }   = require('../db');
 const { requireAuth, guildContext, requireGuildRole, checkFreeTierLimits } = require('../middleware/guildContext');
+const { logActivity } = require('../services/activityLog');
 const router = Router();
 
 // GET all wars for current guild (newest first)
@@ -53,6 +54,7 @@ router.post('/', requireAuth, guildContext, requireGuildRole('editor'), async (r
       [id, opponent, date, JSON.stringify(parties || []), req.guild.id]
     );
     const r = rows[0];
+    logActivity(req.guild.id, req.user.id, 'war_created', 'vs ' + opponent);
     res.status(201).json({ id: Number(r.id), opponent: r.opponent, date: r.date, parties: r.parties });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'War with this id already exists' });

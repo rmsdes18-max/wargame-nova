@@ -95,6 +95,9 @@ router.get('/discord/callback', async (req, res) => {
     // Create session token
     const token = createToken({ id: user.id, username: user.username, role: user.role, avatar: user.avatar, discord_id: user.discord_id });
 
+    // Log login
+    try { const { logActivity } = require('../services/activityLog'); logActivity(null, user.id, 'user_login', user.username); } catch(e){}
+
     // Redirect back to app with token in hash (client picks it up)
     res.redirect('/#auth=' + token);
   } catch (e) {

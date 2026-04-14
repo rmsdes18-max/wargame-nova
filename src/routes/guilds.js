@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { pool }   = require('../db');
 const { requireAuth, guildContext, requireGuildRole, checkFreeTierLimits } = require('../middleware/guildContext');
+const { logActivity } = require('../services/activityLog');
 const router = Router();
 
 // Slugify helper
@@ -65,6 +66,7 @@ router.post('/', requireAuth, async (req, res) => {
     );
 
     await client.query('COMMIT');
+    logActivity(guild.id, req.user.id, 'guild_created', name.trim());
     res.status(201).json({ ...guild, role: 'admin', member_count: 1 });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -242,6 +244,7 @@ router.post('/join', requireAuth, async (req, res) => {
     const { rows: guildInfo } = await client.query('SELECT id, name, slug FROM guilds WHERE id = $1', [guildId]);
 
     await client.query('COMMIT');
+    logActivity(guildId, req.user.id, 'user_joined', 'as ' + joinRole);
     res.status(201).json({ guild: guildInfo[0], role: joinRole });
   } catch (e) {
     await client.query('ROLLBACK');

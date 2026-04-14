@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { pool }   = require('../db');
 const { requireAuth, guildContext, requireGuildRole } = require('../middleware/guildContext');
+const { logActivity } = require('../services/activityLog');
 const router = Router();
 
 // GET all members for current guild
@@ -34,6 +35,7 @@ router.put('/', requireAuth, guildContext, requireGuildRole('editor'), async (re
       );
     }
     await client.query('COMMIT');
+    logActivity(req.guild.id, req.user.id, 'roster_sync', members.length + ' members');
     res.json({ count: members.length });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -54,6 +56,7 @@ router.post('/', requireAuth, guildContext, requireGuildRole('editor'), async (r
       'INSERT INTO roster_members (name, role, guild_role, sort_order, active, guild_id) VALUES ($1,$2,$3,$4,true,$5)',
       [name, role, guildRole || null, maxRows[0].next, req.guild.id]
     );
+    logActivity(req.guild.id, req.user.id, 'member_added', name);
     res.status(201).json({ name, role, guildRole: guildRole || null, active: true });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'Member already exists in this guild' });

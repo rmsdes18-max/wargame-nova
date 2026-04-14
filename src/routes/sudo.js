@@ -141,6 +141,29 @@ router.get('/debug', checkSuperAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/sudo/activity — recent activity log
+router.get('/activity', checkSuperAdmin, async (req, res) => {
+  try {
+    const [recent, today, week] = await Promise.all([
+      pool.query(`
+        SELECT al.action, al.details, al.created_at,
+               g.name as guild_name, u.username
+        FROM activity_log al
+        LEFT JOIN guilds g ON g.id = al.guild_id
+        LEFT JOIN users u ON u.id = al.user_id
+        ORDER BY al.created_at DESC LIMIT 30
+      `),
+      pool.query("SELECT COUNT(*)::int as count FROM activity_log WHERE created_at >= CURRENT_DATE"),
+      pool.query("SELECT COUNT(*)::int as count FROM activity_log WHERE created_at >= date_trunc('week', now())"),
+    ]);
+    res.json({
+      recent: recent.rows,
+      today: today.rows[0].count,
+      thisWeek: week.rows[0].count,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // POST /api/sudo/fix-owner-roles — ensure all guild owners are admin in guild_members
 router.post('/fix-owner-roles', checkSuperAdmin, async (req, res) => {
   try {
