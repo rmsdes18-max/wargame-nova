@@ -1179,7 +1179,7 @@ function renderStatsMatchingUI(results){
   html += '<div onclick="var b=document.getElementById(\'matched-body\');b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="padding:10px 14px;background:var(--bg3);font-size:13px;font-weight:600;color:var(--heal);cursor:pointer;display:flex;justify-content:space-between;">'
     +'<span>✅ MATCHED ('+results.matched.length+')</span><span style="color:var(--text-muted);">▼</span></div>';
   html += '<div id="matched-body" style="'+(results.matched.length>10?'display:none;':'')+'">';
-  results.matched.forEach(function(m){
+  results.matched.forEach(function(m, mi){
     var role = m.member.role||'DPS';
     var rc = role==='TANK'?'#8B5CF6':role==='HEALER'?'#3ecf6e':'#e84040';
     var confColor = m.confidence==='exact'?'#3ecf6e':m.confidence==='alias'?'#f0c040':m.confidence==='fuzzy'?'#5b8fff':'var(--text-muted)';
