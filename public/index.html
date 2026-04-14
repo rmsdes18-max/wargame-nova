@@ -2791,6 +2791,15 @@ function renderAliasSyncPreview(){
   container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">'+html+'</div>';
 }
 
+async function clearAllMembersAndAliases(){
+  if(!confirm('Șterge toți membrii și alias-urile? Vei putea reface procesul de import.')) return;
+  try{
+    await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify([])});
+    await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({})});
+    renderMembersPage();
+  }catch(e){ alert('Error: '+e.message); }
+}
+
 function saveInlineAlias(encodedName){
   var name = decodeURIComponent(encodedName);
   var input = document.getElementById('alias-'+encodedName);
@@ -3802,6 +3811,7 @@ async function goStep3WithVision(){
           <input type="file" accept="image/*" multiple onchange="syncTlGameAliases(this)" style="display:none;">
         </label>
         <button onclick="showAddMemberForm()" class="btn btn-secondary btn-sm">+ Add</button>
+        <button onclick="clearAllMembersAndAliases()" class="btn btn-secondary btn-sm" style="color:#e84040;border-color:rgba(232,64,64,.3);">Clear All</button>
       </div>
       <button id="members-edit-btn" onclick="toggleMembersEditMode()" class="btn btn-primary btn-sm">Edit</button>
     </div>
