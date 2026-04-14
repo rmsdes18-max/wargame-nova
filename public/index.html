@@ -2352,6 +2352,7 @@ function renderMembersList(){
       +(isEditor
         ? '<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;" title="Click to change role">'+m.role+'</span>'
         : '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+m.role+'</span>')
+      +(isEditor && !showArchived ? '<button onclick="editMember(\''+safeName+'\',\''+escHtml(inGameName||'')+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:4px;" title="Edit alias">&#x270E;</button>' : '')
       +(isEditor && !showArchived ? '<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;" title="Archive">Archive</button>' : '')
       +(isEditor && showArchived ? '<button onclick="restoreMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:11px;padding:4px 8px;" title="Restore">Restore</button>' : '')
       +'</div>';
@@ -2629,10 +2630,27 @@ async function syncTlGameAliases(input){
         html += '</div>';
       }
       if(unmatched.length){
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">'+unmatched.length+' unmatched: '+unmatched.map(function(n){return escHtml(n);}).join(', ')+'</div>';
+        // Build list of unmatched roster names (not yet matched)
+        var matchedTlgm = {};
+        matches.forEach(function(m){ matchedTlgm[m.tlgm.toLowerCase()] = true; });
+        var availableRoster = rosterNames.filter(function(rn){ return !matchedTlgm[rn.toLowerCase()]; });
+
+        html += '<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">';
+        html += '<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px;">'+unmatched.length+' unmatched from game</div>';
+        unmatched.forEach(function(gn, idx){
+          var opts = '<option value="">— Select TLGM member —</option>';
+          availableRoster.forEach(function(rn){ opts += '<option value="'+escHtml(rn)+'">'+escHtml(rn)+'</option>'; });
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
+            +'<span style="font-size:12px;color:var(--gold);font-weight:600;min-width:120px;">'+escHtml(gn)+'</span>'
+            +'<span style="color:var(--text-muted);font-size:10px;">→</span>'
+            +'<select id="unmatched-'+idx+'" data-game="'+escHtml(gn)+'" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;">'+opts+'</select>'
+            +'<button onclick="skipUnmatched(this)" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:10px;padding:2px 6px;">Skip</button>'
+            +'</div>';
+        });
+        html += '</div>';
       }
-      html += '<div style="display:flex;gap:8px;margin-top:12px;">'
-        +'<button onclick="applyAliasSync()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply '+matches.length+' aliases</button>'
+      html += '<div style="display:flex;gap:8px;margin-top:16px;">'
+        +'<button onclick="applyAliasSync()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply Aliases</button>'
         +'<button onclick="renderMembersPage()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>'
         +'</div>';
 
@@ -2646,12 +2664,44 @@ async function syncTlGameAliases(input){
   input.value='';
 }
 
-async function applyAliasSync(){
-  if(!window._pendingAliases||!window._pendingAliases.length) return;
+function editMember(encodedName, currentAlias){
+  var name = decodeURIComponent(encodedName);
+  var newAlias = prompt('In-Game Name for "'+name+'":', currentAlias);
+  if(newAlias === null) return; // cancelled
+  newAlias = newAlias.trim();
+  var key = name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
   var aliases = Object.assign({}, _memberAliases);
-  window._pendingAliases.forEach(function(m){
-    var key = m.tlgm.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
-    aliases[key] = m.game;
+  if(newAlias){
+    aliases[key] = newAlias;
+  } else {
+    delete aliases[key];
+  }
+  fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
+    .then(function(r){ if(r.ok) renderMembersPage(); else alert('Failed to save alias'); })
+    .catch(function(e){ alert(e.message); });
+}
+
+function skipUnmatched(btn){
+  btn.closest('div').style.display='none';
+}
+
+async function applyAliasSync(){
+  var aliases = Object.assign({}, _memberAliases);
+  // Auto-matched
+  if(window._pendingAliases){
+    window._pendingAliases.forEach(function(m){
+      var key = m.tlgm.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+      aliases[key] = m.game;
+    });
+  }
+  // Manually matched from dropdowns
+  document.querySelectorAll('[id^="unmatched-"]').forEach(function(sel){
+    var tlgm = sel.value;
+    var game = sel.getAttribute('data-game');
+    if(tlgm && game){
+      var key = tlgm.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+      aliases[key] = game;
+    }
   });
   try{
     var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
