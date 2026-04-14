@@ -3108,6 +3108,9 @@ async function renameGuild(){
 }
 
 async function changeGuildMemberRole(userId, newRole){
+  if(newRole === 'admin'){
+    if(!confirm('Are you sure you want to make this member an ADMIN?\n\nAdmins have full control over the guild: manage members, settings, and data.\n\nThis action can only be reversed by another admin.')) return;
+  }
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId+'/members/'+userId+'/role',{method:'POST',headers:apiHeaders(),body:JSON.stringify({role:newRole})});
     if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); }
