@@ -3353,6 +3353,27 @@ function openMemberProfile(encodedName){
       +'</div>'
     +'</div>';
 
+  // Performance indicators
+  if(warCount >= 2){
+    var trend = 'stable';
+    var trendColor = 'var(--gold)';
+    if(warHistory.length >= 5){
+      var recent5 = warHistory.slice(0,5); // already sorted newest first? No, let's sort
+      var sorted = warHistory.slice().sort(function(a,b){ return 0; }); // keep order (added chronologically)
+      var last5 = warHistory.slice(-5);
+      var recentAvg = last5.reduce(function(s,w){return s+w.dmg;},0)/5;
+      var overallAvg = totalDmg/warCount;
+      if(recentAvg > overallAvg*1.1){ trend='improving ↑'; trendColor='#3ecf6e'; }
+      else if(recentAvg < overallAvg*0.9){ trend='declining ↓'; trendColor='#e84040'; }
+      else { trend='stable →'; trendColor='var(--gold)'; }
+    }
+    var bestWar = warHistory.slice().sort(function(a,b){return(b.k+b.dmg)-(a.k+a.dmg);})[0];
+    document.getElementById('mp-stats').innerHTML += '<div style="display:flex;gap:20px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;">'
+      +'<div><span style="color:var(--text-muted);">Trend: </span><span style="color:'+trendColor+';font-weight:600;">'+trend+'</span></div>'
+      +(bestWar?'<div><span style="color:var(--text-muted);">Best War: </span><span style="color:#fff;font-weight:600;">vs '+escHtml(bestWar.opponent)+' ('+bestWar.k+'K, '+fmtBig(bestWar.dmg)+' DMG)</span></div>':'')
+      +'</div>';
+  }
+
   // War history table
   var warsHtml = '';
   if(warHistory.length){
