@@ -2668,65 +2668,109 @@ async function syncTlGameAliases(input){
       var unmatched = [];
       gameNames.forEach(function(gn){
         var gnLower = gn.toLowerCase().trim();
-        // Exact match
         var exact = rosterNames.find(function(rn){return rn.toLowerCase()===gnLower;});
-        if(exact){ matches.push({tlgm:exact,game:gn,auto:true}); return; }
-        // Partial match (starts with or contains)
+        if(exact){ matches.push({tlgm:exact,game:gn,type:'exact'}); return; }
         var partial = rosterNames.find(function(rn){
           var rl=rn.toLowerCase();
           return rl.startsWith(gnLower)||gnLower.startsWith(rl)||rl.indexOf(gnLower)!==-1||gnLower.indexOf(rl)!==-1;
         });
-        if(partial){ matches.push({tlgm:partial,game:gn,auto:false}); return; }
+        if(partial){ matches.push({tlgm:partial,game:gn,type:'fuzzy'}); return; }
         unmatched.push(gn);
       });
 
-      // Show preview
-      var html = '<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;">Alias Sync Preview</div>';
-      if(matches.length){
-        html += '<div style="margin-bottom:12px;">';
-        matches.forEach(function(m){
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
-            +'<span style="flex:1;font-size:12px;color:var(--text-muted);">'+escHtml(m.tlgm)+'</span>'
-            +'<span style="color:var(--text-muted);font-size:10px;">→</span>'
-            +'<span style="flex:1;font-size:12px;color:var(--gold);font-weight:600;">'+escHtml(m.game)+'</span>'
-            +(m.auto?'<span style="font-size:9px;color:var(--heal);">exact</span>':'<span style="font-size:9px;color:var(--gold);">fuzzy</span>')
-            +'</div>';
-        });
-        html += '</div>';
-      }
-      if(unmatched.length){
-        // Build list of unmatched roster names (not yet matched)
-        var matchedTlgm = {};
-        matches.forEach(function(m){ matchedTlgm[m.tlgm.toLowerCase()] = true; });
-        var availableRoster = rosterNames.filter(function(rn){ return !matchedTlgm[rn.toLowerCase()]; });
-
-        html += '<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">';
-        html += '<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px;">'+unmatched.length+' unmatched from game</div>';
-        unmatched.forEach(function(gn, idx){
-          var opts = '<option value="">— Select TLGM member —</option>';
-          availableRoster.forEach(function(rn){ opts += '<option value="'+escHtml(rn)+'">'+escHtml(rn)+'</option>'; });
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
-            +'<span style="font-size:12px;color:var(--gold);font-weight:600;min-width:120px;">'+escHtml(gn)+'</span>'
-            +'<span style="color:var(--text-muted);font-size:10px;">→</span>'
-            +'<select id="unmatched-'+idx+'" data-game="'+escHtml(gn)+'" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;color:var(--text);font-size:11px;">'+opts+'</select>'
-            +'<button onclick="skipUnmatched(this)" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:10px;padding:2px 6px;">Skip</button>'
-            +'</div>';
-        });
-        html += '</div>';
-      }
-      html += '<div style="display:flex;gap:8px;margin-top:16px;">'
-        +'<button onclick="applyAliasSync()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply Aliases</button>'
-        +'<button onclick="renderMembersPage()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>'
-        +'</div>';
-
-      // Store matches for apply
+      // Store data for dynamic rendering
       window._pendingAliases = matches;
-      container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;">'+html+'</div>';
+      window._unmatchedNames = unmatched;
+      window._allRosterNames = rosterNames;
+      renderAliasSyncPreview();
     }catch(e){
       container.innerHTML = '<div style="padding:14px;color:#e84040;font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
       setTimeout(function(){ renderMembersPage(); },3000);
     }
   input.value='';
+}
+
+function renderAliasSyncPreview(){
+  var container = document.getElementById('members-list-container');
+  var matches = window._pendingAliases || [];
+  var unmatched = window._unmatchedNames || [];
+  var rosterNames = window._allRosterNames || [];
+
+  // Find which TLGM names are already used (by auto-match or manual selection)
+  var usedTlgm = {};
+  matches.forEach(function(m){ usedTlgm[m.tlgm.toLowerCase()] = true; });
+  document.querySelectorAll('[id^="unmatched-"]').forEach(function(sel){
+    if(sel.value) usedTlgm[sel.value.toLowerCase()] = true;
+  });
+
+  var typeColors = {exact:'#3ecf6e',fuzzy:'var(--gold)',manual:'#5b8fff'};
+
+  // Header
+  var html = '<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:16px;">Alias Sync Preview</div>';
+
+  // Column headers
+  html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);border-bottom:1px solid var(--border);">'
+    +'<div style="flex:1;">TLGM Name</div>'
+    +'<div style="width:20px;"></div>'
+    +'<div style="flex:1;">TL Game Name</div>'
+    +'<div style="width:50px;text-align:right;">Match</div>'
+    +'</div>';
+
+  // Auto-matched rows
+  matches.forEach(function(m){
+    var c = typeColors[m.type] || 'var(--text-muted)';
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+      +'<div style="flex:1;font-size:12px;color:var(--text-muted);">'+escHtml(m.tlgm)+'</div>'
+      +'<div style="width:20px;color:var(--text-muted);font-size:10px;text-align:center;">→</div>'
+      +'<div style="flex:1;font-size:12px;color:'+c+';font-weight:600;">'+escHtml(m.game)+'</div>'
+      +'<div style="width:50px;text-align:right;font-size:9px;color:'+c+';">'+m.type+'</div>'
+      +'</div>';
+  });
+
+  // Unmatched rows with dynamic dropdowns
+  if(unmatched.length){
+    html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border);">';
+    html += '<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:8px;padding:0 12px;">'+unmatched.length+' unmatched — select TLGM member or skip</div>';
+    unmatched.forEach(function(gn, idx){
+      var available = rosterNames.filter(function(rn){ return !usedTlgm[rn.toLowerCase()]; });
+      var currentVal = '';
+      var existingSel = document.getElementById('unmatched-'+idx);
+      if(existingSel) currentVal = existingSel.value;
+
+      var opts = '<option value="">— Select —</option>';
+      available.forEach(function(rn){
+        var sel = (rn === currentVal) ? ' selected' : '';
+        opts += '<option value="'+escHtml(rn)+'"'+sel+'>'+escHtml(rn)+'</option>';
+      });
+      // If currentVal is set but not in available (already used elsewhere), still show it selected
+      if(currentVal && available.indexOf(currentVal)===-1){
+        opts += '<option value="'+escHtml(currentVal)+'" selected>'+escHtml(currentVal)+'</option>';
+      }
+
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+        +'<div style="flex:1;font-size:12px;color:var(--gold);font-weight:600;">'+escHtml(gn)+'</div>'
+        +'<div style="width:20px;color:var(--text-muted);font-size:10px;text-align:center;">→</div>'
+        +'<select id="unmatched-'+idx+'" data-game="'+escHtml(gn)+'" onchange="renderAliasSyncPreview()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;">'+opts+'</select>'
+        +'<div style="width:50px;text-align:right;"><button onclick="this.closest(\'div\').parentElement.style.display=\'none\'" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:10px;">Skip</button></div>'
+        +'</div>';
+    });
+    html += '</div>';
+  }
+
+  // Summary + buttons
+  var manualCount = 0;
+  document.querySelectorAll('[id^="unmatched-"]').forEach(function(s){ if(s.value) manualCount++; });
+  var totalAliases = matches.length + manualCount;
+
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">'
+    +'<div style="font-size:12px;color:var(--text-muted);">'+totalAliases+' aliases total ('+matches.length+' auto + '+manualCount+' manual)</div>'
+    +'<div style="display:flex;gap:8px;">'
+      +'<button onclick="applyAliasSync()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply '+totalAliases+' Aliases</button>'
+      +'<button onclick="renderMembersPage()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>'
+    +'</div>'
+    +'</div>';
+
+  container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">'+html+'</div>';
 }
 
 function editMember(encodedName, currentAlias){
