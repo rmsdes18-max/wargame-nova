@@ -125,6 +125,22 @@ router.get('/health', checkSuperAdmin, async (req, res) => {
   });
 });
 
+// GET /api/sudo/debug — full DB state for debugging
+router.get('/debug', checkSuperAdmin, async (req, res) => {
+  try {
+    const [users, members, guilds] = await Promise.all([
+      pool.query('SELECT id, username, discord_id, role as user_role, created_at FROM users ORDER BY id'),
+      pool.query('SELECT user_id, guild_id, role as guild_role, joined_at FROM guild_members ORDER BY user_id'),
+      pool.query('SELECT id, name, slug, owner_id, tier FROM guilds ORDER BY created_at'),
+    ]);
+    res.json({
+      users: users.rows,
+      guild_members: members.rows,
+      guilds: guilds.rows,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // POST /api/sudo/reset-all-data — wipe all guild data, keep user accounts
 router.post('/reset-all-data', checkSuperAdmin, async (req, res) => {
   try {
