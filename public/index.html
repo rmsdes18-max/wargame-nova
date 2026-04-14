@@ -2307,16 +2307,32 @@ function renderMembersList(){
   countEl.textContent = activeCount + ' active' + (archivedCount ? ' · ' + archivedCount + ' archived' : '');
 
   if(!_rosterData.length && !showArchived){
-    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
-      +'<div style="font-size:48px;opacity:.15;margin-bottom:16px;">◆</div>'
-      +'<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:6px;">No members yet</div>'
-      +'<div style="font-size:13px;color:var(--text-muted);max-width:320px;margin-bottom:20px;">Upload a screenshot from TL Guild Manager to sync your roster, or add members manually.</div>'
-      +(isEditor ? '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">'
-        +'<label class="btn btn-primary" style="cursor:pointer;padding:10px 24px;font-size:14px;">Sync from Screenshot<input type="file" accept="image/*" onchange="syncRosterFromScreenshot(this)" style="display:none;"></label>'
-        +'</div>' : '')
+    document.getElementById('members-tabs').style.display = 'none';
+    container.innerHTML = '<div style="padding:40px 20px;">'
+      +'<div style="text-align:center;margin-bottom:28px;">'
+        +'<div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:6px;">Set up your roster</div>'
+        +'<div style="font-size:13px;color:var(--text-muted);">Import members from TLGM, then sync with in-game names</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">'
+        // Step 1: TLGM Import
+        +(isEditor ? '<div onclick="openTlgmModal()" style="flex:0 0 260px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'\'">'
+          +'<div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Step 1</div>'
+          +'<div style="font-size:24px;margin-bottom:8px;">📋</div>'
+          +'<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Import from TLGM</div>'
+          +'<div style="font-size:12px;color:var(--text-muted);">Paste your Telegram Guild Manager member list</div>'
+          +'</div>' : '')
+        // Step 2: Game Sync
+        +'<div style="flex:0 0 260px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;opacity:.4;cursor:not-allowed;">'
+          +'<div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Step 2</div>'
+          +'<div style="font-size:24px;margin-bottom:8px;">📸</div>'
+          +'<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Sync with Game</div>'
+          +'<div style="font-size:12px;color:var(--text-muted);">Upload party screenshot to map in-game names (after Step 1)</div>'
+          +'</div>'
+      +'</div>'
       +'</div>';
     return;
   }
+  document.getElementById('members-tabs').style.display = 'flex';
 
   if(!filtered.length){
     container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">No '+(showArchived?'archived':'active')+' members</div>';
@@ -2440,6 +2456,79 @@ async function syncRosterFromScreenshot(input){
   };
   reader.readAsDataURL(file);
   input.value = '';
+}
+
+// ── TLGM IMPORT ──
+var _tlgmParsed = null;
+
+function openTlgmModal(){
+  _tlgmParsed = null;
+  var modal = document.getElementById('tlgm-modal');
+  modal.style.display = 'flex';
+  document.getElementById('tlgm-textarea').value = '';
+  document.getElementById('tlgm-preview').innerHTML = '';
+  var applyBtn = document.getElementById('tlgm-apply-btn');
+  applyBtn.style.opacity = '.5';
+  applyBtn.style.pointerEvents = 'none';
+}
+function closeTlgmModal(){
+  document.getElementById('tlgm-modal').style.display = 'none';
+}
+
+function parseTlgmText(text){
+  var lines = text.split('\n');
+  var result = [];
+  var curRole = null;
+  for(var i=0;i<lines.length;i++){
+    var line = lines[i].trim();
+    if(!line) continue;
+    if(/tank/i.test(line) && /#+/.test(line)){ curRole='TANK'; continue; }
+    if(/healer/i.test(line) && /#+/.test(line)){ curRole='HEALER'; continue; }
+    if(/dps/i.test(line) && /#+/.test(line)){ curRole='DPS'; continue; }
+    if(!curRole) continue;
+    if(line.charAt(0)!=='|') continue;
+    var cols = line.split('|').map(function(s){ return s.trim(); }).filter(Boolean);
+    if(cols.length<1) continue;
+    var rawName = cols[0].replace(/\*\*/g,'').trim();
+    var rawGuild = cols.length>1 ? cols[1] : '';
+    if(!rawName || rawName==='Nume' || rawName==='Name' || /^-+$/.test(rawName)) continue;
+    var guildRole = null;
+    if(/Leader/i.test(rawGuild)) guildRole='Leader';
+    else if(/Advisor/i.test(rawGuild)) guildRole='Advisor';
+    else if(/On Leave/i.test(rawGuild)) guildRole='On Leave';
+    result.push({name:rawName, role:curRole, guildRole:guildRole, active:true});
+  }
+  return result;
+}
+
+function previewTlgm(){
+  var text = document.getElementById('tlgm-textarea').value;
+  _tlgmParsed = parseTlgmText(text);
+  var prev = document.getElementById('tlgm-preview');
+  var applyBtn = document.getElementById('tlgm-apply-btn');
+  if(!_tlgmParsed.length){
+    prev.innerHTML = '<span style="color:#e84040;">No members found — check format.</span>';
+    applyBtn.style.opacity='.5'; applyBtn.style.pointerEvents='none';
+    return;
+  }
+  var tanks = _tlgmParsed.filter(function(m){return m.role==='TANK';}).length;
+  var healers = _tlgmParsed.filter(function(m){return m.role==='HEALER';}).length;
+  var dps = _tlgmParsed.filter(function(m){return m.role==='DPS';}).length;
+  prev.innerHTML = '<span style="color:var(--heal);">'+_tlgmParsed.length+' members found</span>'
+    +' — <span style="color:var(--tank);">'+tanks+' Tank</span>'
+    +' · <span style="color:var(--heal);">'+healers+' Healer</span>'
+    +' · <span style="color:var(--dps);">'+dps+' DPS</span>';
+  applyBtn.style.opacity='1'; applyBtn.style.pointerEvents='';
+}
+
+async function applyTlgm(){
+  if(!_tlgmParsed||!_tlgmParsed.length) return;
+  try{
+    var r = await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_tlgmParsed)});
+    if(!r.ok) throw new Error('Failed to save');
+    closeTlgmModal();
+    renderMembersPage();
+  }catch(e){ alert('Error: '+e.message); }
 }
 
 async function updateDefaultInviteRole(role){
@@ -3368,8 +3457,9 @@ async function goStep3WithVision(){
       <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
     </div>
     <div id="members-actions" style="display:none;gap:8px;flex-wrap:wrap;">
+      <button onclick="openTlgmModal()" class="btn btn-secondary btn-sm">Update Roster</button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-        Sync from Screenshot
+        Sync Aliases
         <input type="file" accept="image/*" onchange="syncRosterFromScreenshot(this)" style="display:none;">
       </label>
       <button onclick="showAddMemberForm()" class="btn btn-primary btn-sm">+ Add</button>
@@ -3390,11 +3480,29 @@ async function goStep3WithVision(){
     <div id="add-member-error" style="display:none;color:#e84040;font-size:11px;margin-top:6px;"></div>
   </div>
   <!-- Tabs: Active / Archived -->
-  <div style="display:flex;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--border);">
+  <div id="members-tabs" style="display:flex;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--border);">
     <button id="members-tab-active" onclick="switchMembersTab('active')" style="background:none;border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 0;border-bottom:2px solid var(--gold);cursor:pointer;">Active</button>
     <button id="members-tab-archived" onclick="switchMembersTab('archived')" style="background:none;border:none;color:var(--text-muted);font-size:13px;padding:8px 0;border-bottom:2px solid transparent;cursor:pointer;">Archived</button>
   </div>
   <div id="members-list-container"></div>
+</div>
+
+<!-- TLGM Import Modal -->
+<div id="tlgm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:min(560px,92vw);max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#fff;">Import from TLGM</div>
+      <button onclick="closeTlgmModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Paste the member list from your Telegram Guild Manager bot (markdown table format).</div>
+    <textarea id="tlgm-textarea" placeholder="### 🛡️ Tank (21 membri)&#10;| Nume | Rol în guild |&#10;| BuffDaddy | Member |&#10;| HdPwNer | **Leader** |&#10;&#10;### 💚 Healer&#10;| Nume | Rol |&#10;| Selene | Member |&#10;&#10;### ⚔️ DPS&#10;| Nume | Rol |&#10;| ilenia | Member |" style="width:100%;height:200px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-size:12px;font-family:JetBrains Mono,monospace;resize:vertical;outline:none;"></textarea>
+    <div id="tlgm-preview" style="margin-top:10px;font-size:12px;min-height:20px;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="previewTlgm()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Parse &amp; Preview</button>
+      <button id="tlgm-apply-btn" onclick="applyTlgm()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;opacity:.5;pointer-events:none;">Apply</button>
+      <button onclick="closeTlgmModal()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════════ GUILD SETTINGS ═══════════════ -->
