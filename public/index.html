@@ -1671,8 +1671,20 @@ function saveWarWithStatsV3(){
     });
   });
 
-  state.novaPlayers = state.confirmed;
+  // Collect matched players without party assignment as unassigned extras
+  var assignedNames = {};
+  state.parties.forEach(function(p){
+    p.members.forEach(function(m){ assignedNames[m.name.toLowerCase()] = true; });
+  });
+
   state._unassignedExtras = [];
+  state.confirmed.forEach(function(c){
+    if(!assignedNames[c.name.toLowerCase()]){
+      state._unassignedExtras.push(c);
+    }
+  });
+
+  state.novaPlayers = state.confirmed;
   saveWarSimple();
 }
 
