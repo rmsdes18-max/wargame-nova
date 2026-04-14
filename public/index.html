@@ -2088,7 +2088,11 @@ function viewWar(warId){
   // ── War header ──
   var html = '<div class="war-header">';
   html += '<div class="war-title">';
-  html += '<h2>'+escHtml(_currentGuildName)+' vs '+escHtml(w.opponent)+'</h2>';
+  if(_vwEditMode){
+    html += '<h2>'+escHtml(_currentGuildName)+' vs <span contenteditable="true" style="outline:none;border-bottom:1px dashed var(--gold);cursor:text;" onblur="document.getElementById(\'edit-opponent\').value=this.textContent.trim()">'+escHtml(w.opponent)+'</span></h2>';
+  } else {
+    html += '<h2>'+escHtml(_currentGuildName)+' vs '+escHtml(w.opponent)+'</h2>';
+  }
   html += '<span class="date">'+escHtml(w.date)+'</span>';
   html += '</div>';
   html += '<div class="war-actions">';
@@ -2112,11 +2116,11 @@ function viewWar(warId){
 
   // ── Stat cards ──
   html += '<div class="stats-row">';
-  html += '<div class="stat-card gold"><div class="label">Kills</div><div class="value">'+(totalDefeats||'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Kills</div><div class="value" style="color:#e84040;">'+(totalDefeats||'—')+'</div></div>';
   html += '<div class="stat-card"><div class="label">Assists</div><div class="value">'+(totalAssists||'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Dmg Dealt</div><div class="value">'+(totalDmg?totalDmg.toLocaleString():'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Dmg Taken</div><div class="value">'+(totalTaken?totalTaken.toLocaleString():'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Healed</div><div class="value" style="color:var(--heal);">'+(totalHealed?totalHealed.toLocaleString():'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Dmg Dealt</div><div class="value" style="color:#c9a06a;">'+(totalDmg?totalDmg.toLocaleString():'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Dmg Taken</div><div class="value" style="color:#a08090;">'+(totalTaken?totalTaken.toLocaleString():'—')+'</div></div>';
+  html += '<div class="stat-card"><div class="label">Healed</div><div class="value" style="color:#3ecf6e;">'+(totalHealed?totalHealed.toLocaleString():'—')+'</div></div>';
   html += '</div>';
 
   // ── Tabs ──
