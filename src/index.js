@@ -50,11 +50,6 @@ app.get(['/members', '/membrii'], (req, res) => {
   res.redirect('/');
 });
 
-// Admin login page
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(publicDir, 'admin.html'));
-});
-
 // Sudo panel
 app.get('/sudo', (req, res) => {
   res.sendFile(path.join(publicDir, 'sudo.html'));
