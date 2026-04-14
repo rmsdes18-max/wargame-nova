@@ -66,11 +66,15 @@ router.get('/users', checkSuperAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT u.id, u.username, u.discord_id, u.avatar, u.created_at,
+             COALESCE(
+               (SELECT string_agg(g.name || ' (' || gm.role || ')', ', ')
+                FROM guild_members gm JOIN guilds g ON g.id = gm.guild_id
+                WHERE gm.user_id = u.id), ''
+             ) as guilds_info,
              (SELECT COUNT(*)::int FROM guild_members WHERE user_id = u.id) as guilds_count
       FROM users u
       ORDER BY u.created_at DESC
     `);
-    // Mask discord IDs
     res.json(rows.map(u => ({
       ...u,
       discord_id: u.discord_id ? u.discord_id.slice(0, 4) + '...' + u.discord_id.slice(-4) : null,

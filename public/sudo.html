@@ -149,10 +149,13 @@ async function load(){
       users.forEach(function(u){
         var d=new Date(u.created_at);
         var date=d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+        var guildsBadge = u.guilds_info
+          ? '<span style="font-size:11px;color:#fff;">'+esc(u.guilds_info)+'</span>'
+          : '<span style="font-size:11px;color:#e84040;">No guild</span>';
         html+='<tr>'
           +'<td style="font-weight:600;color:#fff;">'+esc(u.username)+'</td>'
           +'<td style="font-family:JetBrains Mono,monospace;font-size:11px;color:#8b8d94;">'+(u.discord_id||'—')+'</td>'
-          +'<td>'+u.guilds_count+'</td>'
+          +'<td>'+guildsBadge+'</td>'
           +'<td style="font-size:11px;color:#8b8d94;">'+date+'</td>'
           +'<td><button class="btn-del" onclick="delUser('+u.id+',\''+esc(u.username)+'\')">Delete</button></td>'
           +'</tr>';
