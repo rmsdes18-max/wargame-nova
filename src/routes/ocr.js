@@ -15,6 +15,8 @@ router.post('/', requireAuth, guildContext, requireGuildRole('editor'), async (r
     return res.status(400).json({ error: 'prompt and image_base64 required' });
   }
 
+  console.log('[OCR] Request received, image size:', Math.round((image_base64||'').length/1024)+'kb');
+
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -38,10 +40,12 @@ router.post('/', requireAuth, guildContext, requireGuildRole('editor'), async (r
 
     if (!resp.ok) {
       const err = await resp.text();
-      return res.status(resp.status).json({ error: 'Anthropic API error: ' + err });
+      console.error('[OCR] Anthropic error:', resp.status, err.substring(0, 300));
+      return res.status(resp.status).json({ error: 'Anthropic API error ' + resp.status + ': ' + err.substring(0, 200) });
     }
 
     const data = await resp.json();
+    console.log('[OCR] Success, tokens:', data.usage);
     res.json({ text: data.content[0].text, usage: data.usage });
   } catch (e) {
     res.status(500).json({ error: 'OCR failed: ' + e.message });

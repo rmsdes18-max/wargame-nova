@@ -2587,16 +2587,21 @@ function compressImage(dataUrl, maxWidth, quality){
 async function callClaude(prompt, imageDataUrl){
   var compressed = await compressImage(imageDataUrl);
   var b64 = compressed.split(',')[1];
+  console.log('[OCR] Sending request, image size:', Math.round(b64.length/1024)+'kb');
   var resp = await fetch('/api/ocr',{
     method:'POST',
     headers: apiHeaders(),
     body: JSON.stringify({ prompt: prompt, image_base64: b64, image_mime: 'image/jpeg' })
   });
+  console.log('[OCR] Response status:', resp.status);
   if(!resp.ok){
-    var err = await resp.json().catch(function(){ return {error:'OCR failed'}; });
-    throw new Error(err.error || 'OCR error '+resp.status);
+    var errText = await resp.text();
+    console.error('[OCR] Error response:', errText);
+    try{ var errObj = JSON.parse(errText); throw new Error(errObj.error || 'OCR error '+resp.status); }
+    catch(e){ if(e.message.startsWith('OCR') || e.message.startsWith('Anthropic')) throw e; throw new Error('OCR error '+resp.status+': '+errText.substring(0,200)); }
   }
   var data = await resp.json();
+  console.log('[OCR] Success, response length:', (data.text||'').length);
   return data.text;
 }
 
@@ -3004,12 +3009,19 @@ async function handlePartyUploadWithVision(e){
         '<div class="processing"><span class="spin">◌</span> Claude analizează culorile și extrage party-urile...</div>';
       try{
         var extracted = await extractPartiesFromImage(ev.target.result);
+        console.log('[OCR] Extracted parties:', JSON.stringify(extracted).substring(0,500));
+        if(!extracted || !extracted.length){
+          throw new Error('OCR returned empty result');
+        }
         state.parties = matchPartiesAgainstRoster(extracted);
         renderPartyEditorFromData(state.parties);
       } catch(err){
+        console.error('[OCR] Failed:', err);
         document.getElementById('party-manual-editor').innerHTML =
-          '<div style="color:#e84040;font-size:12px;padding:10px;background:rgba(232,64,64,.08);border-radius:8px;margin-bottom:10px;">Vision eroare: '+err.message+'<br>Se folosesc party-urile default — editează manual.</div>';
-        state.parties = matchPartiesAgainstRoster(JSON.parse(JSON.stringify(DEFAULT_PARTIES)));
+          '<div style="color:#e84040;font-size:13px;padding:14px;background:rgba(232,64,64,.1);border:1px solid rgba(232,64,64,.2);border-radius:8px;margin-bottom:10px;">'
+          +'<b>OCR Error:</b> '+escHtml(err.message)
+          +'<br><span style="font-size:11px;color:var(--text-muted);">Add members manually below or try a different screenshot.</span></div>';
+        state.parties = JSON.parse(JSON.stringify(DEFAULT_PARTIES));
         renderPartyEditorFromData(state.parties);
       }
     } else {
