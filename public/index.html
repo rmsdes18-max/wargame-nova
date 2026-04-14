@@ -1125,157 +1125,561 @@ function renderStatsList(){
   document.getElementById('nova-list-wrap').innerHTML = html;
 }
 
-function renderStatsMatchingUI(results){
-  var fmtN2 = function(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n||0;};
+// ══════════════════════════════════════════════════════════════════════════
+// STATS MATCHING UI V3 — complete rendering + interaction functions
+// ══════════════════════════════════════════════════════════════════════════
+
+// Global v3 state
+window._v3ResolvedItems = {};  // idx -> {type:'existing'|'new'|'skip', memberName, member, isNew}
+window._v3ManuallyAssigned = {}; // memberName -> true (for NEW badge in party preview)
+
+function renderStatsMatchingV3(results){
+  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
+  var roleClass = function(r){ return (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps'; };
+  var roleBadge = function(r){
+    var rc = roleClass(r);
+    var label = (r||'DPS')==='HEALER'?'HEAL':(r||'DPS');
+    return '<span style="padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;min-width:36px;text-align:center;display:inline-block;'
+      +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;'
+       :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;'
+       :'background:rgba(62,207,110,.2);color:#3ecf6e;')
+      +'">'+label+'</span>';
+  };
+
+  window._v3ResolvedItems = {};
+  window._v3ManuallyAssigned = {};
+
   var html = '';
 
-  // Summary bar
-  html += '<div style="display:flex;gap:16px;margin-bottom:16px;padding:12px 16px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);font-size:13px;">'
-    +'<span style="color:var(--heal);">✓ <b>'+results.matched.length+'</b> matched</span>'
-    +'<span style="color:var(--gold);">⚠ <b>'+results.needsReview.length+'</b> needs review</span>'
-    +'<span style="color:var(--text-muted);">○ <b>'+results.notInScoreboard.length+'</b> not in war</span>'
-    +'</div>';
+  // ── CSS for v3 (injected inline) ──
+  html += '<style id="stats-v3-css">'
+    +'.sm3-matched-banner{background:linear-gradient(135deg,rgba(62,207,110,.1) 0%,rgba(62,207,110,.05) 100%);border:1px solid rgba(62,207,110,.3);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s;}'
+    +'.sm3-matched-banner:hover{background:linear-gradient(135deg,rgba(62,207,110,.15) 0%,rgba(62,207,110,.08) 100%);}'
+    +'.sm3-matched-list{background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;margin-top:-8px;display:none;max-height:250px;overflow-y:auto;}'
+    +'.sm3-matched-list.show{display:block;}'
+    +'.sm3-matched-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}'
+    +'.sm3-matched-item:last-child{border-bottom:none;}'
+    +'.sm3-attention-section{background:#1a1a1a;border:1px solid #333;border-radius:10px;overflow:hidden;margin-bottom:24px;}'
+    +'.sm3-attention-header{background:linear-gradient(135deg,rgba(240,192,64,.15) 0%,rgba(240,192,64,.05) 100%);padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #333;}'
+    +'.sm3-attention-header.done{background:linear-gradient(135deg,rgba(62,207,110,.15) 0%,rgba(62,207,110,.05) 100%);}'
+    +'.sm3-attention-header.done .sm3-att-title{color:#3ecf6e;}'
+    +'.sm3-att-title{font-size:14px;font-weight:600;color:#f0c040;}'
+    +'.sm3-att-count{background:#f0c040;color:#000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}'
+    +'.sm3-attention-item{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);transition:all .2s;}'
+    +'.sm3-attention-item:last-child{border-bottom:none;}'
+    +'.sm3-attention-item:hover{background:rgba(255,255,255,.02);}'
+    +'.sm3-attention-item.resolved{background:rgba(62,207,110,.05);opacity:.7;}'
+    +'.sm3-attention-ocr{font-family:monospace;font-size:15px;font-weight:600;color:#f0c040;min-width:140px;}'
+    +'.sm3-attention-stats{display:flex;gap:16px;font-size:13px;font-family:monospace;}'
+    +'.sm3-attention-stats .k{color:#e84040;} .sm3-attention-stats .d{color:#c9a06a;} .sm3-attention-stats .h{color:#3ecf6e;}'
+    +'.sm3-action-row{display:flex;align-items:center;gap:10px;}'
+    +'.sm3-action-row label{font-size:12px;color:#888;min-width:90px;}'
+    +'.sm3-member-dropdown{flex:1;max-width:260px;background:#252525;border:1px solid #333;border-radius:6px;padding:10px 14px;color:#e0e0e0;font-size:13px;cursor:pointer;}'
+    +'.sm3-member-dropdown:focus{outline:none;border-color:#f0c040;}'
+    +'.sm3-btn-confirm{background:#f0c040;color:#000;border:none;border-radius:6px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}'
+    +'.sm3-btn-confirm:hover{background:#e0b030;}'
+    +'.sm3-btn-confirm:disabled{background:#252525;color:#888;cursor:not-allowed;}'
+    +'.sm3-toggle-options{display:flex;gap:16px;margin-top:8px;padding-top:12px;border-top:1px dashed #333;}'
+    +'.sm3-toggle-option{display:flex;align-items:center;gap:6px;font-size:12px;color:#888;cursor:pointer;padding:6px 12px;border-radius:6px;transition:all .15s;}'
+    +'.sm3-toggle-option:hover{background:#252525;color:#e0e0e0;}'
+    +'.sm3-toggle-option.active{background:rgba(240,192,64,.15);color:#f0c040;}'
+    +'.sm3-toggle-option input{accent-color:#f0c040;}'
+    +'.sm3-new-member-form{display:none;margin-top:12px;padding:14px;background:#252525;border-radius:8px;border:1px solid #333;}'
+    +'.sm3-new-member-form.show{display:block;}'
+    +'.sm3-form-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}'
+    +'.sm3-form-row:last-child{margin-bottom:0;}'
+    +'.sm3-form-row label{font-size:12px;color:#888;min-width:70px;}'
+    +'.sm3-form-input{flex:1;max-width:200px;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:8px 12px;color:#e0e0e0;font-size:13px;}'
+    +'.sm3-form-input:focus{outline:none;border-color:#f0c040;}'
+    +'.sm3-form-select{background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:8px 12px;color:#e0e0e0;font-size:13px;min-width:100px;}'
+    +'.sm3-form-checkbox{display:flex;align-items:center;gap:8px;font-size:12px;color:#888;}'
+    +'.sm3-form-checkbox input{accent-color:#f0c040;width:16px;height:16px;}'
+    +'.sm3-suggestion-hint{margin-top:8px;font-size:11px;color:#888;display:flex;align-items:center;gap:6px;}'
+    +'.sm3-suggestion-hint .match{color:#3ecf6e;font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;}'
+    +'.sm3-suggestion-hint .match:hover{text-decoration-style:solid;}'
+    +'.sm3-resolved-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(62,207,110,.2);color:#3ecf6e;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;}'
+    +'.sm3-resolved-badge .new-tag{background:#f0c040;color:#000;font-size:9px;padding:2px 6px;border-radius:4px;margin-left:4px;}'
+    +'.sm3-all-done{text-align:center;padding:30px 20px;display:none;}'
+    +'.sm3-all-done.show{display:block;}'
+    +'.sm3-all-done h3{font-size:16px;font-weight:600;color:#3ecf6e;margin-bottom:4px;}'
+    +'.sm3-all-done p{font-size:13px;color:#888;}'
+    +'.sm3-party-preview{background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:24px;}'
+    +'.sm3-party-preview-header{padding:14px 20px;border-bottom:1px solid #333;display:flex;align-items:center;gap:10px;}'
+    +'.sm3-party-preview-header h3{font-size:14px;font-weight:600;color:#e0e0e0;}'
+    +'.sm3-party-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#333;}'
+    +'.sm3-party-card{background:#1a1a1a;padding:14px;}'
+    +'.sm3-party-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #333;}'
+    +'.sm3-party-card-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}'
+    +'.sm3-party-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}'
+    +'.sm3-party-member{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;}'
+    +'.sm3-party-member .name{flex:1;}'
+    +'.sm3-party-member .stats{font-family:monospace;font-size:10px;color:#888;}'
+    +'.sm3-party-member.new-match{background:rgba(240,192,64,.1);margin:0 -8px;padding:4px 8px;border-radius:4px;}'
+    +'.sm3-footer{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid #333;}'
+    +'.sm3-btn-save{background:#3ecf6e;color:#000;border:none;border-radius:8px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;}'
+    +'.sm3-btn-save:hover{transform:scale(1.02);box-shadow:0 4px 20px rgba(62,207,110,.3);}'
+    +'.sm3-btn-save.pulse{animation:sm3pulse 2s infinite;}'
+    +'@keyframes sm3pulse{0%,100%{box-shadow:0 0 0 0 rgba(62,207,110,.4);}50%{box-shadow:0 0 0 10px rgba(62,207,110,0);}}'
+    +'.sm3-btn-secondary{background:transparent;border:1px solid #333;color:#888;border-radius:8px;padding:14px 20px;font-size:13px;cursor:pointer;}'
+    +'.sm3-btn-secondary:hover{border-color:#888;color:#e0e0e0;}'
+    +'</style>';
 
-  // NEEDS REVIEW (expanded)
-  if(results.needsReview.length){
-    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:8px;margin-bottom:12px;">';
-    html += '<div style="padding:10px 14px;background:var(--bg3);font-size:13px;font-weight:600;color:var(--gold);">⚠ NEEDS REVIEW ('+results.needsReview.length+')</div>';
-    results.needsReview.forEach(function(r,idx){
-      var sugOpts = '';
-      if(r.suggestions && r.suggestions.length){
-        r.suggestions.forEach(function(s){ sugOpts += '<option value="'+escHtml(s.member.name)+'">'+escHtml(s.member.name)+' ('+s.score+'%)</option>'; });
-        sugOpts += '<option disabled>──────────</option>';
-      }
-      var availOpts = '';
-      var usedNames = {};
-      results.matched.forEach(function(m){ usedNames[m.member.name]=true; });
-      _rosterCache.forEach(function(m){
-        if(m.active!==false && !usedNames[m.name]) availOpts += '<option value="'+escHtml(m.name)+'">'+escHtml(m.name)+'</option>';
-      });
+  // ── MATCHED BANNER (green gradient, collapsed by default) ──
+  html += '<div class="sm3-matched-banner" onclick="toggleMatchedV3()">'
+    +'<div style="display:flex;align-items:center;gap:12px;">'
+      +'<div style="width:40px;height:40px;background:rgba(62,207,110,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">&#10003;</div>'
+      +'<div>'
+        +'<h3 style="font-size:15px;font-weight:600;color:#3ecf6e;margin:0 0 2px 0;">'+results.matched.length+' players matched automatically</h3>'
+        +'<p style="font-size:12px;color:#888;margin:0;">Stats linked to roster members</p>'
+      +'</div>'
+    +'</div>'
+    +'<div style="color:#888;font-size:12px;display:flex;align-items:center;gap:4px;">'
+      +'<span id="sm3-expand-text">View all</span>'
+      +'<span id="sm3-expand-arrow">&#9660;</span>'
+    +'</div>'
+  +'</div>';
 
-      html += '<div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);background:rgba(240,192,64,.03);">'
-        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
-          +'<span style="font-size:12px;color:var(--gold);font-family:JetBrains Mono,monospace;font-weight:600;">'+escHtml(r.ocrName)+'</span>'
-          +'<span style="color:var(--text-muted);font-size:10px;">→</span>'
-          +'<select id="review-select-'+idx+'" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 10px;color:var(--text);font-size:12px;min-width:180px;">'
-            +'<option value="">— Select Member —</option>'+sugOpts+availOpts
-          +'</select>'
-          +'<button onclick="assignReviewMember('+idx+')" class="btn btn-primary" style="padding:4px 10px;font-size:11px;">Assign</button>'
-        +'</div>'
-        +'<div style="font-size:11px;color:var(--text-muted);">'
-          +'K:<span style="color:#e84040;">'+(r.stats.defeat||0)+'</span> '
-          +'A:<span>'+(r.stats.assist||0)+'</span> '
-          +'DMG:<span style="color:var(--gold);">'+fmtN2(r.stats.dmg_dealt||0)+'</span> '
-          +'HEAL:<span style="color:#3ecf6e;">'+fmtN2(r.stats.healed||0)+'</span>'
-        +'</div>'
-        +(r.suggestions&&r.suggestions.length?'<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">💡 '+r.suggestions.map(function(s){return escHtml(s.member.name)+' ('+s.score+'%)';}).join(', ')+'</div>':'')
-        +'</div>';
-    });
-    html += '</div>';
-  }
-
-  // MATCHED (collapsed if >10)
-  html += '<div id="section-matched" style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--heal);border-radius:8px;margin-bottom:12px;">';
-  html += '<div onclick="var b=document.getElementById(\'matched-body\');b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="padding:10px 14px;background:var(--bg3);font-size:13px;font-weight:600;color:var(--heal);cursor:pointer;display:flex;justify-content:space-between;">'
-    +'<span>✅ MATCHED ('+results.matched.length+')</span><span style="color:var(--text-muted);">▼</span></div>';
-  html += '<div id="matched-body" style="'+(results.matched.length>10?'display:none;':'')+'">';
+  // ── MATCHED LIST (hidden by default) ──
+  html += '<div class="sm3-matched-list" id="sm3-matched-list">';
+  var maxShow = 7;
   results.matched.forEach(function(m, mi){
+    if(mi >= maxShow) return;
     var role = m.member.role||'DPS';
-    var rc = role==='TANK'?'#8B5CF6':role==='HEALER'?'#3ecf6e':'#e84040';
-    var confColor = m.confidence==='exact'?'#3ecf6e':m.confidence==='alias'?'#f0c040':m.confidence==='fuzzy'?'#5b8fff':'var(--text-muted)';
-    // Party dropdown options
-    var partyOpts = '<option value="">—</option>';
-    if(state.parties){
-      state.parties.forEach(function(p,pi){
-        if(p._isExtras||p.name==='_Extras') return;
-        var count = results.matched.filter(function(x){return x.party===p.name;}).length;
-        var sel = m.party===p.name?' selected':'';
-        var dis = count>=6&&m.party!==p.name?' disabled':'';
-        partyOpts += '<option value="'+escHtml(p.name)+'"'+sel+dis+'>'+escHtml(p.name)+' ('+count+'/6)</option>';
-      });
-    }
+    html += '<div class="sm3-matched-item">'
+      +roleBadge(role)
+      +'<span style="font-weight:600;min-width:100px;">'+escHtml(m.member.name)+'</span>'
+      +'<span style="color:#888;font-size:11px;font-family:monospace;margin-left:auto;">K:'+(m.stats.defeat||0)+' A:'+(m.stats.assist||0)+' D:'+fmtS(m.stats.dmg_dealt||0)+' H:'+fmtS(m.stats.healed||0)+'</span>'
+    +'</div>';
+  });
+  if(results.matched.length > maxShow){
+    html += '<div style="padding:10px 16px;text-align:center;color:#888;font-size:12px;">+ '+(results.matched.length - maxShow)+' more players</div>';
+  }
+  html += '</div>';
 
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;">'
-      +'<span onclick="cycleMatchedRole('+mi+')" style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'22;color:'+rc+';min-width:36px;text-align:center;cursor:pointer;" title="Click to change role">'+role+'</span>'
-      +'<span style="font-weight:600;color:#fff;min-width:80px;">'+escHtml(m.member.name)+'</span>'
-      +'<span style="color:var(--text-muted);font-size:10px;">←</span>'
-      +'<span style="color:var(--gold);font-family:JetBrains Mono,monospace;font-size:11px;min-width:80px;">'+escHtml(m.ocrName)+'</span>'
-      +'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#e84040;">K:'+(m.stats.defeat||0)+'</span>'
-      +'<span style="font-family:JetBrains Mono,monospace;font-size:10px;">A:'+(m.stats.assist||0)+'</span>'
-      +'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--gold);">D:'+fmtN2(m.stats.dmg_dealt||0)+'</span>'
-      +'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#3ecf6e;">H:'+fmtN2(m.stats.healed||0)+'</span>'
-      +'<select onchange="assignMatchedParty('+mi+',this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 6px;color:var(--text);font-size:10px;min-width:80px;">'+partyOpts+'</select>'
-      +'<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+confColor+'22;color:'+confColor+';">'+m.confidence+'</span>'
+  // ── NEEDS YOUR ATTENTION section ──
+  html += '<div class="sm3-attention-section" id="sm3-attention-section">';
+  html += '<div class="sm3-attention-header" id="sm3-attention-header">'
+    +'<span style="font-size:18px;">&#9888;&#65039;</span>'
+    +'<h3 class="sm3-att-title" id="sm3-attention-title">Needs your attention</h3>'
+    +'<span class="sm3-att-count" id="sm3-attention-count">'+results.needsReview.length+'</span>'
+  +'</div>';
+
+  html += '<div id="sm3-attention-list">';
+  results.needsReview.forEach(function(r,idx){
+    // Build dropdown options
+    var sugOpts = '';
+    if(r.suggestions && r.suggestions.length){
+      sugOpts += '<optgroup label="&#127919; Suggested">';
+      r.suggestions.forEach(function(s){
+        sugOpts += '<option value="'+escHtml(s.member.name)+'">'+escHtml(s.member.name)+' ('+s.matchedOn+')</option>';
+      });
+      sugOpts += '</optgroup>';
+    }
+    var allOpts = '<optgroup label="All members">';
+    var usedNames = {};
+    results.matched.forEach(function(m){ usedNames[m.member.name]=true; });
+    if(_rosterCache) _rosterCache.forEach(function(m){
+      if(m.active!==false && !usedNames[m.name]) allOpts += '<option value="'+escHtml(m.name)+'">'+escHtml(m.name)+'</option>';
+    });
+    allOpts += '</optgroup>';
+
+    html += '<div class="sm3-attention-item" id="sm3-item-'+idx+'">'
+      +'<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">'
+        +'<span class="sm3-attention-ocr">'+escHtml(r.ocrName)+'</span>'
+        +'<div class="sm3-attention-stats">'
+          +'<span class="k">K:'+(r.stats.defeat||0)+'</span>'
+          +'<span>A:'+(r.stats.assist||0)+'</span>'
+          +'<span class="d">D:'+fmtS(r.stats.dmg_dealt||0)+'</span>'
+          +'<span class="h">H:'+fmtS(r.stats.healed||0)+'</span>'
+        +'</div>'
+      +'</div>'
+      +'<div class="sm3-attention-action" id="sm3-action-'+idx+'">'
+        +'<div class="sm3-action-row">'
+          +'<label>Assign to:</label>'
+          +'<select class="sm3-member-dropdown" id="sm3-dropdown-'+idx+'" onchange="handleDropdownV3('+idx+')">'
+            +'<option value="">Select member...</option>'
+            +sugOpts+allOpts
+          +'</select>'
+          +'<button class="sm3-btn-confirm" id="sm3-btn-'+idx+'" disabled onclick="resolveItemV3('+idx+',\'existing\')">Confirm</button>'
+        +'</div>'
+        +'<div class="sm3-toggle-options">'
+          +'<label class="sm3-toggle-option" onclick="toggleNewMemberV3('+idx+')">'
+            +'<input type="radio" name="sm3-opt-'+idx+'" id="sm3-radio-new-'+idx+'">'
+            +'<span>&#10133; Add as new member</span>'
+          +'</label>'
+          +'<label class="sm3-toggle-option" onclick="skipItemV3('+idx+')">'
+            +'<input type="radio" name="sm3-opt-'+idx+'">'
+            +'<span>&#9193;&#65039; Skip this player</span>'
+          +'</label>'
+        +'</div>'
+        +'<div class="sm3-new-member-form" id="sm3-form-'+idx+'">'
+          +'<div class="sm3-form-row">'
+            +'<label>Name:</label>'
+            +'<input type="text" class="sm3-form-input" id="sm3-name-'+idx+'" placeholder="Enter name..." value="'+escHtml(r.ocrName)+'">'
+            +'<select class="sm3-form-select" id="sm3-role-'+idx+'">'
+              +'<option value="DPS">DPS</option>'
+              +'<option value="TANK">Tank</option>'
+              +'<option value="HEALER">Healer</option>'
+            +'</select>'
+          +'</div>'
+          +'<div class="sm3-form-row">'
+            +'<label></label>'
+            +'<label class="sm3-form-checkbox">'
+              +'<input type="checkbox" id="sm3-alias-'+idx+'" checked>'
+              +'Save "'+escHtml(r.ocrName)+'" as alias for auto-match next time'
+            +'</label>'
+          +'</div>'
+          +'<div class="sm3-form-row">'
+            +'<label></label>'
+            +'<button class="sm3-btn-confirm" onclick="resolveItemV3('+idx+',\'new\')">Add &amp; Assign Stats</button>'
+          +'</div>'
+        +'</div>'
+        +(r.suggestions&&r.suggestions.length
+          ?'<div class="sm3-suggestion-hint">&#128161; This looks like <span class="match" onclick="selectSuggestionV3('+idx+',\''+escHtml(r.suggestions[0].member.name)+'\')">'+escHtml(r.suggestions[0].member.name)+'</span> &#8212; click to assign</div>'
+          :'')
+      +'</div>'
+    +'</div>';
+  });
+  html += '</div>';
+
+  // All Done State
+  html += '<div class="sm3-all-done" id="sm3-all-done">'
+    +'<div style="font-size:40px;margin-bottom:10px;">&#127881;</div>'
+    +'<h3>All players identified!</h3>'
+    +'<p>Review the party breakdown below and save</p>'
+  +'</div>';
+
+  html += '</div>'; // close attention section
+
+  // ── PARTY BREAKDOWN (grid 2 columns) ──
+  html += '<div class="sm3-party-preview" id="sm3-party-preview">';
+  html += '<div class="sm3-party-preview-header">'
+    +'<span style="font-size:18px;">&#128203;</span>'
+    +'<h3>Party Breakdown</h3>'
+  +'</div>';
+  html += '<div class="sm3-party-grid">';
+  var partyDotColors = ['#5b8fff','#3ecf6e','#e84040','#f0c040','#8B5CF6','#f97316','#0891b2'];
+  state.parties.forEach(function(party,pi){
+    if(party._isExtras || party.name==='_Extras') return;
+    var dotColor = partyDotColors[pi % partyDotColors.length];
+    // Find members in this party from matched results
+    var pMembers = [];
+    results.matched.forEach(function(m){
+      // Find party assignment via state.parties member list
+      var inParty = party.members.some(function(pm){ return pm.name === m.member.name || namesMatch(pm.name, m.member.name); });
+      if(inParty) pMembers.push({name:m.member.name, role:m.member.role||'DPS', stats:m.stats, isNew:false});
+    });
+
+    html += '<div class="sm3-party-card">'
+      +'<div class="sm3-party-card-header">'
+        +'<span class="sm3-party-card-title"><span class="sm3-party-dot" style="background:'+dotColor+';"></span> '+escHtml(party.name)+(party.label?' &#8212; '+escHtml(party.label):'')+'</span>'
+        +'<span style="font-size:11px;color:#888;">'+pMembers.length+'/'+party.members.length+'</span>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:6px;" id="sm3-party-members-'+pi+'">';
+    pMembers.forEach(function(pm){
+      html += '<div class="sm3-party-member'+(pm.isNew?' new-match':'')+'">'
+        +roleBadge(pm.role)
+        +'<span class="name">'+escHtml(pm.name)+'</span>'
+        +'<span class="stats">K:'+(pm.stats.defeat||0)+' D:'+fmtS(pm.stats.dmg_dealt||0)+'</span>'
       +'</div>';
+    });
+    if(!pMembers.length) html += '<div style="font-size:11px;color:#888;padding:4px 0;">No stats yet</div>';
+    html += '</div></div>';
   });
   html += '</div></div>';
 
-  // NOT IN SCOREBOARD (collapsed)
-  if(results.notInScoreboard.length){
-    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--text-muted);border-radius:8px;margin-bottom:12px;">';
-    html += '<div onclick="var b=document.getElementById(\'missing-body\');b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="padding:10px 14px;background:var(--bg3);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;justify-content:space-between;">'
-      +'<span>○ NOT IN WAR ('+results.notInScoreboard.length+')</span><span>▼</span></div>';
-    html += '<div id="missing-body" style="display:none;">';
-    results.notInScoreboard.forEach(function(n){
-      var role=n.member.role||'DPS';
-      var rc=role==='TANK'?'#8B5CF6':role==='HEALER'?'#3ecf6e':'#e84040';
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;">'
-        +'<span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'22;color:'+rc+';min-width:36px;text-align:center;">'+role+'</span>'
-        +'<span style="color:#fff;font-weight:600;">'+escHtml(n.member.name)+'</span>'
-        +'<span style="color:var(--text-muted);font-style:italic;margin-left:auto;">— did not participate</span>'
-        +'</div>';
-    });
-    html += '</div></div>';
+  // ── FOOTER ──
+  html += '<div class="sm3-footer">'
+    +'<button class="sm3-btn-secondary" onclick="goBackToStep1()">&#8592; Back to Party Setup</button>'
+    +'<div style="display:flex;gap:16px;align-items:center;">'
+      +'<span style="font-size:12px;color:#888;display:flex;align-items:center;gap:6px;">&#128190; New aliases saved automatically</span>'
+      +'<button class="sm3-btn-save" id="sm3-save-btn" onclick="saveWarWithStatsV3()">Save War &#8594;</button>'
+    +'</div>'
+  +'</div>';
+
+  // Handle case where no needsReview items
+  if(!results.needsReview.length){
+    setTimeout(function(){
+      var attHeader = document.getElementById('sm3-attention-header');
+      var attList = document.getElementById('sm3-attention-list');
+      var allDone = document.getElementById('sm3-all-done');
+      var countEl = document.getElementById('sm3-attention-count');
+      var titleEl = document.getElementById('sm3-attention-title');
+      if(attHeader) attHeader.classList.add('done');
+      if(attList) attList.style.display = 'none';
+      if(allDone) allDone.classList.add('show');
+      if(countEl) countEl.style.display = 'none';
+      if(titleEl) titleEl.textContent = 'All done!';
+      var saveBtn = document.getElementById('sm3-save-btn');
+      if(saveBtn) saveBtn.classList.add('pulse');
+    }, 50);
   }
 
   return html;
 }
 
-function assignReviewMember(idx){
-  if(!window._currentMatchResults) return;
-  var sel = document.getElementById('review-sel-'+idx) || document.getElementById('review-select-'+idx);
-  if(!sel || !sel.value) return;
-  var memberName = sel.value;
-  var member = _rosterCache.find(function(m){return m.name===memberName;});
-  var review = window._currentMatchResults.needsReview[idx];
-  if(!review || !member) return;
+// ── V3 Interaction Functions ──
 
-  window._currentMatchResults.matched.push({
-    ocrName:review.ocrName, member:member, stats:review.stats, confidence:'manual'
-  });
-  window._currentMatchResults.needsReview.splice(idx,1);
-  window._currentMatchResults.notInScoreboard = window._currentMatchResults.notInScoreboard.filter(function(n){return n.member.name!==memberName;});
-
-  // Update state.novaPlayers too
-  var np = state.novaPlayers.find(function(p){return p.name===review.ocrName;});
-  if(np){ np.status='confirmed'; np.checked=true; }
-
-  document.getElementById('nova-list-wrap').innerHTML = renderStatsMatchingUI(window._currentMatchResults);
+function toggleMatchedV3(){
+  var list = document.getElementById('sm3-matched-list');
+  var text = document.getElementById('sm3-expand-text');
+  var arrow = document.getElementById('sm3-expand-arrow');
+  if(!list) return;
+  list.classList.toggle('show');
+  if(text) text.textContent = list.classList.contains('show') ? 'Hide' : 'View all';
+  if(arrow) arrow.innerHTML = list.classList.contains('show') ? '&#9650;' : '&#9660;';
 }
 
-function cycleMatchedRole(idx){
-  if(!window._currentMatchResults||!window._currentMatchResults.matched[idx]) return;
-  var roles=['TANK','HEALER','DPS'];
-  var cur=window._currentMatchResults.matched[idx].member.role||'DPS';
-  window._currentMatchResults.matched[idx].member.role=roles[(roles.indexOf(cur)+1)%3];
-  // Also update in novaPlayers
-  var ocrName=window._currentMatchResults.matched[idx].ocrName;
-  var np=state.novaPlayers.find(function(p){return p.name===ocrName;});
-  if(np) np.role=window._currentMatchResults.matched[idx].member.role;
-  document.getElementById('nova-list-wrap').innerHTML=renderStatsMatchingUI(window._currentMatchResults);
+function handleDropdownV3(idx){
+  var dropdown = document.getElementById('sm3-dropdown-'+idx);
+  var btn = document.getElementById('sm3-btn-'+idx);
+  if(!dropdown || !btn) return;
+  btn.disabled = !dropdown.value;
+  // Hide new member form if showing
+  var form = document.getElementById('sm3-form-'+idx);
+  var radio = document.getElementById('sm3-radio-new-'+idx);
+  if(form) form.classList.remove('show');
+  if(radio) radio.checked = false;
 }
 
-function assignMatchedParty(idx,partyName){
-  if(!window._currentMatchResults||!window._currentMatchResults.matched[idx]) return;
-  // Check party limit
-  if(partyName){
-    var count=window._currentMatchResults.matched.filter(function(m){return m.party===partyName;}).length;
-    if(count>=6&&window._currentMatchResults.matched[idx].party!==partyName){alert('Party full (6/6)');return;}
+function toggleNewMemberV3(idx){
+  var form = document.getElementById('sm3-form-'+idx);
+  var radio = document.getElementById('sm3-radio-new-'+idx);
+  if(!form) return;
+  if(form.classList.contains('show')){
+    form.classList.remove('show');
+    if(radio) radio.checked = false;
+  } else {
+    form.classList.add('show');
+    if(radio) radio.checked = true;
+    // Clear dropdown
+    var dropdown = document.getElementById('sm3-dropdown-'+idx);
+    var btn = document.getElementById('sm3-btn-'+idx);
+    if(dropdown) dropdown.value = '';
+    if(btn) btn.disabled = true;
   }
-  window._currentMatchResults.matched[idx].party=partyName||null;
-  document.getElementById('nova-list-wrap').innerHTML=renderStatsMatchingUI(window._currentMatchResults);
 }
 
+function selectSuggestionV3(idx, memberName){
+  var dropdown = document.getElementById('sm3-dropdown-'+idx);
+  if(!dropdown) return;
+  dropdown.value = memberName;
+  handleDropdownV3(idx);
+  setTimeout(function(){ resolveItemV3(idx, 'existing'); }, 300);
+}
+
+function skipItemV3(idx){
+  var item = document.getElementById('sm3-item-'+idx);
+  var action = document.getElementById('sm3-action-'+idx);
+  if(!item || !action) return;
+  action.innerHTML = '<span class="sm3-resolved-badge" style="background:rgba(136,136,136,.2);color:#888;">&#9193;&#65039; Skipped</span>';
+  item.classList.add('resolved');
+  window._v3ResolvedItems[idx] = {type:'skip'};
+  updateAttentionCountV3();
+}
+
+function resolveItemV3(idx, type){
+  var item = document.getElementById('sm3-item-'+idx);
+  var action = document.getElementById('sm3-action-'+idx);
+  if(!item || !action || !window._currentMatchResults) return;
+  var review = window._currentMatchResults.needsReview[idx];
+  if(!review) return;
+
+  var memberName = '';
+  var isNew = false;
+  var member = null;
+
+  if(type === 'existing'){
+    var dropdown = document.getElementById('sm3-dropdown-'+idx);
+    if(!dropdown || !dropdown.value) return;
+    memberName = dropdown.value;
+    member = _rosterCache ? _rosterCache.find(function(m){return m.name===memberName;}) : null;
+
+    // Save alias if it's a match
+    if(member){
+      var key = normalizeName(member.name);
+      if(!_memberAliases[key] || _memberAliases[key] !== review.ocrName){
+        _memberAliases[key] = review.ocrName;
+        // Save aliases to backend
+        try{ fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_memberAliases)}); }catch(e){}
+      }
+    }
+
+    // Move to matched in results
+    window._currentMatchResults.matched.push({
+      ocrName: review.ocrName, member: member || {name:memberName,role:'DPS'}, stats: review.stats, confidence: 'manual'
+    });
+    window._currentMatchResults.notInScoreboard = window._currentMatchResults.notInScoreboard.filter(function(n){return n.member.name!==memberName;});
+
+    // Update novaPlayers
+    var np = state.novaPlayers.find(function(p){return p.name===review.ocrName;});
+    if(np){ np.name = memberName; np.status='confirmed'; np.checked=true; }
+
+    window._v3ManuallyAssigned[memberName] = true;
+  } else {
+    // New member
+    var nameInput = document.getElementById('sm3-name-'+idx);
+    var roleSelect = document.getElementById('sm3-role-'+idx);
+    var aliasCheck = document.getElementById('sm3-alias-'+idx);
+    memberName = (nameInput && nameInput.value) ? nameInput.value.trim() : review.ocrName;
+    var role = (roleSelect && roleSelect.value) ? roleSelect.value : 'DPS';
+    isNew = true;
+
+    // Create new member object
+    member = {name: memberName, role: role, active: true};
+
+    // Save alias if checked
+    if(aliasCheck && aliasCheck.checked){
+      var key2 = normalizeName(memberName);
+      _memberAliases[key2] = review.ocrName;
+      try{ fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_memberAliases)}); }catch(e){}
+    }
+
+    // Add to roster cache
+    if(_rosterCache){
+      _rosterCache.push(member);
+      // Also save roster
+      try{ fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_rosterCache)}); }catch(e){}
+    }
+
+    // Move to matched
+    window._currentMatchResults.matched.push({
+      ocrName: review.ocrName, member: member, stats: review.stats, confidence: 'manual'
+    });
+
+    // Update novaPlayers
+    var np2 = state.novaPlayers.find(function(p){return p.name===review.ocrName;});
+    if(np2){ np2.name = memberName; np2.role = role; np2.status='confirmed'; np2.checked=true; }
+
+    window._v3ManuallyAssigned[memberName] = true;
+  }
+
+  action.innerHTML = '<span class="sm3-resolved-badge">&#10003; Assigned to '+escHtml(memberName)+(isNew?'<span class="new-tag">NEW</span>':'')+'</span>';
+  item.classList.add('resolved');
+  window._v3ResolvedItems[idx] = {type:type, memberName:memberName, member:member, isNew:isNew};
+
+  updateAttentionCountV3();
+  updatePartyPreviewV3();
+}
+
+function updateAttentionCountV3(){
+  if(!window._currentMatchResults) return;
+  var total = window._currentMatchResults.needsReview.length;
+  var resolved = Object.keys(window._v3ResolvedItems).length;
+  var remaining = total - resolved;
+
+  var countEl = document.getElementById('sm3-attention-count');
+  if(countEl) countEl.textContent = remaining;
+
+  if(remaining <= 0){
+    var attList = document.getElementById('sm3-attention-list');
+    var allDone = document.getElementById('sm3-all-done');
+    var attHeader = document.getElementById('sm3-attention-header');
+    var titleEl = document.getElementById('sm3-attention-title');
+    var iconEl = attHeader ? attHeader.querySelector('span') : null;
+
+    if(attList) attList.style.display = 'none';
+    if(allDone) allDone.classList.add('show');
+    if(attHeader) attHeader.classList.add('done');
+    if(countEl) countEl.style.display = 'none';
+    if(titleEl) titleEl.textContent = 'All done!';
+    if(iconEl) iconEl.textContent = '\u2705';
+    var saveBtn = document.getElementById('sm3-save-btn');
+    if(saveBtn) saveBtn.classList.add('pulse');
+  }
+}
+
+function updatePartyPreviewV3(){
+  // Rebuild party preview based on current matched results
+  if(!window._currentMatchResults) return;
+  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
+  var roleBadge = function(r){
+    var rc = (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps';
+    var label = (r||'DPS')==='HEALER'?'HEAL':(r||'DPS');
+    return '<span style="padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;min-width:36px;text-align:center;display:inline-block;'
+      +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;'
+       :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;'
+       :'background:rgba(62,207,110,.2);color:#3ecf6e;')
+      +'">'+label+'</span>';
+  };
+
+  state.parties.forEach(function(party,pi){
+    if(party._isExtras || party.name==='_Extras') return;
+    var container = document.getElementById('sm3-party-members-'+pi);
+    if(!container) return;
+
+    var pMembers = [];
+    window._currentMatchResults.matched.forEach(function(m){
+      var inParty = party.members.some(function(pm){ return pm.name === m.member.name || namesMatch(pm.name, m.member.name); });
+      if(inParty){
+        pMembers.push({name:m.member.name, role:m.member.role||'DPS', stats:m.stats, isNew:!!window._v3ManuallyAssigned[m.member.name]});
+      }
+    });
+
+    var html = '';
+    pMembers.forEach(function(pm){
+      html += '<div class="sm3-party-member'+(pm.isNew?' new-match':'')+'">'
+        +roleBadge(pm.role)
+        +'<span class="name">'+escHtml(pm.name)+'</span>'
+        +'<span class="stats">K:'+(pm.stats.defeat||0)+' D:'+fmtS(pm.stats.dmg_dealt||0)+'</span>'
+        +(pm.isNew?'<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>':'')
+      +'</div>';
+    });
+    if(!pMembers.length) html = '<div style="font-size:11px;color:#888;padding:4px 0;">No stats yet</div>';
+
+    container.innerHTML = html;
+
+    // Update count
+    var headerEl = container.parentElement.querySelector('.sm3-party-card-header span:last-child');
+    if(headerEl) headerEl.textContent = pMembers.length+'/'+party.members.length;
+  });
+}
+
+// ── Save War V3: builds confirmed state from match results ──
+function saveWarWithStatsV3(){
+  if(!window._currentMatchResults) return;
+
+  // Build confirmed list from matched results
+  state.confirmed = [];
+  window._currentMatchResults.matched.forEach(function(m){
+    var existing = state.novaPlayers.find(function(p){ return p.name === m.member.name || p.name === m.ocrName; });
+    state.confirmed.push({
+      name: m.member.name,
+      party: existing ? existing.party : '?',
+      role: m.member.role || 'DPS',
+      defeat: m.stats.defeat || 0,
+      assist: m.stats.assist || 0,
+      dmg_dealt: m.stats.dmg_dealt || 0,
+      dmg_taken: m.stats.dmg_taken || 0,
+      healed: m.stats.healed || 0,
+      checked: true,
+      status: 'confirmed'
+    });
+  });
+
+  // Merge stats into parties
+  state.parties.forEach(function(p){
+    p.members.forEach(function(m){
+      var stats = findStatsByNameOrAlias(state.confirmed, m.name);
+      if(stats){
+        m.defeat    = stats.defeat    || 0;
+        m.assist    = stats.assist    || 0;
+        m.dmg_dealt = stats.dmg_dealt || 0;
+        m.dmg_taken = stats.dmg_taken || 0;
+        m.healed    = stats.healed    || 0;
+      }
+    });
+  });
+
+  state.novaPlayers = state.confirmed;
+  state._unassignedExtras = [];
+  saveWarSimple();
+}
+
+// Keep backward compatibility
+function assignReviewMember(idx){ resolveItemV3(idx, 'existing'); }
+function cycleMatchedRole(idx){}
+function assignMatchedParty(idx,partyName){}
 function assignExtraToParty(i, partyName){
   if(!partyName) return;
   state.novaPlayers[i].party   = partyName;
@@ -1292,6 +1696,9 @@ function confirmNovaPlayers(){
   state.confirmed = state.novaPlayers.filter(function(p){return p.checked;});
   goStep(4);
 }
+
+// Alias for old renderStatsMatchingUI calls
+function renderStatsMatchingUI(results){ return renderStatsMatchingV3(results); }
 
 // ── STEP 4: MATCH PREVIEW ─────────────────────────────────────────────────
 function renderMatchPreview(){
@@ -4039,53 +4446,7 @@ async function extractAllScoreboards(){
     });
   });
 
-  // Render results table
-  var confirmed=0, missing=0, extra=0;
-  state.novaPlayers.forEach(function(p){ if(p.status==='confirmed') confirmed++; else if(p.status==='missing') missing++; else if(p.status==='extra') extra++; });
-
-  var summaryHtml = '<div style="margin-bottom:12px;font-size:12px;">'
-    +'<span style="color:var(--heal);">✓ '+confirmed+' cu stats</span>'
-    +(missing ? ' · <span style="color:var(--gold);">⚠ '+missing+' fără stats</span>' : '')
-    +(extra ? ' · <span style="color:var(--muted);">+ '+extra+' extra</span>' : '')
-    +(errors.length ? ' · <span style="color:#e84040;">'+errors.length+' erori</span>' : '')
-    +'</div>';
-
-  // Results table — grouped by party, missing/extra at bottom
-  var inpStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);text-align:right;padding:3px 6px;font-size:12px;font-family:Share Tech Mono,monospace;';
-  var thStyle = 'padding:8px 6px;color:var(--muted);font-size:10px;font-weight:600;text-align:right;';
-  var partyOptions = state.parties.map(function(p){ return p.name; });
-
-  function renderPlayerRow(p, i){
-    var isUnassigned = (p.status==='missing' || p.status==='extra');
-    var partyCell = isUnassigned
-      ? '<select onchange="state.novaPlayers['+i+'].party=this.value" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;padding:2px 4px;">'
-        + partyOptions.map(function(pn){ return '<option'+(p.party===pn?' selected':'')+'>'+escHtml(pn)+'</option>'; }).join('')
-        + '<option value="?"'+(p.party==='?'?' selected':'')+'>(fără party)</option></select>'
-      : '<span style="color:var(--muted);font-size:11px;">'+escHtml(p.party)+'</span>';
-
-    return '<tr style="border-bottom:1px solid rgba(255,255,255,.04);">'
-      +'<td style="padding:7px 10px;color:#ddd;font-weight:600;font-size:13px;">'+escHtml(p.name)+'</td>'
-      +'<td style="padding:7px 6px;text-align:center;">'+partyCell+'</td>'
-      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.defeat||0)+'" onchange="state.novaPlayers['+i+'].defeat=+this.value" style="width:55px;'+inpStyle+'"></td>'
-      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.assist||0)+'" onchange="state.novaPlayers['+i+'].assist=+this.value" style="width:55px;'+inpStyle+'"></td>'
-      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.dmg_dealt||0)+'" onchange="state.novaPlayers['+i+'].dmg_dealt=+this.value" style="width:85px;'+inpStyle+'"></td>'
-      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.dmg_taken||0)+'" onchange="state.novaPlayers['+i+'].dmg_taken=+this.value" style="width:85px;'+inpStyle+'"></td>'
-      +'<td style="padding:5px 4px;"><input type="number" value="'+(p.healed||0)+'" onchange="state.novaPlayers['+i+'].healed=+this.value" style="width:85px;'+inpStyle+'"></td>'
-      +'<td style="padding:5px 4px;text-align:center;">'
-        +(p.status==='confirmed' ? '<span style="color:var(--heal);font-size:14px;">✓</span>'
-        : p.status==='missing' ? '<span style="color:var(--gold);font-size:14px;">⚠</span>'
-        : '<span style="color:var(--muted);font-size:12px;">+</span>')
-      +'</td></tr>';
-  }
-
-  var tableHeader = '<tr style="background:var(--bg3);">'
-    +'<th style="'+thStyle+'text-align:left;padding-left:10px;">Jucător</th>'
-    +'<th style="'+thStyle+'text-align:center;">Party</th>'
-    +'<th style="'+thStyle+'">Kills</th><th style="'+thStyle+'">Assists</th>'
-    +'<th style="'+thStyle+'">Dmg Dealt</th><th style="'+thStyle+'">Dmg Taken</th>'
-    +'<th style="'+thStyle+'">Healed</th><th style="width:30px;"></th></tr>';
-
-  // ═══ NEW STATS MATCHING UI (from mockup) ═══
+  // ═══ STATS MATCHING UI V3 ═══
   var matchResults = (_rosterCache && _rosterCache.length)
     ? matchOcrToMembers(state.novaPlayers, _rosterCache, _memberAliases)
     : {matched:[], needsReview:[], notInScoreboard:[]};
@@ -4098,157 +4459,25 @@ async function extractAllScoreboards(){
   }
   window._currentMatchResults = matchResults;
 
-  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
-  var roleClass = function(r){ return (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps'; };
+  var out = renderStatsMatchingV3(matchResults);
 
-  var out = '';
-
-  // ── Stats Summary Boxes ──
-  out += '<div style="display:flex;gap:16px;margin-bottom:24px;">';
-  out += '<div style="background:#1a1a1a;border:1px solid #333;border-left:3px solid #3ecf6e;border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;">'
-    +'<div style="font-size:24px;font-weight:700;color:#3ecf6e;">'+matchResults.matched.length+'</div>'
-    +'<div style="font-size:12px;color:#888;">Matched<br>Automat</div></div>';
-  out += '<div style="background:#1a1a1a;border:1px solid #333;border-left:3px solid #f0c040;border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;">'
-    +'<div style="font-size:24px;font-weight:700;color:#f0c040;">'+matchResults.needsReview.length+'</div>'
-    +'<div style="font-size:12px;color:#888;">Needs<br>Review</div></div>';
-  out += '<div style="background:#1a1a1a;border:1px solid #333;border-left:3px solid #e84040;border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;">'
-    +'<div style="font-size:24px;font-weight:700;color:#e84040;">'+matchResults.notInScoreboard.length+'</div>'
-    +'<div style="font-size:12px;color:#888;">Not in<br>Scoreboard</div></div>';
-  out += '</div>';
-
-  // ── NEEDS REVIEW (expanded) ──
-  if(matchResults.needsReview.length){
-    out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;overflow:hidden;" id="section-review">';
-    out += '<div onclick="var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252525;cursor:pointer;">'
-      +'<div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;"><span style="color:#f0c040;">⚠️</span> NEEDS REVIEW <span style="background:#0f0f0f;padding:2px 8px;border-radius:10px;font-size:12px;color:#888;">'+matchResults.needsReview.length+'</span></div>'
-      +'<span style="color:#888;font-size:12px;">▲</span></div>';
-    out += '<div class="sm-section-body">';
-    matchResults.needsReview.forEach(function(r,idx){
-      var availOpts = '<option value="">— Select Member —</option>';
-      if(r.suggestions && r.suggestions.length){
-        r.suggestions.forEach(function(s){ availOpts += '<option value="'+escHtml(s.member.name)+'">'+escHtml(s.member.name)+' ('+s.score+'%)</option>'; });
-        availOpts += '<option disabled>──────────</option>';
-      }
-      var usedNames = {};
-      matchResults.matched.forEach(function(m){ usedNames[m.member.name]=true; });
-      if(_rosterCache) _rosterCache.forEach(function(m){ if(m.active!==false && !usedNames[m.name]) availOpts += '<option value="'+escHtml(m.name)+'">'+escHtml(m.name)+'</option>'; });
-
-      out += '<div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(240,192,64,.03);">'
-        +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">'
-          +'<span style="font-family:monospace;color:#f0c040;font-size:14px;font-weight:600;">'+escHtml(r.ocrName)+'</span>'
-          +'<span style="color:#888;font-size:14px;">→</span>'
-          +'<select id="review-sel-'+idx+'" style="background:#252525;border:1px solid #444;border-radius:6px;padding:6px 12px;color:#e0e0e0;font-size:13px;min-width:180px;">'+availOpts+'</select>'
-          +'<button onclick="assignReviewMember('+idx+')" class="btn btn-primary" style="padding:5px 10px;font-size:11px;">Assign</button>'
-        +'</div>'
-        +'<div style="display:flex;gap:20px;font-size:12px;color:#888;margin-left:0;">'
-          +'<span>K: <strong style="color:#e84040;">'+(r.stats.defeat||0)+'</strong></span>'
-          +'<span>A: <strong>'+(r.stats.assist||0)+'</strong></span>'
-          +'<span>DMG: <strong style="color:#c9a06a;">'+fmtS(r.stats.dmg_dealt||0)+'</strong></span>'
-          +'<span>HEAL: <strong style="color:#3ecf6e;">'+fmtS(r.stats.healed||0)+'</strong></span>'
-        +'</div>'
-        +(r.suggestions&&r.suggestions.length?'<div style="margin-top:6px;font-size:11px;color:#888;">💡 Suggestions: '+r.suggestions.map(function(s){return '<strong style="color:#e0e0e0;">'+escHtml(s.member.name)+'</strong> ('+s.score+'%)';}).join(', ')+'</div>':'')
-        +'</div>';
-    });
-    out += '</div></div>';
-  }
-
-  // ── MATCHED (collapsed) ──
-  out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;overflow:hidden;" id="section-matched">';
-  out += '<div onclick="var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';this.querySelector(\'.sm-toggle\').textContent=b.style.display===\'none\'?\'▼ Click to expand\':\'▲ Click to collapse\';" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252525;cursor:pointer;">'
-    +'<div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;"><span style="color:#3ecf6e;">✅</span> MATCHED <span style="background:#0f0f0f;padding:2px 8px;border-radius:10px;font-size:12px;color:#888;">'+matchResults.matched.length+'</span></div>'
-    +'<span class="sm-toggle" style="color:#888;font-size:12px;">▼ Click to expand</span></div>';
-  out += '<div style="display:none;">';
-  matchResults.matched.forEach(function(m){
-    var role = m.member.role||'DPS';
-    var rc = roleClass(role);
-    var confColor = m.confidence==='exact'?'#3ecf6e':m.confidence==='alias'?'#f0c040':'#5b8fff';
-    out += '<div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;">'
-      +'<span class="role-badge '+rc+'" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;min-width:44px;text-align:center;'
-        +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;border:1px solid #e84040;'
-         :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;border:1px solid #8B5CF6;'
-         :'background:rgba(62,207,110,.2);color:#3ecf6e;border:1px solid #3ecf6e;')
-      +'">'+role+'</span>'
-      +'<span style="font-weight:600;color:#e0e0e0;min-width:120px;">'+escHtml(m.member.name)+'</span>'
-      +'<span style="color:#888;font-size:14px;">←</span>'
-      +'<span style="color:#f0c040;font-family:monospace;font-size:13px;min-width:120px;">'+escHtml(m.ocrName)+'</span>'
-      +'<div style="display:flex;gap:16px;margin-left:auto;font-size:12px;font-family:monospace;">'
-        +'<span><span style="color:#888;font-size:10px;">K</span> <span style="color:#e84040;">'+(m.stats.defeat||0)+'</span></span>'
-        +'<span><span style="color:#888;font-size:10px;">A</span> <span>'+(m.stats.assist||0)+'</span></span>'
-        +'<span><span style="color:#888;font-size:10px;">DMG</span> <span style="color:#c9a06a;">'+fmtS(m.stats.dmg_dealt||0)+'</span></span>'
-        +'<span><span style="color:#888;font-size:10px;">HEAL</span> <span style="color:#3ecf6e;">'+fmtS(m.stats.healed||0)+'</span></span>'
-      +'</div>'
-      +'<span style="font-size:10px;padding:2px 6px;border-radius:3px;margin-left:8px;background:'+confColor+'33;color:'+confColor+';">'+m.confidence+'</span>'
-      +'</div>';
-  });
-  out += '</div></div>';
-
-  // ── NOT IN SCOREBOARD (collapsed) ──
-  if(matchResults.notInScoreboard.length){
-    out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;margin-bottom:16px;overflow:hidden;">';
-    out += '<div onclick="var b=this.nextElementSibling;b.style.display=b.style.display===\'none\'?\'\':\'none\';" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252525;cursor:pointer;">'
-      +'<div style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;"><span style="color:#e84040;">❌</span> NOT IN SCOREBOARD <span style="background:#0f0f0f;padding:2px 8px;border-radius:10px;font-size:12px;color:#888;">'+matchResults.notInScoreboard.length+'</span></div>'
-      +'<span style="color:#888;font-size:12px;">▼</span></div>';
-    out += '<div style="display:none;">';
-    matchResults.notInScoreboard.forEach(function(n){
-      var role = n.member.role||'DPS';
-      var rc = roleClass(role);
-      out += '<div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;">'
-        +'<span style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;min-width:44px;text-align:center;'
-          +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;border:1px solid #e84040;'
-           :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;border:1px solid #8B5CF6;'
-           :'background:rgba(62,207,110,.2);color:#3ecf6e;border:1px solid #3ecf6e;')
-        +'">'+role+'</span>'
-        +'<span style="font-weight:600;color:#e0e0e0;">'+escHtml(n.member.name)+'</span>'
-        +'<span style="color:#888;font-style:italic;margin-left:auto;">— did not participate</span>'
-        +'</div>';
-    });
-    out += '</div></div>';
-  }
-
-  // ── Party Assignment Preview ──
-  var partyDotColors = ['#5b8fff','#3ecf6e','#e84040','#f0c040','#8B5CF6','#f97316','#0891b2'];
-  out += '<h3 style="margin:24px 0 12px;font-size:14px;color:#888;">📋 Party Assignment Preview</h3>';
-  out += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">';
-  state.parties.forEach(function(party,pi){
-    if(party._isExtras || party.name==='_Extras') return;
-    var pMembers = state.novaPlayers.filter(function(p){ return p.party===party.name && p.status==='confirmed'; });
-    var dotColor = partyDotColors[pi % partyDotColors.length];
-    out += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px;">';
-    out += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #333;">'
-      +'<span style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';"></span>'+escHtml(party.name)+(party.label?' — '+escHtml(party.label):'')+'</span>'
-      +'<span style="font-size:11px;color:'+(pMembers.length>=6?'#3ecf6e':'#888')+';">'+pMembers.length+'/6</span>'
-      +'</div>';
-    out += '<div style="display:flex;flex-direction:column;gap:4px;">';
-    pMembers.forEach(function(pm){
-      var rc2 = roleClass(pm.role);
-      out += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;">'
-        +'<span style="padding:2px 5px;border-radius:4px;font-size:8px;font-weight:700;min-width:32px;text-align:center;'
-          +(rc2==='dps'?'background:rgba(232,64,64,.2);color:#e84040;'
-           :rc2==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;'
-           :'background:rgba(62,207,110,.2);color:#3ecf6e;')
-        +'">'+pm.role+'</span> '+escHtml(pm.name)+'</div>';
-    });
-    if(!pMembers.length) out += '<div style="font-size:11px;color:#888;padding:4px 0;">Empty</div>';
-    out += '</div></div>';
-  });
-  out += '</div>';
-
-  // ── Footer ──
-  out += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid #333;">'
-    +'<div style="font-size:12px;color:#888;">💾 Alias-urile noi vor fi salvate automat</div>'
-    +'</div>';
-
-  resultsEl.innerHTML = summaryHtml + out;
+  resultsEl.innerHTML = out;
   statusEl.innerHTML = '<span style="color:var(--heal);font-weight:600;">Extragere completă! Verifică matches și salvează.</span>';
 
   btn.textContent = '🔍 Extrage din nou';
   btn.disabled = false;
-  document.getElementById('score-save-btn').style.display = '';
+  // Hide the old save button — v3 has its own inline save
+  document.getElementById('score-save-btn').style.display = 'none';
 }
 
 
 function saveWarWithStats(){
-  // Add extra players with assigned party to their respective parties
+  // Delegate to v3 save if available
+  if(window._currentMatchResults){
+    saveWarWithStatsV3();
+    return;
+  }
+  // Fallback: Add extra players with assigned party to their respective parties
   var unassigned = [];
   state.novaPlayers.forEach(function(p){
     if(p.status==='extra' && p.party && p.party!=='?'){
