@@ -47,6 +47,14 @@ router.post('/', requireAuth, async (req, res) => {
   const slug = slugify(name);
   if (!slug) return res.status(400).json({ error: 'Invalid guild name' });
 
+  // Check if user already has a guild — can't create if already in one
+  const { rows: existingGuilds } = await pool.query(
+    'SELECT guild_id FROM guild_members WHERE user_id = $1 LIMIT 1', [req.user.id]
+  );
+  if (existingGuilds.length) {
+    return res.status(403).json({ error: 'You are already in a guild. Leave your current guild first to create a new one.' });
+  }
+
   // Verify user exists in DB (token may reference stale ID after DB reset)
   const { rows: userCheck } = await pool.query('SELECT id FROM users WHERE id = $1', [req.user.id]);
   if (!userCheck.length) {
@@ -176,6 +184,14 @@ router.post('/:id/invite', requireAuth, guildContext, requireGuildRole('admin'),
 router.post('/join', requireAuth, async (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Invite code required' });
+
+  // Check if user already has a guild
+  const { rows: existingGuilds } = await pool.query(
+    'SELECT guild_id FROM guild_members WHERE user_id = $1 LIMIT 1', [req.user.id]
+  );
+  if (existingGuilds.length) {
+    return res.status(403).json({ error: 'You are already in a guild. Leave first to join another.' });
+  }
 
   const client = await pool.connect();
   try {
