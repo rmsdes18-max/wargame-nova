@@ -9,7 +9,8 @@
 - Playground pentru testare componente
 
 ### Changed
-- index.html: 7000 -> 5148 linii
+- index.html: 7000 -> 4476 linii
+- Extract smart-match.js (676 linii) — SM3 stats matching UI complet
 - 55+ duplicate eliminate
 - 30 alert() -> Toast
 - 30+ fetch() -> apiGet/apiPost/apiPut/apiPatch/apiDelete
@@ -19,7 +20,7 @@
 - 7 empty state blocks -> EmptyState()
 
 ### Next (v2.0.0)
-- [ ] Extract smart-match.js (~600 linii)
+- [x] Extract smart-match.js (676 linii)
 - [ ] Extract war-view.js (~800 linii)
 - [ ] Extract members.js (~700 linii)
 - [ ] Extract settings.js (~600 linii)
