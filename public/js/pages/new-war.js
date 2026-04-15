@@ -140,8 +140,8 @@ function renderPartyEditor(){
   html += '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Editează dacă party-urile din poză sunt diferite față de cele de mai jos:</div>';
   html += '<div class="parties-confirm" id="party-editor-cards">';
   state.parties.forEach(function(p,pi){
-    html += '<div class="party-card">';
-    html += '<div class="party-card-hdr">';
+    html += '<div class="inner-card party-card">';
+    html += '<div class="party-card-header">';
     html += '<input type="text" value="'+p.name+'" style="background:transparent;border:none;color:var(--text);font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;width:80px;outline:none;" onchange="updatePartyName('+pi+',this.value)">';
     html += '<input type="text" value="'+p.label+'" style="background:rgba(255,255,255,.08);border:none;color:var(--tank);font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
     html += '</div>';
@@ -149,7 +149,7 @@ function renderPartyEditor(){
       var matchDot = m.tlgmKey
         ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
         : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
-      html += '<div class="party-member">';
+      html += '<div class="party-card-member">';
       html += RoleBadge(m.role, {pill:false});
       html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
       html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColor(m.role)+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
@@ -169,7 +169,7 @@ function updatePartyLabel(pi,v){ state.parties[pi].label=v; }
 function updateMemberName(pi,mi,v){ state.parties[pi].members[mi].name=v; }
 function updateMemberRole(pi,mi,v){ state.parties[pi].members[mi].role=v; updateRoleDot(pi,mi,v); }
 function updateRoleDot(pi,mi,v){
-  var dots = document.querySelectorAll('.party-member .role-dot');
+  var dots = document.querySelectorAll('.party-card-member .dot');
   // rebuild is simpler — re-render confirm display
 }
 
@@ -396,7 +396,7 @@ function renderStatsRow(p, i){
 
   var html = '<div class="nova-row" style="'+rowStyle+'">';
   html += '<div class="nova-row-name" style="display:flex;align-items:center;gap:5px;">';
-  html += '<div class="role-dot" style="background:'+dot+'"></div>';
+  html += '<div class="dot" style="background:'+dot+'"></div>';
   html += '<input type="checkbox" class="player-check" '+(p.checked?'checked':'')+' onchange="togglePlayer('+i+',this.checked)">';
   html += '<span style="font-size:12px;font-weight:600;color:var(--text);">'+p.name+'</span>';
   html += partyCell;

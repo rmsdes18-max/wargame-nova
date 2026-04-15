@@ -47,15 +47,15 @@ function renderWarsList(){
 
     return '<div class="war-timeline-item">'
       +'<div class="war-timeline-date">'+escHtml(w.date)+'</div>'
-      +'<div class="war-card" onclick="viewWar('+w.id+')">'
+      +'<div class="inner-card war-card" onclick="viewWar('+w.id+')">'
       +'<div class="war-card-header">'
-        +'<span class="war-card-opponent">vs '+escHtml(w.opponent)+'</span>'
+        +'<span class="war-card-title">vs '+escHtml(w.opponent)+'</span>'
       +'</div>'
       +'<div class="war-card-stats">'
-        +'<div class="war-card-stat"><span class="lbl">Kills</span><span class="val">'+totalK+'</span></div>'
-        +'<div class="war-card-stat"><span class="lbl">Assists</span><span class="val">'+totalA+'</span></div>'
-        +'<div class="war-card-stat"><span class="lbl">Dmg Dealt</span><span class="val">'+fmtShort(totalDmg)+'</span></div>'
-        +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtShort(totalHeal)+'</span></div>'
+        +'<div class="war-card-stat"><span class="war-card-stat-label">Kills</span><span class="war-card-stat-value">'+totalK+'</span></div>'
+        +'<div class="war-card-stat"><span class="war-card-stat-label">Assists</span><span class="war-card-stat-value">'+totalA+'</span></div>'
+        +'<div class="war-card-stat"><span class="war-card-stat-label">Dmg Dealt</span><span class="war-card-stat-value">'+fmtShort(totalDmg)+'</span></div>'
+        +'<div class="war-card-stat"><span class="war-card-stat-label">Healed</span><span class="war-card-stat-value">'+fmtShort(totalHeal)+'</span></div>'
       +'</div>'
       +partyDotsHtml
       +'</div>'
@@ -190,12 +190,12 @@ function viewWar(warId){
     p.members.forEach(function(m){ pKills+=m.defeat||0; pAssists+=m.assist||0; pDmg+=m.dmg_dealt||0; pTaken+=m.dmg_taken||0; pHealed+=m.healed||0; });
     var dotColor = partyDotColorsVw[pi % partyDotColorsVw.length];
 
-    html += '<div class="party-card" data-pi="'+pi+'">';
-    html += '<div class="party-header">';
+    html += '<div class="inner-card party-card" data-pi="'+pi+'">';
+    html += '<div class="party-card-header">';
     if(_vwEditMode){
-      html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
+      html += '<div class="party-card-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
     } else {
-      html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
+      html += '<div class="party-card-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
     }
     html += '<div class="party-meta">'+p.members.length+' members'
       +(_vwEditMode ? ' <button onclick="deletePartyFromWar('+w.id+','+pi+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:11px;margin-left:8px;" title="Delete party">\u2715 Delete</button>' : '')
@@ -307,7 +307,7 @@ function viewWar(warId){
       var extraSafeName = encodeURIComponent(ex.name);
       html += '<div class="extra-player-card" draggable="true" data-extra-idx="'+ei+'">'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
-          +'<span class="role-dot" style="background:'+roleColor(extraRole)+';cursor:pointer;" onclick="cycleExtraRole('+JSON.stringify(w.id)+','+ei+')" title="Click to change role"></span>'
+          +'<span class="dot" style="background:'+roleColor(extraRole)+';cursor:pointer;" onclick="cycleExtraRole('+JSON.stringify(w.id)+','+ei+')" title="Click to change role"></span>'
           +'<span style="font-weight:600;color:var(--text);font-size:13px;">'+escHtml(ex.name)+'</span>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
@@ -331,7 +331,7 @@ function viewWar(warId){
   html += '<div id="vw-tab-leaderboard" style="display:none;">';
   html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">';
   function renderPodium(title, list, statKey, statColor){
-    var h = '<div class="party-card"><div class="party-header" style="border-bottom:1px solid var(--border);"><div class="party-name" style="font-size:13px;">'+title+'</div></div>';
+    var h = '<div class="inner-card party-card"><div class="party-card-header" style="border-bottom:1px solid var(--border);"><div class="party-card-name" style="font-size:13px;">'+title+'</div></div>';
     h += '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">';
     var medals = ['var(--accent-primary)','#b0b0b0','#a07030','var(--text-secondary)','var(--text-muted)'];
     list.forEach(function(m,idx){
@@ -340,7 +340,7 @@ function viewWar(warId){
         +'<span style="font-size:'+(idx===0?'18':'16')+'px;font-weight:'+(idx===0?'800':'700')+';color:'+medals[idx]+';width:24px;">'+(idx+1)+'</span>'
         +'<div style="flex:1;"><div style="font-weight:600;color:'+(idx===0?'var(--text)':'var(--text-primary)')+';font-size:13px;">'+escHtml(m.name)+'</div>'
         +'<div style="font-family:JetBrains Mono,monospace;font-size:12px;color:'+(statColor||'var(--text-secondary)')+';">'+val.toLocaleString()+'</div></div>'
-        +'<span class="role-dot" style="background:'+roleColor(m.role)+';width:8px;height:8px;border-radius:50%;"></span>'
+        +'<span class="dot" style="background:'+roleColor(m.role)+';width:8px;height:8px;border-radius:50%;"></span>'
         +'</div>';
     });
     h += '</div></div>';

@@ -3,9 +3,9 @@
 /**
  * RoleBadge - Displays a player combat role (DPS / TANK / HEALER).
  *
- * Combines the role-dot indicator and the role-pill label into a single
- * reusable HTML fragment.  Mirrors the CSS classes already defined in
- * nova.css (.role-dot, .dot-{ROLE}, .role-pill, .role-{ROLE}).
+ * Combines the dot indicator and the badge label into a single
+ * reusable HTML fragment.  Uses .dot with inline background color
+ * and .badge.badge-{role} classes from nova.css.
  *
  * @param {string} role          - 'DPS' | 'TANK' | 'HEALER'
  * @param {object} [options]
@@ -21,27 +21,33 @@ function RoleBadge(role, options) {
   var r = (role || 'DPS').toUpperCase();
   if (r !== 'TANK' && r !== 'HEALER' && r !== 'DPS') r = 'DPS';
 
+  var rc = r === 'TANK' ? 'tank' : r === 'HEALER' ? 'heal' : 'dps';
   var showDot  = opts.dot  !== false;
   var showPill = opts.pill !== false;
   var label    = opts.label || (r === 'HEALER' ? 'HEAL' : r);
   var small    = opts.size === 'small';
   var clickable = !!opts.clickable;
 
-  var dotSize = small ? 'width:6px;height:6px;' : '';
+  var dotColors = {
+    dps:  'var(--dps)',
+    tank: 'var(--tank)',
+    heal: 'var(--heal)'
+  };
+  var dotStyle = 'background:' + dotColors[rc] + ';';
+  if (small) dotStyle += 'width:6px;height:6px;';
   var pillSize = small ? 'font-size:var(--font-size-2xs);padding:0 var(--spacing-xs);' : '';
   var clickCls = clickable ? ' role-pill-btn' : '';
 
   var html = '';
 
   if (showDot) {
-    html += '<div class="role-dot dot-' + r + '"'
-      + (dotSize ? ' style="' + dotSize + '"' : '')
+    html += '<div class="dot" style="' + dotStyle + '"'
       + (clickable ? ' onclick' : '')
       + '></div>';
   }
 
   if (showPill) {
-    html += '<span class="role-pill role-' + r + clickCls + '"'
+    html += '<span class="badge badge-' + rc + clickCls + '"'
       + (pillSize ? ' style="' + pillSize + '"' : '')
       + '>' + label + '</span>';
   }

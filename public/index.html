@@ -341,21 +341,21 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 
   <div class="wizard-steps" id="wizard-steps" style="max-width:800px;">
-    <div class="wstep active" id="ws-1"><span class="wstep-num">1</span><span data-t="partySetup">Party Setup</span></div>
-    <div class="wstep" id="ws-2"><span class="wstep-num">2</span><span data-t="scoreboard">Scoreboard</span></div>
+    <button class="wizard-step active" id="ws-1" data-t="partySetup">Party Setup</button>
+    <button class="wizard-step" id="ws-2" data-t="scoreboard">Scoreboard</button>
   </div>
 
       <!-- STEP 1: Party upload -->
       <div id="step-1">
         <div style="max-width:700px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-          <div class="form-group">
-            <label class="form-label" data-t="opponent">Opponent</label>
-            <input id="opponent-input" class="form-input" type="text" placeholder="Guild name..." data-tp="opponentPh">
+          <div class="field">
+            <label class="field-label" data-t="opponent">Opponent</label>
+            <input id="opponent-input" class="input" type="text" placeholder="Guild name..." data-tp="opponentPh">
           </div>
-          <div class="form-group">
-            <label class="form-label" data-t="date">Date</label>
-            <input id="date-input" class="form-input" type="date">
+          <div class="field">
+            <label class="field-label" data-t="date">Date</label>
+            <input id="date-input" class="input" type="date">
           </div>
         </div>
 
@@ -364,9 +364,9 @@ input[type=number]{-moz-appearance:textfield;}
 
         <div class="upload-zone" id="party-upload-zone">
           <input type="file" accept="image/*" id="party-img-input" onchange="handlePartyUploadWithVision(event)">
-          <div class="upload-icon">📸</div>
-          <div class="upload-title" data-t="dropHere">Drop party screenshot here</div>
-          <div class="upload-sub" data-t="orClick">or click to select file</div>
+          <div class="upload-zone-icon">📸</div>
+          <div class="upload-zone-title" data-t="dropHere">Drop party screenshot here</div>
+          <div class="upload-zone-desc" data-t="orClick">or click to select file</div>
         </div>
         </div><!-- /max-width:700px -->
 

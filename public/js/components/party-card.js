@@ -21,7 +21,7 @@ function PartyMemberRow(member, options) {
   var showStats = !!opts.showStats;
   var clickableRole = !!opts.clickableRole;
   var isNew = !!opts.isNew;
-  var cls = 'party-member' + (opts.extraClass ? ' ' + opts.extraClass : '');
+  var cls = 'party-card-member' + (opts.extraClass ? ' ' + opts.extraClass : '');
 
   var html = '<div class="' + cls + '">';
 
@@ -69,7 +69,7 @@ function PartyMemberRow(member, options) {
 /**
  * Renders a full party card: header + list of members.
  *
- * Uses the `.party-card` / `.party-card-hdr` / `.party-member` classes
+ * Uses the `.inner-card.party-card` / `.party-card-header` / `.party-card-member` classes
  * from nova.css for the "simple" variant, or builds a different layout
  * depending on options.variant.
  *
@@ -99,12 +99,12 @@ function PartyCard(party, options) {
   }
 
   // ── simple / confirm variant ──
-  var html = '<div class="party-card">';
+  var html = '<div class="inner-card party-card">';
 
   // Header
-  html += '<div class="party-card-hdr">';
+  html += '<div class="party-card-header">';
   html += '<span>' + (party.name || '') + '</span>';
-  if (party.label) html += '<span class="ptag">' + party.label + '</span>';
+  if (party.label) html += '<span class="party-card-tag">' + party.label + '</span>';
   html += '</div>';
 
   // Members
