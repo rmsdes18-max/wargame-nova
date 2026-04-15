@@ -7,16 +7,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/nova.css">
 <style>
-  /* Override shell layout — playground is a simple scrollable page */
   body { background: #0f0f0f; padding: 0; }
-  .pg-wrap { max-width: 820px; margin: 0 auto; padding: 32px 24px 64px; }
+  .pg-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 64px; }
 
   /* Header */
-  .pg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+  .pg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .pg-title { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: #fff; }
   .pg-title span { color: var(--accent-primary); }
   .pg-back { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
   .pg-back:hover { color: #fff; }
+
+  /* Nav tabs */
+  .pg-nav { display: flex; gap: 4px; margin-bottom: 32px; flex-wrap: wrap; }
+  .pg-nav-btn {
+    background: var(--bg-tertiary); border: 1px solid var(--border-default);
+    color: var(--text-secondary); border-radius: 6px; padding: 7px 14px;
+    cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px; font-weight: 600; transition: all .15s;
+  }
+  .pg-nav-btn:hover { background: var(--bg-hover); color: #fff; }
+  .pg-nav-btn.active { background: rgba(240,192,64,.15); border-color: var(--gold); color: var(--gold); }
 
   /* Section */
   .pg-section { margin-bottom: 40px; }
@@ -26,9 +36,11 @@
     color: var(--text-muted); margin-bottom: 14px;
     border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;
   }
-
-  /* Inline flex row for badges */
   .pg-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  /* Page sections */
+  .pg-page { display: none; }
+  .pg-page.active { display: block; }
 
   /* Make modal static for preview */
   .pg-modal-static .modal-overlay {
@@ -36,10 +48,8 @@
     background: transparent; z-index: auto;
   }
 
-  /* Dropdown wrapper */
-  .pg-dropdown {
-    position: relative; display: inline-block;
-  }
+  /* Dropdown */
+  .pg-dropdown { position: relative; display: inline-block; }
   .pg-dropdown-toggle {
     background: var(--bg-tertiary); border: 1px solid var(--border-default);
     color: var(--text-primary); border-radius: 6px; padding: 7px 14px;
@@ -72,49 +82,188 @@
     <a class="pg-back" href="index.html">&larr; Back to App</a>
   </div>
 
-  <!-- ── 1. ROLE BADGES ──────────────────────────────────── -->
-  <div class="pg-section">
-    <div class="pg-section-title">RoleBadge</div>
-    <div class="pg-row" id="rolebadge-demo"></div>
+  <!-- ── NAV ─────────────────────────────────────────────── -->
+  <div class="pg-nav" id="pg-nav">
+    <button class="pg-nav-btn active" onclick="pgShow('components')">Components</button>
+    <button class="pg-nav-btn" onclick="pgShow('wars-list')">Wars List</button>
+    <button class="pg-nav-btn" onclick="pgShow('war-view')">War View</button>
+    <button class="pg-nav-btn" onclick="pgShow('members')">Members</button>
+    <button class="pg-nav-btn" onclick="pgShow('settings')">Settings</button>
+    <button class="pg-nav-btn" onclick="pgShow('new-war')">New War</button>
   </div>
 
-  <!-- ── 2. PARTY CARD ───────────────────────────────────── -->
-  <div class="pg-section">
-    <div class="pg-section-title">PartyCard</div>
-    <div style="max-width:380px;" id="partycard-demo"></div>
-  </div>
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- COMPONENTS PAGE                                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page active" id="pg-components">
 
-  <!-- ── 3. MEMBER DROPDOWN ──────────────────────────────── -->
-  <div class="pg-section">
-    <div class="pg-section-title">MemberDropdown</div>
-    <div id="dropdown-demo"></div>
-  </div>
-
-  <!-- ── 4. STATS ROW ────────────────────────────────────── -->
-  <div class="pg-section">
-    <div class="pg-section-title">StatsRow</div>
-    <div id="statsrow-demo"></div>
-  </div>
-
-  <!-- ── 5. MODAL ────────────────────────────────────────── -->
-  <div class="pg-section">
-    <div class="pg-section-title">Modal</div>
-    <div class="pg-modal-static" id="modal-demo"></div>
-  </div>
-
-  <!-- ── 6. TOAST ────────────────────────────────────────── -->
-  <div class="pg-section">
-    <div class="pg-section-title">Toast</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="pg-dropdown-toggle" onclick="Toast.success('War saved successfully!')">Success</button>
-      <button class="pg-dropdown-toggle" onclick="Toast.error('Failed to save war')">Error</button>
-      <button class="pg-dropdown-toggle" onclick="Toast.warning('CSV is empty')">Warning</button>
-      <button class="pg-dropdown-toggle" onclick="Toast.info('3 new aliases saved')">Info</button>
+    <div class="pg-section">
+      <div class="pg-section-title">RoleBadge</div>
+      <div class="pg-row" id="rolebadge-demo"></div>
     </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">StatsRow</div>
+      <div id="statsrow-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">PartyCard</div>
+      <div style="max-width:380px;" id="partycard-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">MemberDropdown</div>
+      <div id="dropdown-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Modal</div>
+      <div class="pg-modal-static" id="modal-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Toast</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="pg-dropdown-toggle" onclick="Toast.success('War saved successfully!')">Success</button>
+        <button class="pg-dropdown-toggle" onclick="Toast.error('Failed to save war')">Error</button>
+        <button class="pg-dropdown-toggle" onclick="Toast.warning('CSV is empty')">Warning</button>
+        <button class="pg-dropdown-toggle" onclick="Toast.info('3 new aliases saved')">Info</button>
+      </div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">EmptyState</div>
+      <div id="emptystate-demo"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- WARS LIST PAGE                                         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page" id="pg-wars-list">
+
+    <div class="pg-section">
+      <div class="pg-section-title">War Cards (Timeline)</div>
+      <div id="warslist-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Empty Wars State</div>
+      <div id="warslist-empty-demo" style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- WAR VIEW PAGE                                          -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page" id="pg-war-view">
+
+    <div class="pg-section">
+      <div class="pg-section-title">War Header + Stats</div>
+      <div id="warview-header-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Party Table</div>
+      <div id="warview-table-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Extras Panel</div>
+      <div id="warview-extras-demo" style="max-width:300px;"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Leaderboard Podium</div>
+      <div id="warview-leaderboard-demo" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- MEMBERS PAGE                                           -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page" id="pg-members">
+
+    <div class="pg-section">
+      <div class="pg-section-title">Member Rows (with role filters)</div>
+      <div id="members-rows-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Unmatched Members Warning</div>
+      <div id="members-unmatched-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Member Profile Card</div>
+      <div id="members-profile-demo" style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:12px;padding:24px;max-width:600px;"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SETTINGS PAGE                                          -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page" id="pg-settings">
+
+    <div class="pg-section">
+      <div class="pg-section-title">Guild Card</div>
+      <div id="settings-guild-demo" style="max-width:400px;"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">User List</div>
+      <div id="settings-users-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Invite Code</div>
+      <div id="settings-invite-demo" style="max-width:400px;"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Onboard Forms</div>
+      <div id="settings-onboard-demo" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- NEW WAR PAGE                                           -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page" id="pg-new-war">
+
+    <div class="pg-section">
+      <div class="pg-section-title">Step 1 - Upload Zone</div>
+      <div id="newwar-upload-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Step 2 - Party Editor</div>
+      <div id="newwar-editor-demo" style="max-width:400px;"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Step 3 - Stats Matching Preview</div>
+      <div id="newwar-match-demo"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Wizard Buttons</div>
+      <div id="newwar-buttons-demo"></div>
+    </div>
+
   </div>
 
 </div>
 
+<!-- ── Scripts ────────────────────────────────────────────── -->
+<script src="js/utils/api.js"></script>
+<script src="js/utils/party-helpers.js"></script>
 <script src="js/utils/dom.js"></script>
 <script src="js/components/role-badge.js"></script>
 <script src="js/components/stats-row.js"></script>
@@ -124,91 +273,396 @@
 <script src="js/components/modal.js"></script>
 <script src="js/components/toast.js"></script>
 <script>
-  // escHtml stub for playground (provided by index.html in production)
+  // ── Stubs for playground ──
   if (typeof escHtml === 'undefined') {
     window.escHtml = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
   }
+
+  // ── Nav switching ──
+  function pgShow(page) {
+    document.querySelectorAll('.pg-page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.pg-nav-btn').forEach(function(b){ b.classList.remove('active'); });
+    var el = document.getElementById('pg-' + page);
+    if (el) el.classList.add('active');
+    // Find matching button
+    var btns = document.querySelectorAll('.pg-nav-btn');
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i].textContent.toLowerCase().replace(/\s+/g, '-') === page ||
+          btns[i].onclick.toString().indexOf("'" + page + "'") > -1) {
+        btns[i].classList.add('active');
+      }
+    }
+  }
+
+  // ── Mock Data ──
+  var MOCK_MEMBERS = [
+    { name: 'Darkblade',  role: 'TANK',   defeat: 12, assist: 30, dmg_dealt: 540000,  dmg_taken: 320000, healed: 0 },
+    { name: 'Lumina',     role: 'HEALER', defeat: 3,  assist: 45, dmg_dealt: 180000,  dmg_taken: 150000, healed: 820000 },
+    { name: 'Shadowfang', role: 'DPS',    defeat: 18, assist: 22, dmg_dealt: 1200000, dmg_taken: 280000, healed: 0 },
+    { name: 'Pyrostorm',  role: 'DPS',    defeat: 7,  assist: 33, dmg_dealt: 890000,  dmg_taken: 190000, healed: 0 },
+    { name: 'Ironwall',   role: 'TANK',   defeat: 5,  assist: 38, dmg_dealt: 420000,  dmg_taken: 680000, healed: 0 },
+    { name: 'Zephyr',     role: 'HEALER', defeat: 1,  assist: 50, dmg_dealt: 90000,   dmg_taken: 110000, healed: 950000 }
+  ];
+
+  var MOCK_PARTY1 = { name: 'Alpha Squad', label: 'Party 1', members: MOCK_MEMBERS.slice(0, 4) };
+  var MOCK_PARTY2 = { name: 'Bravo Team',  label: 'Party 2', members: [MOCK_MEMBERS[4], MOCK_MEMBERS[5],
+    { name: 'Stormcaller', role: 'DPS', defeat: 14, assist: 19, dmg_dealt: 980000, dmg_taken: 210000, healed: 0 },
+    { name: 'Nightwhisper', role: 'DPS', defeat: 9, assist: 28, dmg_dealt: 760000, dmg_taken: 170000, healed: 0 }
+  ]};
+
+  var MOCK_EXTRAS = [
+    { name: 'LostSoul', role: 'DPS', defeat: 2, assist: 5, dmg_dealt: 120000, dmg_taken: 90000, healed: 0 },
+    { name: 'Wanderer',  role: 'HEALER', defeat: 0, assist: 12, dmg_dealt: 30000, dmg_taken: 40000, healed: 280000 }
+  ];
 </script>
+
+<!-- ── COMPONENTS PAGE DEMOS ─────────────────────────────── -->
 <script>
+  // RoleBadge
   document.getElementById('rolebadge-demo').innerHTML =
     '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS') + '</div>'
     + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('TANK') + '</div>'
     + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('HEALER') + '</div>'
-    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Small:</strong> '
-    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS', { size: 'small' }) + '</div>'
-    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('TANK', { size: 'small' }) + '</div>'
-    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Clickable:</strong> '
-    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS', { clickable: true }) + '</div>'
-    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Inline variant:</strong> '
-    + RoleBadge.inline('DPS') + ' '
-    + RoleBadge.inline('TANK') + ' '
-    + RoleBadge.inline('HEALER');
-</script>
-<script>
-  var demoStats = { defeat: 42, assist: 73, dmg_dealt: 3100000, dmg_taken: 890000, healed: 15000 };
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Inline:</strong> '
+    + RoleBadge.inline('DPS') + ' ' + RoleBadge.inline('TANK') + ' ' + RoleBadge.inline('HEALER');
+
+  // StatsRow
+  var ds = { defeat: 42, assist: 73, dmg_dealt: 3100000, dmg_taken: 890000, healed: 15000 };
   document.getElementById('statsrow-demo').innerHTML =
-    '<strong style="color:var(--text-muted);font-size:12px;">Cards (default):</strong>'
-    + StatsRow(demoStats)
-    + '<br><strong style="color:var(--text-muted);font-size:12px;">Compact cards:</strong>'
-    + StatsRow(demoStats, { compact: true, fields: ['kills','assists','dmg_dealt','healed'] })
-    + '<br><strong style="color:var(--text-muted);font-size:12px;">Inline:</strong><br>'
-    + '<span style="font-family:monospace;font-size:12px;color:var(--text-secondary);">' + StatsRow.inline(demoStats) + '</span>'
-    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Inline colored:</strong><br>'
-    + '<span style="font-family:monospace;font-size:12px;">' + StatsRow.inline(demoStats, { colored: true }) + '</span>'
-    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Summary totals:</strong>'
-    + StatsRow.summary({ defeat: 420, assist: 730, dmg_dealt: 31000000, healed: 1500000 });
-</script>
-<script>
-  var demoParty = {
-    name: 'Alpha Squad', label: 'Party 1',
-    members: [
-      { name: 'Darkblade',  role: 'TANK',   defeat: 12, assist: 30, dmg_dealt: 540000,  healed: 0 },
-      { name: 'Lumina',     role: 'HEALER', defeat: 3,  assist: 45, dmg_dealt: 180000,  healed: 820000 },
-      { name: 'Shadowfang', role: 'DPS',    defeat: 18, assist: 22, dmg_dealt: 1200000, healed: 0 },
-      { name: 'Pyrostorm',  role: 'DPS',    defeat: 7,  assist: 33, dmg_dealt: 890000,  healed: 0 }
-    ]
-  };
-  var sm3Lookup = {};
-  demoParty.members.forEach(function(m){ sm3Lookup[m.name] = m; });
-  var sm3Result = PartyCard(demoParty, {
-    variant: 'sm3', partyIndex: 0, dotColor: '#7c3aed',
-    memberStatsLookup: sm3Lookup, newMembers: { Pyrostorm: true }
-  });
+    StatsRow(ds)
+    + '<br><span style="font-family:monospace;font-size:12px;">' + StatsRow.inline(ds, { colored: true }) + '</span>';
+
+  // PartyCard
+  var sm3L = {}; MOCK_PARTY1.members.forEach(function(m){ sm3L[m.name] = m; });
   document.getElementById('partycard-demo').innerHTML =
-    '<strong style="color:var(--text-muted);font-size:12px;">Simple variant:</strong>'
-    + PartyCard(demoParty)
-    + '<br><strong style="color:var(--text-muted);font-size:12px;">With stats:</strong>'
-    + PartyCard(demoParty, { showStats: true })
-    + '<br><strong style="color:var(--text-muted);font-size:12px;">SM3 variant (match preview):</strong>'
-    + sm3Result.html;
-</script>
-<script>
-  document.getElementById('dropdown-demo').innerHTML =
-    '<strong style="color:var(--text-muted);font-size:12px;">Default (closed):</strong><br><br>'
-    + MemberDropdown({
-        memberName: 'Darkblade', currentRole: 'TANK',
-        parties: [{ name: 'Party 2', index: 1 }],
-        onRoleChange: "Toast.info('Set role to {role}')",
-        onMove: "Toast.info('Moved to party {partyIndex}')",
-        onRemove: "Toast.warning('Removed from war')"
-      })
-    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Open:</strong><br><br>'
-    + MemberDropdown({
-        memberName: 'Lumina', currentRole: 'HEALER',
-        parties: [{ name: 'Party 1', index: 0 }, { name: 'Party 3', index: 2 }],
-        open: true
-      });
-</script>
-<script>
-  document.getElementById('modal-demo').innerHTML = Modal({
-    title: 'Paste Party Data',
-    subtitle: 'Paste the scoreboard text or party list below. Click Parse to preview.',
-    body: '<textarea class="modal-textarea" readonly>Darkblade    TANK    K:12  A:30  D:540K  H:0\nLumina       HEALER  K:3   A:45  D:180K  H:820K\nShadowfang   DPS     K:18  A:22  D:1.2M  H:0\nPyrostorm    DPS     K:7   A:33  D:890K  H:0</textarea>',
-    footer: '<button class="btn-modal-parse">Parse</button>'
-      + '<button class="btn-modal-apply ready">Apply</button>'
-      + '<button class="btn-modal-cancel">Cancel</button>',
+    PartyCard(MOCK_PARTY1)
+    + '<br>' + PartyCard(MOCK_PARTY1, { variant: 'sm3', partyIndex: 0, dotColor: '#7c3aed', memberStatsLookup: sm3L, newMembers: { Pyrostorm: true } }).html;
+
+  // Dropdown
+  document.getElementById('dropdown-demo').innerHTML = MemberDropdown({
+    memberName: 'Darkblade', currentRole: 'TANK',
+    parties: [{ name: 'Party 2', index: 1 }],
+    onRoleChange: "Toast.info('Set role to {role}')",
     open: true
   });
+
+  // Modal
+  document.getElementById('modal-demo').innerHTML = Modal({
+    title: 'Paste Party Data',
+    subtitle: 'Paste scoreboard text below.',
+    body: '<textarea class="modal-textarea" readonly style="min-height:80px;">Darkblade  TANK  K:12 A:30 D:540K H:0</textarea>',
+    footer: '<button class="btn-modal-parse">Parse</button><button class="btn-modal-apply ready">Apply</button>',
+    open: true
+  });
+
+  // EmptyState
+  document.getElementById('emptystate-demo').innerHTML =
+    '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;">'
+    + EmptyState({ icon: '&#9876;', title: 'No wars recorded yet', description: 'Upload a party screenshot to start tracking.', buttonText: '+ Add First War', buttonAction: "Toast.info('Would start new war')" })
+    + '</div>';
 </script>
+
+<!-- ── WARS LIST PAGE DEMOS ──────────────────────────────── -->
+<script>
+  (function(){
+    var wars = [
+      { opponent: 'Shadow Legion', date: '2026-04-14', kills: 42, assists: 87, dmg: 4200000, heal: 1800000, parties: 2, members: 10 },
+      { opponent: 'Iron Wolves',   date: '2026-04-12', kills: 38, assists: 71, dmg: 3800000, heal: 1500000, parties: 2, members: 10 },
+      { opponent: 'Night Ravens',  date: '2026-04-10', kills: 55, assists: 102, dmg: 5100000, heal: 2200000, parties: 3, members: 15 }
+    ];
+    var colors = PARTY_DOT_COLORS;
+    var html = '<div style="display:flex;flex-direction:column;gap:16px;">';
+    wars.forEach(function(w){
+      var dotsHtml = '<div class="war-card-parties">';
+      for (var i = 0; i < w.parties; i++) dotsHtml += '<div class="war-card-party-dot" style="background:' + colors[i % colors.length] + ';"></div>';
+      dotsHtml += '</div>';
+      html += '<div class="war-card">'
+        + '<div class="war-card-header"><span class="war-card-opponent">vs ' + w.opponent + '</span></div>'
+        + '<div class="war-card-stats">'
+          + '<div class="war-card-stat"><span class="lbl">Kills</span><span class="val">' + w.kills + '</span></div>'
+          + '<div class="war-card-stat"><span class="lbl">Assists</span><span class="val">' + w.assists + '</span></div>'
+          + '<div class="war-card-stat"><span class="lbl">Dmg Dealt</span><span class="val">' + fmtShort(w.dmg) + '</span></div>'
+          + '<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">' + fmtShort(w.heal) + '</span></div>'
+        + '</div>'
+        + dotsHtml
+        + '<div style="position:absolute;top:12px;right:14px;font-size:11px;color:var(--text-muted);">' + w.date + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+    document.getElementById('warslist-demo').innerHTML = html;
+
+    document.getElementById('warslist-empty-demo').innerHTML = EmptyState({
+      icon: '&#9876;', title: 'No wars recorded yet',
+      description: 'Upload a party screenshot to start tracking your guild wars.',
+      buttonText: '+ Add First War', buttonAction: "Toast.info('Start new war')",
+      padding: '60px 20px'
+    });
+  })();
+</script>
+
+<!-- ── WAR VIEW PAGE DEMOS ───────────────────────────────── -->
+<script>
+  (function(){
+    var totals = { defeat: 40, assist: 128, dmg_dealt: 4200000, dmg_taken: 1900000, healed: 1770000 };
+
+    // Header
+    document.getElementById('warview-header-demo').innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+        + '<div><h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;">Nova Guild vs Shadow Legion</h2>'
+        + '<span style="font-size:12px;color:var(--text-muted);">2026-04-14</span></div>'
+        + '<div style="display:flex;gap:8px;">'
+          + '<button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;border-radius:6px;">&#x1F517; Share</button>'
+          + '<button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;border-radius:6px;">&#x1F4F8; Export</button>'
+          + '<button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;border-radius:6px;">&#x270E; Edit</button>'
+        + '</div>'
+      + '</div>'
+      + StatsRow(totals);
+
+    // Party table
+    var tableHtml = '<div class="party-card"><div class="party-header">'
+      + '<div class="party-name"><div class="party-color-dot" style="background:#7c3aed;"></div>Alpha Squad</div>'
+      + '<div class="party-meta">4 members</div></div>'
+      + '<div style="overflow-x:auto;"><table class="data-table"><thead><tr>'
+      + '<th style="width:28%;">Player</th><th class="num">K</th><th class="num">A</th>'
+      + '<th class="num">DMG</th><th class="num">TAKEN</th><th class="num">HEAL</th></tr></thead><tbody>';
+    MOCK_PARTY1.members.forEach(function(m){
+      var rc = roleColor(m.role);
+      var nc = roleClass(m.role);
+      var rl = m.role === 'HEALER' ? 'HEAL' : m.role;
+      tableHtml += '<tr><td><div class="player-cell">'
+        + '<span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:' + rc + '22;color:' + rc + ';margin-right:6px;">' + rl + '</span>'
+        + '<span class="player-name ' + nc + '">' + m.name + '</span></div></td>'
+        + '<td class="num num-k">' + (m.defeat || 0) + '</td>'
+        + '<td class="num">' + (m.assist || 0) + '</td>'
+        + '<td class="num num-dmg">' + fmtFull(m.dmg_dealt) + '</td>'
+        + '<td class="num num-taken">' + fmtFull(m.dmg_taken) + '</td>'
+        + '<td class="num num-heal">' + fmtFull(m.healed) + '</td></tr>';
+    });
+    var pTotals = { k: 40, a: 130, d: 2810000, t: 940000, h: 820000 };
+    tableHtml += '</tbody><tbody><tr class="total-row"><td>Total</td>'
+      + '<td class="num num-k">' + pTotals.k + '</td><td class="num">' + pTotals.a + '</td>'
+      + '<td class="num num-dmg">' + fmtFull(pTotals.d) + '</td>'
+      + '<td class="num num-taken">' + fmtFull(pTotals.t) + '</td>'
+      + '<td class="num num-heal">' + fmtFull(pTotals.h) + '</td>'
+      + '</tr></tbody></table></div></div>';
+    document.getElementById('warview-table-demo').innerHTML = tableHtml;
+
+    // Extras panel
+    var extrasHtml = '<div class="extras-panel"><div class="extras-panel-header">Extra Players (2)</div>';
+    MOCK_EXTRAS.forEach(function(ex){
+      extrasHtml += '<div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+          + '<span class="role-dot" style="background:' + roleColor(ex.role) + ';cursor:pointer;"></span>'
+          + '<span style="font-weight:600;color:#fff;font-size:13px;">' + ex.name + '</span></div>'
+        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
+          + '<div><span style="color:var(--text-muted);">K</span> <span style="color:#cf4444;">' + ex.defeat + '</span></div>'
+          + '<div><span style="color:var(--text-muted);">A</span> <span>' + ex.assist + '</span></div>'
+          + '<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">' + fmtFull(ex.dmg_dealt) + '</span></div>'
+        + '</div></div>';
+    });
+    extrasHtml += '</div>';
+    document.getElementById('warview-extras-demo').innerHTML = extrasHtml;
+
+    // Leaderboard
+    var podiumHtml = '';
+    var podiumData = [
+      { title: 'Top Kills', key: 'defeat', color: 'var(--accent-primary)' },
+      { title: 'Top Damage', key: 'dmg_dealt', color: '#c9a06a' },
+      { title: 'Top Healed', key: 'healed', color: 'var(--heal)' }
+    ];
+    var allM = MOCK_PARTY1.members.concat(MOCK_PARTY2.members);
+    podiumData.forEach(function(pd){
+      var sorted = allM.slice().sort(function(a, b){ return (b[pd.key] || 0) - (a[pd.key] || 0); }).slice(0, 3);
+      var medals = ['var(--accent-primary)', '#c0c0c0', '#cd7f32'];
+      var h = '<div class="party-card"><div class="party-header" style="border-bottom:1px solid var(--border);"><div class="party-name" style="font-size:13px;">' + pd.title + '</div></div>';
+      h += '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">';
+      sorted.forEach(function(m, idx){
+        h += '<div style="display:flex;align-items:center;gap:10px;">'
+          + '<span style="font-size:' + (idx === 0 ? '18' : '16') + 'px;font-weight:' + (idx === 0 ? '800' : '700') + ';color:' + medals[idx] + ';width:24px;">' + (idx + 1) + '</span>'
+          + '<div style="flex:1;"><div style="font-weight:600;color:' + (idx === 0 ? '#fff' : 'var(--text-primary)') + ';font-size:13px;">' + m.name + '</div>'
+          + '<div style="font-family:JetBrains Mono,monospace;font-size:12px;color:' + pd.color + ';">' + (m[pd.key] || 0).toLocaleString() + '</div></div>'
+          + '<span class="role-dot" style="background:' + roleColor(m.role) + ';width:8px;height:8px;border-radius:50%;"></span>'
+          + '</div>';
+      });
+      h += '</div></div>';
+      podiumHtml += h;
+    });
+    document.getElementById('warview-leaderboard-demo').innerHTML = podiumHtml;
+  })();
+</script>
+
+<!-- ── MEMBERS PAGE DEMOS ────────────────────────────────── -->
+<script>
+  (function(){
+    // Role filter tabs
+    var filterHtml = '<div style="display:flex;gap:4px;margin-bottom:16px;">';
+    ['ALL', 'TANK', 'HEALER', 'DPS'].forEach(function(r){
+      var active = r === 'ALL';
+      var color = r === 'ALL' ? 'var(--text-primary)' : roleHex(r);
+      filterHtml += '<button class="pg-dropdown-toggle" style="'
+        + (active ? 'background:rgba(240,192,64,.15);border-color:var(--gold);color:var(--gold);' : '')
+        + '" onclick="this.parentElement.querySelectorAll(\'button\').forEach(function(b){b.style.background=\'\';b.style.borderColor=\'\';b.style.color=\'\';});this.style.background=\'rgba(240,192,64,.15)\';this.style.borderColor=\'var(--gold)\';this.style.color=\'var(--gold)\';">'
+        + (r === 'ALL' ? 'All' : r) + '</button>';
+    });
+    filterHtml += '</div>';
+
+    // Member rows
+    var rowsHtml = '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">';
+    rowsHtml += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border-subtle);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">'
+      + '<div style="min-width:55px;">Role</div><div style="flex:1;">TLGM Name</div><div style="min-width:140px;">In-Game Name</div></div>';
+    var aliases = { darkblade: 'DarkBlade_TL', lumina: 'Lumina_TL', shadowfang: '', pyrostorm: 'PyroStorm_TL', ironwall: 'IronWall_TL', zephyr: '' };
+    MOCK_MEMBERS.forEach(function(m){
+      var color = roleHex(m.role);
+      var alias = aliases[m.name.toLowerCase()] || '';
+      rowsHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+        + '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:' + color + '22;color:' + color + ';min-width:55px;text-align:center;">' + m.role + '</span>'
+        + '<div style="flex:1;font-size:13px;font-weight:600;color:#fff;cursor:pointer;">' + m.name + '</div>'
+        + '<span style="font-size:12px;color:var(--gold);min-width:140px;">' + (alias || '<span style="color:var(--text-muted);">--</span>') + '</span>'
+        + '</div>';
+    });
+    rowsHtml += '</div>';
+    document.getElementById('members-rows-demo').innerHTML = filterHtml + rowsHtml;
+
+    // Unmatched warning
+    var unmatchedHtml = '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:14px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+        + '<span style="font-size:14px;">&#9888;</span>'
+        + '<span style="font-size:13px;font-weight:600;color:var(--gold);">2 members need in-game name</span>'
+      + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    ['Shadowfang', 'Zephyr'].forEach(function(n){
+      var m = MOCK_MEMBERS.find(function(x){ return x.name === n; });
+      unmatchedHtml += '<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bg-tertiary);color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
+        + '<span style="width:6px;height:6px;border-radius:50%;background:' + roleHex(m.role) + ';"></span>' + n + '</span>';
+    });
+    unmatchedHtml += '</div></div>';
+    document.getElementById('members-unmatched-demo').innerHTML = unmatchedHtml;
+
+    // Profile card
+    var prof = MOCK_MEMBERS[0];
+    var profColor = roleHex(prof.role);
+    document.getElementById('members-profile-demo').innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
+        + '<div style="width:48px;height:48px;border-radius:50%;background:' + profColor + '22;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:' + profColor + ';">' + prof.name.charAt(0) + '</div>'
+        + '<div><div style="font-size:18px;font-weight:700;color:#fff;">' + prof.name + '</div>'
+        + '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:' + profColor + '22;color:' + profColor + ';">' + prof.role + '</span></div>'
+      + '</div>'
+      + StatsRow(prof, { fields: ['kills', 'assists', 'dmg_dealt', 'healed'] })
+      + '<div style="margin-top:16px;font-size:12px;color:var(--text-muted);">3 wars participated &middot; Avg 4.0 K/war &middot; Best: vs Shadow Legion (12K)</div>';
+  })();
+</script>
+
+<!-- ── SETTINGS PAGE DEMOS ───────────────────────────────── -->
+<script>
+  (function(){
+    // Guild card
+    document.getElementById('settings-guild-demo').innerHTML =
+      '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;">'
+        + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
+          + '<div style="width:44px;height:44px;border-radius:10px;background:rgba(240,192,64,.15);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold);">N</div>'
+          + '<div><div style="font-size:16px;font-weight:700;color:#fff;">Nova Guild</div>'
+          + '<div style="font-size:11px;color:var(--text-muted);">EU &middot; Croxus &middot; 10 members</div></div>'
+          + '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:rgba(240,192,64,.15);color:var(--gold);margin-left:auto;">PRO</span>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;">'
+          + '<button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;border-radius:6px;">Settings</button>'
+          + '<button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;border-radius:6px;color:var(--dps);">Leave Guild</button>'
+        + '</div></div>';
+
+    // Users list
+    var users = [
+      { name: 'suuo', role: 'admin', avatar: '', joined: '2026-01-15' },
+      { name: 'Darkblade', role: 'editor', avatar: '', joined: '2026-02-20' },
+      { name: 'Lumina', role: 'viewer', avatar: '', joined: '2026-03-10' }
+    ];
+    var usersHtml = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    users.forEach(function(u){
+      var roleBg = u.role === 'admin' ? 'rgba(240,192,64,.15)' : u.role === 'editor' ? 'rgba(91,143,255,.15)' : 'rgba(255,255,255,.06)';
+      var roleCol = u.role === 'admin' ? 'var(--gold)' : u.role === 'editor' ? '#5b8fff' : 'var(--text-muted)';
+      usersHtml += '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">'
+        + '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-muted);">' + u.name.charAt(0).toUpperCase() + '</div>'
+        + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#fff;">' + u.name + '</div>'
+        + '<div style="font-size:10px;color:var(--text-muted);">Joined ' + u.joined + '</div></div>'
+        + '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:' + roleBg + ';color:' + roleCol + ';font-weight:600;">' + u.role.toUpperCase() + '</span>'
+        + '</div>';
+    });
+    usersHtml += '</div>';
+    document.getElementById('settings-users-demo').innerHTML = usersHtml;
+
+    // Invite code
+    document.getElementById('settings-invite-demo').innerHTML =
+      '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:16px;">'
+        + '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Invite Code</div>'
+        + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<code style="flex:1;background:var(--bg-tertiary);padding:10px 14px;border-radius:6px;font-family:JetBrains Mono,monospace;font-size:14px;color:var(--gold);letter-spacing:.05em;">NOVA-X7K9-BETA</code>'
+          + '<button class="btn btn-secondary" style="padding:8px 14px;font-size:12px;border-radius:6px;" onclick="Toast.success(\'Copied!\')">Copy</button>'
+        + '</div></div>';
+
+    // Onboard forms
+    document.getElementById('settings-onboard-demo').innerHTML =
+      '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;">'
+        + '<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">Create Guild</div>'
+        + '<input placeholder="Guild name" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:#fff;font-size:13px;margin-bottom:8px;outline:none;">'
+        + '<select style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:var(--text-muted);font-size:13px;margin-bottom:12px;">'
+          + '<option>Select region...</option><option>EU</option><option>NA</option><option>SA</option></select>'
+        + '<button class="btn btn-primary" style="width:100%;padding:10px;font-size:13px;border-radius:6px;border:none;cursor:pointer;">Create</button>'
+      + '</div>'
+      + '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;">'
+        + '<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">Join Guild</div>'
+        + '<input placeholder="Invite code" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:var(--gold);font-size:13px;font-family:JetBrains Mono,monospace;margin-bottom:12px;outline:none;">'
+        + '<button class="btn btn-primary" style="width:100%;padding:10px;font-size:13px;border-radius:6px;border:none;cursor:pointer;">Join</button>'
+      + '</div>';
+  })();
+</script>
+
+<!-- ── NEW WAR PAGE DEMOS ────────────────────────────────── -->
+<script>
+  (function(){
+    // Upload zone
+    document.getElementById('newwar-upload-demo').innerHTML =
+      '<div class="upload-zone" style="max-width:500px;">'
+        + '<div style="font-size:36px;opacity:.3;margin-bottom:12px;">&#128247;</div>'
+        + '<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Upload Party Screenshot</div>'
+        + '<div style="font-size:12px;color:var(--text-muted);">Drag & drop or click to upload</div>'
+      + '</div>';
+
+    // Party editor
+    document.getElementById('newwar-editor-demo').innerHTML =
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Edit party composition before matching:</div>'
+      + PartyCard(MOCK_PARTY1)
+      + '<div style="margin-top:12px;">' + PartyCard(MOCK_PARTY2) + '</div>';
+
+    // Stats matching preview
+    var matchHtml = '<div style="background:linear-gradient(135deg,rgba(62,207,110,.1),rgba(62,207,110,.05));border:1px solid rgba(62,207,110,.3);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
+      + '<div style="display:flex;align-items:center;gap:12px;">'
+        + '<div style="width:40px;height:40px;background:rgba(62,207,110,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">&#10003;</div>'
+        + '<div><h3 style="font-size:15px;font-weight:600;color:#3ecf6e;margin:0 0 2px;">6 players matched</h3>'
+        + '<p style="font-size:12px;color:#888;margin:0;">Stats linked to roster</p></div></div>'
+      + '<span style="color:#888;font-size:12px;">View all &#9660;</span></div>';
+    matchHtml += StatsRow.summary({ defeat: 40, assist: 128, dmg_dealt: 4200000, healed: 1770000 });
+    matchHtml += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;overflow:hidden;padding:14px 20px;">'
+      + '<div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid #333;">'
+        + '<span style="font-size:18px;">&#9888;&#65039;</span>'
+        + '<span style="font-size:14px;font-weight:600;color:#f0c040;">Needs your attention</span>'
+        + '<span style="background:#f0c040;color:#000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">2</span></div>'
+      + '<div style="padding:14px 0;font-family:monospace;font-size:15px;font-weight:600;color:#f0c040;">xX_UnknownPlayer_Xx</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<select style="flex:1;max-width:260px;background:#252525;border:1px solid #333;border-radius:6px;padding:10px 14px;color:#e0e0e0;font-size:13px;">'
+          + '<option>Select member...</option><option>Darkblade (fuzzy)</option><option>Shadowfang (fuzzy)</option></select>'
+        + '<button style="background:#f0c040;color:#000;border:none;border-radius:6px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;">Confirm</button>'
+      + '</div></div>';
+    document.getElementById('newwar-match-demo').innerHTML = matchHtml;
+
+    // Buttons
+    document.getElementById('newwar-buttons-demo').innerHTML =
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;">'
+        + '<button class="btn btn-secondary" style="padding:10px 20px;font-size:13px;border-radius:8px;">&#8592; Back</button>'
+        + '<button style="background:#3ecf6e;color:#000;border:none;border-radius:8px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;">Save War &#8594;</button>'
+        + '<button class="btn btn-primary" style="padding:10px 24px;font-size:13px;border-radius:8px;">Parse Screenshot</button>'
+        + '<button class="btn btn-secondary" style="padding:10px 24px;font-size:13px;border-radius:8px;color:var(--dps);">&#x2715; Cancel</button>'
+      + '</div>';
+  })();
+</script>
+
 </body>
 </html>
