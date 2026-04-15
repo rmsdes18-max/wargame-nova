@@ -117,7 +117,7 @@ function renderMembersList(){
         var opts = '<option value="">-- Select --</option>';
         availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
         output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
-          +'<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
+          +'<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;">'+(m.role==='HEALER'?'HEAL':m.role)+'</span>'
           +'<span style="font-size:13px;font-weight:600;color:var(--text);flex:1;">'+escHtml(m.name)+'</span>'
           +'<input id="manual-'+safeName+'" list="game-names-datalist" placeholder="Type or search..." style="width:180px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
           +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
@@ -153,8 +153,8 @@ function renderMembersList(){
     rows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
       // ROLE
       +(_membersEditMode&&isEditor
-        ? '<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
-        : '<span class="badge badge-' + roleCls + '" style="min-width:55px;text-align:center;">'+m.role+'</span>')
+        ? '<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;">'+(m.role==='HEALER'?'HEAL':m.role)+'</span>'
+        : '<span class="badge badge-' + roleCls + '">'+(m.role==='HEALER'?'HEAL':m.role)+'</span>')
       // TLGM NAME
       +'<div style="flex:1;min-width:0;">'
         +(_membersEditMode
@@ -720,7 +720,7 @@ function openMemberProfile(encodedName){
         +'<div style="font-size:18px;font-weight:700;color:var(--text);">'+escHtml(name)+'</div>'
         +(alias?'<div style="font-size:12px;color:var(--gold);margin-top:2px;">In-game: '+escHtml(alias)+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:4px;">'
-          +'<span class="badge badge-' + (member.role === 'TANK' ? 'tank' : member.role === 'HEALER' ? 'heal' : 'dps') + '">'+member.role+'</span>'
+          +'<span class="badge badge-' + (member.role === 'TANK' ? 'tank' : member.role === 'HEALER' ? 'heal' : 'dps') + '">'+(member.role==='HEALER'?'HEAL':member.role)+'</span>'
           +(member.guildRole?'<span class="badge badge-viewer">'+escHtml(member.guildRole)+'</span>':'')
           +'<span style="font-size:10px;color:var(--text-muted);">'+warCount+' wars</span>'
         +'</div>'

@@ -745,16 +745,16 @@ initApp();
     <div id="add-member-error" style="display:none;color:#e84040;font-size:11px;margin-top:6px;"></div>
   </div>
   <!-- Tabs: Active / Archived -->
-  <div id="members-tabs" style="display:flex;align-items:center;gap:16px;margin-bottom:10px;border-bottom:1px solid var(--border);">
-    <button id="members-tab-active" onclick="switchMembersTab('active')" style="background:none;border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 0;border-bottom:2px solid var(--gold);cursor:pointer;">Active</button>
-    <button id="members-tab-archived" onclick="switchMembersTab('archived')" style="background:none;border:none;color:var(--text-muted);font-size:13px;padding:8px 0;border-bottom:2px solid transparent;cursor:pointer;">Archived</button>
+  <div id="members-tabs" class="tabs">
+    <button id="members-tab-active" class="tab active" onclick="switchMembersTab('active')">Active</button>
+    <button id="members-tab-archived" class="tab" onclick="switchMembersTab('archived')">Archived</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:12px;" id="members-role-filters">
-    <button onclick="setRoleFilter('ALL')" id="rf-ALL" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:var(--gold);color:#000;font-weight:600;cursor:pointer;">All</button>
-    <button onclick="setRoleFilter('TANK')" id="rf-TANK" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:#8B5CF6;font-weight:600;cursor:pointer;">Tank</button>
-    <button onclick="setRoleFilter('HEALER')" id="rf-HEALER" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:#3ecf6e;font-weight:600;cursor:pointer;">Healer</button>
-    <button onclick="setRoleFilter('DPS')" id="rf-DPS" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:#e84040;font-weight:600;cursor:pointer;">DPS</button>
-    <button onclick="setRoleFilter('ALL');document.getElementById('members-list-container').scrollTop=0;" id="rf-UNMATCHED" style="font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid rgba(240,192,64,.3);background:transparent;color:var(--gold);font-weight:600;cursor:pointer;display:none;">⚠ 0</button>
+    <button onclick="setRoleFilter('ALL')" id="rf-ALL" class="badge badge-pill badge-admin" style="cursor:pointer;border:none;">All</button>
+    <button onclick="setRoleFilter('TANK')" id="rf-TANK" class="badge badge-pill badge-tank" style="cursor:pointer;border:none;opacity:0.6;">Tank</button>
+    <button onclick="setRoleFilter('HEALER')" id="rf-HEALER" class="badge badge-pill badge-heal" style="cursor:pointer;border:none;opacity:0.6;">Healer</button>
+    <button onclick="setRoleFilter('DPS')" id="rf-DPS" class="badge badge-pill badge-dps" style="cursor:pointer;border:none;opacity:0.6;">DPS</button>
+    <button onclick="setRoleFilter('ALL');document.getElementById('members-list-container').scrollTop=0;" id="rf-UNMATCHED" class="badge badge-pill" style="cursor:pointer;border:1px solid rgba(212,225,87,.3);background:transparent;color:var(--accent);display:none;">⚠ 0</button>
   </div>
   <div id="members-list-container"></div>
 </div>
