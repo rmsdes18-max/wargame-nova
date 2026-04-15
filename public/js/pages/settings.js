@@ -66,12 +66,12 @@ function renderUsersList(){
 
         var roleSelect = '';
         if(u.role !== 'admin'){
-          roleSelect = '<select onchange="changeUserRole('+u.id+',this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px;cursor:pointer;">'
+          roleSelect = '<select class="select" onchange="changeUserRole('+u.id+',this.value)">'
             +'<option value="viewer"'+(u.role==='viewer'?' selected':'')+'>Viewer</option>'
             +'<option value="editor"'+(u.role==='editor'?' selected':'')+'>Editor</option>'
             +'</select>';
         } else {
-          roleSelect = '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:rgba(240,192,64,.15);color:var(--gold);">ADMIN</span>';
+          roleSelect = '<span class="badge badge-pill badge-admin">ADMIN</span>';
         }
 
         html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
@@ -309,14 +309,14 @@ async function initGuildSettings(){
       var roleSelect = '';
       if(m.role !== 'admin' || data.your_role === 'admin'){
         if(m.id !== data.owner_id && data.your_role === 'admin'){
-          roleSelect = '<select onchange="changeGuildMemberRole('+m.id+',this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px;cursor:pointer;">'
+          roleSelect = '<select class="select" onchange="changeGuildMemberRole('+m.id+',this.value)">'
             +'<option value="viewer"'+(m.role==='viewer'?' selected':'')+'>Viewer</option>'
             +'<option value="editor"'+(m.role==='editor'?' selected':'')+'>Editor</option>'
             +'<option value="admin"'+(m.role==='admin'?' selected':'')+'>Admin</option>'
             +'</select>';
         } else {
-          var roleColor = m.role==='admin'?'var(--gold)':m.role==='editor'?'var(--color-info)':'var(--text-muted)';
-          roleSelect = '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;color:'+roleColor+';">'+m.role.toUpperCase()+'</span>';
+          var roleCls = m.role === 'admin' ? 'admin' : m.role === 'editor' ? 'editor' : 'viewer';
+          roleSelect = '<span class="badge badge-' + roleCls + '">'+m.role.toUpperCase()+'</span>';
         }
       }
 
@@ -331,7 +331,7 @@ async function initGuildSettings(){
           +'<div style="display:flex;align-items:center;gap:5px;">'
             +'<span style="font-weight:600;color:var(--text);font-size:13px;">'+escHtml(m.username)+'</span>'
             +discordBadge
-            +(m.id===data.owner_id?'<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);">OWNER</span>':'')
+            +(m.id===data.owner_id?'<span class="badge badge-pill badge-admin">OWNER</span>':'')
           +'</div>'
           +'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined '+dateStr+'</div>'
         +'</div>'

@@ -230,6 +230,7 @@ function viewWar(warId){
       var rc = roleColor(memberRole);
       var nc = roleClass(memberRole);
       var roleLabel = memberRole==='TANK'?'TANK':memberRole==='HEALER'?'HEAL':'DPS';
+      var badgeCls = memberRole === 'TANK' ? 'tank' : memberRole === 'HEALER' ? 'heal' : 'dps';
       var isDimmed = !(m.defeat||m.assist||m.dmg_dealt);
 
       html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="'+(_vwEditMode?'true':'false')+'" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">';
@@ -238,10 +239,10 @@ function viewWar(warId){
       html += '<td>';
       html += '<div class="player-cell">';
       if(_vwEditMode){
-        html += '<span onclick="cycleWarMemberRole('+w.id+','+pi+','+mi+')" style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'22;color:'+rc+';cursor:pointer;margin-right:6px;" title="Click to change role">'+roleLabel+'</span>';
+        html += '<span class="badge badge-' + badgeCls + '" onclick="cycleWarMemberRole('+w.id+','+pi+','+mi+')" style="cursor:pointer;" title="Click to change role">'+roleLabel+'</span>';
         html += '<span class="player-name '+nc+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
       } else {
-        html += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'22;color:'+rc+';margin-right:6px;">'+roleLabel+'</span>';
+        html += '<span class="badge badge-' + badgeCls + '">'+roleLabel+'</span>';
         html += '<span class="player-name '+nc+'">'+escHtml(m.name)+'</span>';
       }
       html += '</div></td>';

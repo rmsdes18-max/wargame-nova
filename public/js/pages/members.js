@@ -111,13 +111,13 @@ function renderMembersList(){
       output += '<datalist id="game-names-datalist">'+datalistOpts+'</datalist>';
 
       unmatchedMembers.forEach(function(m){
-        var color = roleHex(m.role);
         var safeName = encodeURIComponent(m.name);
         var nRole = nextRole(m.role);
+        var roleCls = m.role === 'TANK' ? 'tank' : m.role === 'HEALER' ? 'heal' : 'dps';
         var opts = '<option value="">-- Select --</option>';
         availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
         output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
-          +'<span onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
+          +'<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
           +'<span style="font-size:13px;font-weight:600;color:var(--text);flex:1;">'+escHtml(m.name)+'</span>'
           +'<input id="manual-'+safeName+'" list="game-names-datalist" placeholder="Type or search..." style="width:180px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
           +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
@@ -144,17 +144,17 @@ function renderMembersList(){
   // ── MAIN TABLE (matched members) ──
   var rows = '';
   (showArchived ? filtered : matchedMembers).forEach(function(m){
-    var color = roleHex(m.role);
     var safeName = encodeURIComponent(m.name);
     var nRole = nextRole(m.role);
+    var roleCls = m.role === 'TANK' ? 'tank' : m.role === 'HEALER' ? 'heal' : 'dps';
     var aliasKey = m.name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
     var inGameName = _memberAliases[aliasKey] || '';
 
     rows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
       // ROLE
       +(_membersEditMode&&isEditor
-        ? '<span onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
-        : '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';min-width:55px;text-align:center;">'+m.role+'</span>')
+        ? '<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
+        : '<span class="badge badge-' + roleCls + '" style="min-width:55px;text-align:center;">'+m.role+'</span>')
       // TLGM NAME
       +'<div style="flex:1;min-width:0;">'
         +(_membersEditMode
@@ -720,8 +720,8 @@ function openMemberProfile(encodedName){
         +'<div style="font-size:18px;font-weight:700;color:var(--text);">'+escHtml(name)+'</div>'
         +(alias?'<div style="font-size:12px;color:var(--gold);margin-top:2px;">In-game: '+escHtml(alias)+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:4px;">'
-          +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+member.role+'</span>'
-          +(member.guildRole?'<span style="font-size:10px;padding:2px 8px;border-radius:3px;background:rgba(255,255,255,.06);color:var(--text-muted);">'+escHtml(member.guildRole)+'</span>':'')
+          +'<span class="badge badge-' + (member.role === 'TANK' ? 'tank' : member.role === 'HEALER' ? 'heal' : 'dps') + '">'+member.role+'</span>'
+          +(member.guildRole?'<span class="badge badge-viewer">'+escHtml(member.guildRole)+'</span>':'')
           +'<span style="font-size:10px;color:var(--text-muted);">'+warCount+' wars</span>'
         +'</div>'
       +'</div>'
