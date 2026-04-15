@@ -1,5 +1,10 @@
 # Wargame Nova
 
+## VERSIONING
+- Verifica VERSION.md pentru versiunea curenta
+- Actualizeaza CHANGELOG.md dupa fiecare modificare majora
+- Marcheaza ce ai facut si ce urmeaza in "Next"
+
 ## CODE STYLE - OBLIGATORIU
 
 Toate modificarile de cod JS TREBUIE sa respecte aceste reguli. Verifica INTOTDEAUNA inainte de a scrie cod.
