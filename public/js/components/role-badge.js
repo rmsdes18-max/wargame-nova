@@ -28,7 +28,7 @@ function RoleBadge(role, options) {
   var clickable = !!opts.clickable;
 
   var dotSize = small ? 'width:6px;height:6px;' : '';
-  var pillSize = small ? 'font-size:8px;padding:0 4px;' : '';
+  var pillSize = small ? 'font-size:var(--font-size-2xs);padding:0 var(--spacing-xs);' : '';
   var clickCls = clickable ? ' role-pill-btn' : '';
 
   var html = '';
@@ -62,12 +62,12 @@ RoleBadge.inline = function(role) {
   var label = r === 'HEALER' ? 'HEAL' : r;
 
   var colors = {
-    dps:  'background:rgba(232,64,64,.2);color:#e84040;',
-    tank: 'background:rgba(139,92,246,.2);color:#8B5CF6;',
-    heal: 'background:rgba(62,207,110,.2);color:#3ecf6e;'
+    dps:  'background:var(--role-dps-bg);color:var(--dps);',
+    tank: 'background:var(--role-tank-bg);color:var(--tank);',
+    heal: 'background:var(--role-heal-bg);color:var(--heal);'
   };
 
-  return '<span style="padding:2px 6px;border-radius:4px;font-size:9px;'
-    + 'font-weight:700;min-width:36px;text-align:center;display:inline-block;'
+  return '<span style="padding:var(--spacing-2xs) var(--spacing-sm);border-radius:var(--radius-sm);font-size:var(--font-size-xs);'
+    + 'font-weight:var(--font-weight-bold);min-width:36px;text-align:center;display:inline-block;'
     + colors[rc] + '">' + label + '</span>';
 };

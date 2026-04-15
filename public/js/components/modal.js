@@ -29,7 +29,7 @@ function Modal(options) {
   var open = opts.open ? ' open' : '';
   var onClose = opts.onClose || (id ? "document.getElementById('" + id + "').classList.remove('open')" : 'closeModal()');
 
-  var widths = { sm: '400px', md: '560px', lg: '720px' };
+  var widths = { sm: 'var(--modal-width-sm)', md: 'var(--modal-width-md)', lg: 'var(--modal-width-lg)' };
   var maxW = widths[size] || widths.md;
 
   var cardCls = 'modal-card' + (opts.extraClass ? ' ' + opts.extraClass : '');
@@ -40,7 +40,7 @@ function Modal(options) {
   // Title bar
   html += '<div class="modal-title">';
   html += '<span>' + (opts.title || '') + '</span>';
-  html += '<span style="cursor:pointer;color:var(--text-muted);font-size:20px;line-height:1;" onclick="' + onClose + '">&times;</span>';
+  html += '<span style="cursor:pointer;color:var(--text-muted);font-size:var(--font-size-3xl);line-height:1;" onclick="' + onClose + '">&times;</span>';
   html += '</div>';
 
   // Subtitle
@@ -139,23 +139,23 @@ function closeModal() {
  */
 Modal.inline = function(options) {
   var opts = options || {};
-  var widths = { sm: '400px', md: '520px', lg: '640px' };
+  var widths = { sm: 'var(--modal-width-sm)', md: '520px', lg: '640px' };
   var maxW = widths[opts.size || 'md'] || widths.md;
   var closeFn = "document.getElementById('" + opts.id + "').style.display='none'";
   var scrollable = opts.scrollable ? 'overflow-y:auto;' : '';
 
-  var html = '<div id="' + opts.id + '" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center;' + scrollable + '">';
-  html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:min(' + maxW + ',92vw);max-height:' + (opts.scrollable ? '85' : '80') + 'vh;overflow-y:auto;' + (opts.scrollable ? 'margin:20px auto;' : '') + '">';
+  var html = '<div id="' + opts.id + '" style="display:none;position:fixed;inset:0;background:var(--overlay-bg);z-index:var(--z-modal);align-items:center;justify-content:center;' + scrollable + '">';
+  html += '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:var(--spacing-2xl);width:min(' + maxW + ',92vw);max-height:' + (opts.scrollable ? '85' : '80') + 'vh;overflow-y:auto;' + (opts.scrollable ? 'margin:var(--spacing-xl) auto;' : '') + '">';
 
   // Header
-  html += '<div style="display:flex;justify-content:space-between;align-items:' + (opts.scrollable ? 'start' : 'center') + ';margin-bottom:16px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:' + (opts.scrollable ? 'start' : 'center') + ';margin-bottom:var(--spacing-lg);">';
   if (opts.title) {
-    html += '<div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#fff;">' + opts.title + '</div>';
+    html += '<div style="font-family:var(--font-display);font-size:var(--font-size-2xl);font-weight:var(--font-weight-bold);color:#fff;">' + opts.title + '</div>';
   }
   if (opts.bodyId && !opts.title) {
     html += '<div id="' + opts.bodyId + '-header"></div>';
   }
-  html += '<button onclick="' + closeFn + '" style="background:none;border:none;color:var(--text-muted);font-size:' + (opts.scrollable ? '22' : '20') + 'px;cursor:pointer;line-height:1;">&times;</button>';
+  html += '<button onclick="' + closeFn + '" style="background:none;border:none;color:var(--text-muted);font-size:var(--font-size-3xl);cursor:pointer;line-height:1;">&times;</button>';
   html += '</div>';
 
   // Body
@@ -168,7 +168,7 @@ Modal.inline = function(options) {
 
   // Footer
   if (opts.footer) {
-    html += '<div style="display:flex;gap:8px;margin-top:16px;">' + opts.footer + '</div>';
+    html += '<div style="display:flex;gap:var(--spacing-sm);margin-top:var(--spacing-lg);">' + opts.footer + '</div>';
   }
 
   html += '</div></div>';

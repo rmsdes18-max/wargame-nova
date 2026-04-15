@@ -16,10 +16,10 @@ var Toast = (function() {
   var _counter = 0;
 
   var TYPES = {
-    success: { bg: 'rgba(62,207,110,.15)', border: '#3ecf6e', color: '#3ecf6e', icon: '\u2713' },
-    error:   { bg: 'rgba(232,64,64,.15)',   border: '#e84040', color: '#e84040', icon: '\u2717' },
-    warning: { bg: 'rgba(240,192,64,.15)',   border: '#f0c040', color: '#f0c040', icon: '\u26A0' },
-    info:    { bg: 'rgba(91,143,255,.15)',    border: '#5b8fff', color: '#5b8fff', icon: '\u2139' }
+    success: { bg: 'var(--color-success-bg)', border: 'var(--color-success)', color: 'var(--color-success)', icon: '\u2713' },
+    error:   { bg: 'var(--color-error-bg)',   border: 'var(--color-error)',   color: 'var(--color-error)',   icon: '\u2717' },
+    warning: { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', color: 'var(--color-warning)', icon: '\u26A0' },
+    info:    { bg: 'var(--color-info-bg)',     border: 'var(--color-info)',    color: 'var(--color-info)',    icon: '\u2139' }
   };
 
   function _getContainer() {
@@ -27,7 +27,7 @@ var Toast = (function() {
     if (!el) {
       el = document.createElement('div');
       el.id = _containerId;
-      el.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:380px;';
+      el.style.cssText = 'position:fixed;top:var(--spacing-lg);right:var(--spacing-lg);z-index:var(--z-toast);display:flex;flex-direction:column;gap:var(--spacing-sm);pointer-events:none;max-width:380px;';
       document.body.appendChild(el);
     }
     return el;
@@ -41,17 +41,17 @@ var Toast = (function() {
 
     var toast = document.createElement('div');
     toast.id = id;
-    toast.style.cssText = 'pointer-events:auto;display:flex;align-items:center;gap:10px;'
-      + 'padding:12px 16px;border-radius:8px;'
+    toast.style.cssText = 'pointer-events:auto;display:flex;align-items:center;gap:var(--spacing-sm);'
+      + 'padding:var(--spacing-md) var(--spacing-lg);border-radius:var(--radius-lg);'
       + 'background:' + type.bg + ';border:1px solid ' + type.border + ';'
-      + 'font-family:"Plus Jakarta Sans",sans-serif;font-size:13px;font-weight:600;'
+      + 'font-family:var(--font-body);font-size:var(--font-size-md);font-weight:var(--font-weight-semibold);'
       + 'color:' + type.color + ';'
-      + 'box-shadow:0 4px 16px rgba(0,0,0,.3);'
+      + 'box-shadow:var(--shadow-md);'
       + 'transform:translateX(120%);transition:transform .3s ease,opacity .3s ease;opacity:0;';
 
     // Icon
     var icon = document.createElement('span');
-    icon.style.cssText = 'font-size:16px;flex-shrink:0;';
+    icon.style.cssText = 'font-size:var(--font-size-xl);flex-shrink:0;';
     icon.textContent = type.icon;
 
     // Message
@@ -61,7 +61,7 @@ var Toast = (function() {
 
     // Close button
     var close = document.createElement('span');
-    close.style.cssText = 'cursor:pointer;opacity:.6;font-size:16px;line-height:1;';
+    close.style.cssText = 'cursor:pointer;opacity:var(--opacity-secondary);font-size:var(--font-size-xl);line-height:1;';
     close.textContent = '\u00D7';
     close.onclick = function() { _dismiss(id); };
 

@@ -40,7 +40,7 @@ function MemberDropdown(options) {
   // Role items
   for (var i = 0; i < roles.length; i++) {
     var r = roles[i];
-    var active = r === role ? 'font-weight:800;' : '';
+    var active = r === role ? 'font-weight:var(--font-weight-extrabold);' : '';
     var onclick = opts.onRoleChange ? ' onclick="' + opts.onRoleChange.replace('{role}', r) + '"' : '';
     html += '<div class="pg-dropdown-item" style="' + active + '"' + onclick + '>'
       + RoleBadge(r, { pill: false })
@@ -50,7 +50,7 @@ function MemberDropdown(options) {
 
   // Move to party items
   if (parties.length) {
-    html += '<div style="border-top:1px solid var(--border-subtle,#333);margin-top:4px;padding-top:4px;">';
+    html += '<div style="border-top:1px solid var(--border-subtle);margin-top:var(--spacing-xs);padding-top:var(--spacing-xs);">';
     for (var p = 0; p < parties.length; p++) {
       var onclick2 = opts.onMove ? ' onclick="' + opts.onMove.replace('{partyIndex}', parties[p].index) + '"' : '';
       html += '<div class="pg-dropdown-item"' + onclick2 + '>Move to ' + escHtml(parties[p].name) + '</div>';
@@ -61,7 +61,7 @@ function MemberDropdown(options) {
   // Remove
   if (showRemove) {
     var onclick3 = opts.onRemove ? ' onclick="' + opts.onRemove + '"' : '';
-    html += '<div class="pg-dropdown-item danger" style="border-top:1px solid var(--border-subtle,#333);margin-top:4px;padding-top:6px;"' + onclick3 + '>'
+    html += '<div class="pg-dropdown-item danger" style="border-top:1px solid var(--border-subtle);margin-top:var(--spacing-xs);padding-top:var(--spacing-sm);"' + onclick3 + '>'
       + 'Remove from war</div>';
   }
 

@@ -45,19 +45,19 @@ function PartyMemberRow(member, options) {
   if (showStats && stats) {
     var hasStats = (stats.defeat || stats.assist || stats.dmg_dealt || stats.healed);
     if (hasStats) {
-      html += '<span class="stats" style="font-family:monospace;font-size:10px;color:#888;">'
+      html += '<span class="stats" style="font-family:var(--font-mono);font-size:var(--font-size-sm);color:var(--text-muted);">'
         + 'K:' + (stats.defeat || 0)
         + ' D:' + fmtShort(stats.dmg_dealt || 0)
         + ' H:' + fmtShort(stats.healed || 0)
         + '</span>';
     } else {
-      html += '<span class="stats" style="color:#555;">--</span>';
+      html += '<span class="stats" style="color:var(--text-muted);">--</span>';
     }
   }
 
   // NEW badge
   if (isNew) {
-    html += '<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>';
+    html += '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
   }
 
   html += '</div>';
@@ -117,7 +117,7 @@ function PartyCard(party, options) {
   }
 
   if (!members.length) {
-    html += '<div style="font-size:11px;color:#888;padding:7px 12px;">No members</div>';
+    html += '<div style="font-size:var(--font-size-base);color:var(--text-muted);padding:var(--spacing-sm) var(--spacing-md);">No members</div>';
   }
 
   html += '</div>';
@@ -140,9 +140,9 @@ function _renderSm3PartyCard(party, opts) {
         + '<span class="sm3-party-dot" style="background:' + dotColor + ';"></span> '
         + escHtml(party.name) + (party.label ? ' &#8212; ' + escHtml(party.label) : '')
       + '</span>'
-      + '<span style="font-size:11px;color:#888;"' + (countId ? ' id="' + countId + '"' : '') + '></span>'
+      + '<span style="font-size:var(--font-size-base);color:var(--text-muted);"' + (countId ? ' id="' + countId + '"' : '') + '></span>'
     + '</div>'
-    + '<div style="display:flex;flex-direction:column;gap:6px;"' + (membersId ? ' id="' + membersId + '"' : '') + '>';
+    + '<div style="display:flex;flex-direction:column;gap:var(--spacing-sm);"' + (membersId ? ' id="' + membersId + '"' : '') + '>';
 
   var members = party.members || [];
   var matchedCount = 0;
@@ -172,19 +172,19 @@ function _renderSm3PartyCard(party, opts) {
         + ' D:' + fmtShort(memberStats.dmg_dealt || 0)
         + ' H:' + fmtShort(memberStats.healed || 0) + '</span>';
     } else {
-      html += '<span class="stats" style="color:#555;">--</span>';
+      html += '<span class="stats" style="color:var(--text-muted);">--</span>';
     }
 
     // NEW badge
     if (isNew) {
-      html += '<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>';
+      html += '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
     }
 
     html += '</div>';
   }
 
   if (!members.length) {
-    html += '<div style="font-size:11px;color:#888;padding:4px 0;">No members</div>';
+    html += '<div style="font-size:var(--font-size-base);color:var(--text-muted);padding:var(--spacing-xs) 0;">No members</div>';
   }
 
   html += '</div></div>';
@@ -235,18 +235,18 @@ PartyCard.sm3Members = function(party, options) {
         + ' D:' + fmtShort(memberStats.dmg_dealt || 0)
         + ' H:' + fmtShort(memberStats.healed || 0) + '</span>';
     } else {
-      html += '<span class="stats" style="color:#555;">--</span>';
+      html += '<span class="stats" style="color:var(--text-muted);">--</span>';
     }
 
     if (isNew) {
-      html += '<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>';
+      html += '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
     }
 
     html += '</div>';
   }
 
   if (!members.length) {
-    html = '<div style="font-size:11px;color:#888;padding:4px 0;">No members</div>';
+    html = '<div style="font-size:var(--font-size-base);color:var(--text-muted);padding:var(--spacing-xs) 0;">No members</div>';
   }
 
   return { html: html, matchedCount: matchedCount };

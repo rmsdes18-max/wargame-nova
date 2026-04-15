@@ -27,11 +27,11 @@ function fmtFull(n) {
 /* ── Stat definitions ─────────────────────────────────────────────── */
 
 var STAT_DEFS = {
-  kills:     { key: 'defeat',    label: 'Kills',     shortLabel: 'K', color: '#e84040' },
-  assists:   { key: 'assist',    label: 'Assists',   shortLabel: 'A', color: '#c9a06a' },
-  dmg_dealt: { key: 'dmg_dealt', label: 'Dmg Dealt', shortLabel: 'D', color: '#f0c040' },
-  dmg_taken: { key: 'dmg_taken', label: 'Dmg Taken', shortLabel: 'TKN', color: '#a08090' },
-  healed:    { key: 'healed',    label: 'Healed',    shortLabel: 'H', color: '#3ecf6e' }
+  kills:     { key: 'defeat',    label: 'Kills',     shortLabel: 'K', color: 'var(--color-kills)' },
+  assists:   { key: 'assist',    label: 'Assists',   shortLabel: 'A', color: 'var(--color-assists)' },
+  dmg_dealt: { key: 'dmg_dealt', label: 'Dmg Dealt', shortLabel: 'D', color: 'var(--color-dmg-dealt)' },
+  dmg_taken: { key: 'dmg_taken', label: 'Dmg Taken', shortLabel: 'TKN', color: 'var(--color-dmg-taken)' },
+  healed:    { key: 'healed',    label: 'Healed',    shortLabel: 'H', color: 'var(--color-healed)' }
 };
 
 /* ── StatsRow ─────────────────────────────────────────────────────── */
@@ -121,19 +121,19 @@ StatsRow.summary = function(totals, options) {
   var opts = options || {};
   var ids  = opts.ids || {};
   var items = [
-    { key: 'defeat',    label: 'Total Kills',   color: '#e84040', id: ids.kills   || '' },
-    { key: 'assist',    label: 'Total Assists',  color: '#c9a06a', id: ids.assists  || '' },
-    { key: 'dmg_dealt', label: 'Total Damage',   color: '#f0c040', id: ids.damage   || '' },
-    { key: 'healed',    label: 'Total Healed',   color: '#3ecf6e', id: ids.healed   || '' }
+    { key: 'defeat',    label: 'Total Kills',   color: 'var(--color-kills)',  id: ids.kills   || '' },
+    { key: 'assist',    label: 'Total Assists',  color: 'var(--color-assists)', id: ids.assists  || '' },
+    { key: 'dmg_dealt', label: 'Total Damage',   color: 'var(--color-dmg-dealt)', id: ids.damage   || '' },
+    { key: 'healed',    label: 'Total Healed',   color: 'var(--color-healed)', id: ids.healed   || '' }
   ];
 
-  var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">';
+  var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--spacing-sm);margin-bottom:var(--spacing-lg);">';
   for (var i = 0; i < items.length; i++) {
     var it  = items[i];
     var val = fmtShort(totals[it.key] || 0);
-    html += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
-      + '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">' + it.label + '</div>'
-      + '<div style="font-size:20px;font-weight:700;color:' + it.color + ';font-family:monospace;"'
+    html += '<div style="background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:var(--spacing-md) var(--spacing-lg);text-align:center;">'
+      + '<div style="font-size:var(--font-size-sm);color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:var(--spacing-xs);">' + it.label + '</div>'
+      + '<div style="font-size:var(--font-size-3xl);font-weight:var(--font-weight-bold);color:' + it.color + ';font-family:var(--font-mono);"'
         + (it.id ? ' id="' + it.id + '"' : '') + '>' + val + '</div>'
       + '</div>';
   }
