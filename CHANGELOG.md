@@ -1,6 +1,6 @@
 # Changelog
 
-## [v2.0.0-alpha] - 2026-04-15
+## [v2.0.0] - 2026-04-15
 
 ### Added
 - 7 componente: role-badge, stats-row, party-card, modal, member-dropdown, toast, empty-state
