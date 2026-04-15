@@ -90,6 +90,7 @@ input[type=number]{-moz-appearance:textfield;}
   .landing-right{flex:none;padding:24px;border-left:none;border-top:1px solid var(--border,#3f4147);}
 }
 </style>
+<script src="js/components/role-badge.js"></script>
 </head>
 <body>
 
@@ -834,7 +835,7 @@ function renderPartyEditor(){
         ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
         : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
       html += '<div class="party-member">';
-      html += '<div class="role-dot dot-'+m.role+'"></div>';
+      html += RoleBadge(m.role, {pill:false});
       html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:#ddd;font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
       html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColors[m.role]+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
       ['TANK','HEALER','DPS'].forEach(function(r){
@@ -863,7 +864,7 @@ function confirmParties(){
   state.parties.forEach(function(p){
     html += '<div class="party-card"><div class="party-card-hdr"><span>'+p.name+'</span><span class="ptag">'+p.label+'</span></div>';
     p.members.forEach(function(m){
-      html += '<div class="party-member"><div class="role-dot dot-'+m.role+'"></div><span class="role-pill role-'+m.role+'">'+m.role+'</span><span class="member-name">'+m.name+'</span></div>';
+      html += '<div class="party-member">'+RoleBadge(m.role)+'<span class="member-name">'+m.name+'</span></div>';
     });
     html += '</div>';
   });
@@ -1136,15 +1137,6 @@ window._v3ManuallyAssigned = {}; // memberName -> true (for NEW badge in party p
 function renderStatsMatchingV3(results){
   var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
   var roleClass = function(r){ return (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps'; };
-  var roleBadge = function(r){
-    var rc = roleClass(r);
-    var label = (r||'DPS')==='HEALER'?'HEAL':(r||'DPS');
-    return '<span style="padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;min-width:36px;text-align:center;display:inline-block;'
-      +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;'
-       :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;'
-       :'background:rgba(62,207,110,.2);color:#3ecf6e;')
-      +'">'+label+'</span>';
-  };
 
   window._v3ResolvedItems = {};
   window._v3ManuallyAssigned = {};
@@ -1249,7 +1241,7 @@ function renderStatsMatchingV3(results){
     if(mi >= maxShow) return;
     var role = m.member.role||'DPS';
     html += '<div class="sm3-matched-item">'
-      +roleBadge(role)
+      +RoleBadge.inline(role)
       +'<span style="font-weight:600;min-width:100px;">'+escHtml(m.member.name)+'</span>'
       +'<span style="color:#888;font-size:11px;font-family:monospace;margin-left:auto;">'
         +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'defeat\',this)" title="Click to edit">K:'+(m.stats.defeat||0)+'</span> '
@@ -1431,7 +1423,7 @@ function renderStatsMatchingV3(results){
       var isNew = !!window._v3ManuallyAssigned[pm.name];
       html += '<div class="sm3-party-member'+(isNew?' new-match':'')+'">'
         +'<span class="sm3-party-role-badge" onclick="cyclePartyRoleV3('+pi+','+mi+')" title="Click to cycle role" style="cursor:pointer;">'
-          +roleBadge(memberRole)
+          +RoleBadge.inline(memberRole)
         +'</span>'
         +'<span class="name">'+escHtml(pm.name)+'</span>'
         +(memberStats
@@ -1659,15 +1651,6 @@ function updatePartyPreviewV3(){
   // Rebuild party preview based on current matched results
   if(!window._currentMatchResults) return;
   var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
-  var roleBadge = function(r){
-    var rc = (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps';
-    var label = (r||'DPS')==='HEALER'?'HEAL':(r||'DPS');
-    return '<span style="padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;min-width:36px;text-align:center;display:inline-block;'
-      +(rc==='dps'?'background:rgba(232,64,64,.2);color:#e84040;'
-       :rc==='tank'?'background:rgba(139,92,246,.2);color:#8B5CF6;'
-       :'background:rgba(62,207,110,.2);color:#3ecf6e;')
-      +'">'+label+'</span>';
-  };
 
   // Build matched stats lookup
   var matchedStatsLookup = {};
@@ -1698,7 +1681,7 @@ function updatePartyPreviewV3(){
       var isNew = !!window._v3ManuallyAssigned[pm.name];
       html += '<div class="sm3-party-member'+(isNew?' new-match':'')+'">'
         +'<span class="sm3-party-role-badge" onclick="cyclePartyRoleV3('+pi+','+mi+')" title="Click to cycle role" style="cursor:pointer;">'
-          +roleBadge(memberRole)
+          +RoleBadge.inline(memberRole)
         +'</span>'
         +'<span class="name">'+escHtml(pm.name)+'</span>'
         +(memberStats
@@ -2808,13 +2791,13 @@ function updateUIForRole(){
       var avatarHtml = _userAvatar
         ? '<img src="'+_userAvatar+'" style="width:34px;height:34px;border-radius:50%;">'
         : '<div style="width:34px;height:34px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-muted);">'+_userName.charAt(0).toUpperCase()+'</div>';
-      var roleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);font-weight:600;">ADMIN</span>'
+      var userRoleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);font-weight:600;">ADMIN</span>'
         : _userRole === 'editor' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(91,143,255,.15);color:#5b8fff;font-weight:600;">EDITOR</span>'
         : '';
       userEl.innerHTML = avatarHtml
         +'<div style="display:flex;flex-direction:column;gap:2px;">'
           +'<span style="font-size:13px;font-weight:600;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(_userName)+'</span>'
-          +roleBadge
+          +userRoleBadge
         +'</div>'
         +'<button onclick="logout()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:4px 6px;" title="Logout">\u2715</button>';
     } else {

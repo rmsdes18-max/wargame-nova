@@ -75,23 +75,7 @@
   <!-- ── 1. ROLE BADGES ──────────────────────────────────── -->
   <div class="pg-section">
     <div class="pg-section-title">RoleBadge</div>
-    <div class="pg-row">
-      <!-- DPS -->
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div class="role-dot dot-DPS"></div>
-        <span class="role-pill role-DPS">DPS</span>
-      </div>
-      <!-- TANK -->
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div class="role-dot dot-TANK"></div>
-        <span class="role-pill role-TANK">TANK</span>
-      </div>
-      <!-- HEALER -->
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div class="role-dot dot-HEALER"></div>
-        <span class="role-pill role-HEALER">HEALER</span>
-      </div>
-    </div>
+    <div class="pg-row" id="rolebadge-demo"></div>
   </div>
 
   <!-- ── 2. PARTY CARD ───────────────────────────────────── -->
@@ -158,24 +142,7 @@
   <!-- ── 4. STATS ROW ────────────────────────────────────── -->
   <div class="pg-section">
     <div class="pg-section-title">StatsRow</div>
-    <div class="stats-row">
-      <div class="stat-card gold">
-        <div class="label">Kills</div>
-        <div class="value">40</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Assists</div>
-        <div class="value">80</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Damage</div>
-        <div class="value">2.1M</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Healing</div>
-        <div class="value">15K</div>
-      </div>
-    </div>
+    <div id="statsrow-demo"></div>
   </div>
 
   <!-- ── 5. MODAL ────────────────────────────────────────── -->
@@ -204,5 +171,37 @@ Pyrostorm    DPS     K:7   A:33  D:890K  H:0</textarea>
   </div>
 
 </div>
+
+<script src="js/components/role-badge.js"></script>
+<script src="js/components/stats-row.js"></script>
+<script>
+  document.getElementById('rolebadge-demo').innerHTML =
+    '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS') + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('TANK') + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('HEALER') + '</div>'
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Small:</strong> '
+    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS', { size: 'small' }) + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('TANK', { size: 'small' }) + '</div>'
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Clickable:</strong> '
+    + '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS', { clickable: true }) + '</div>'
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Inline variant:</strong> '
+    + RoleBadge.inline('DPS') + ' '
+    + RoleBadge.inline('TANK') + ' '
+    + RoleBadge.inline('HEALER');
+</script>
+<script>
+  var demoStats = { defeat: 42, assist: 73, dmg_dealt: 3100000, dmg_taken: 890000, healed: 15000 };
+  document.getElementById('statsrow-demo').innerHTML =
+    '<strong style="color:var(--text-muted);font-size:12px;">Cards (default):</strong>'
+    + StatsRow(demoStats)
+    + '<br><strong style="color:var(--text-muted);font-size:12px;">Compact cards:</strong>'
+    + StatsRow(demoStats, { compact: true, fields: ['kills','assists','dmg_dealt','healed'] })
+    + '<br><strong style="color:var(--text-muted);font-size:12px;">Inline:</strong><br>'
+    + '<span style="font-family:monospace;font-size:12px;color:var(--text-secondary);">' + StatsRow.inline(demoStats) + '</span>'
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Inline colored:</strong><br>'
+    + '<span style="font-family:monospace;font-size:12px;">' + StatsRow.inline(demoStats, { colored: true }) + '</span>'
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Summary totals:</strong>'
+    + StatsRow.summary({ defeat: 420, assist: 730, dmg_dealt: 31000000, healed: 1500000 });
+</script>
 </body>
 </html>
