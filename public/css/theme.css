@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════════
-   WARTL Design Tokens v2 — Weave-inspired design system
-   Single source of truth for all design values.
-   Import AFTER nova.css:  <link rel="stylesheet" href="css/design-tokens.css">
+   WARTL — theme.css
+   Design tokens: colors, spacing, fonts, radii, heights.
+   Loads AFTER components.css and overrides defaults.
    ══════════════════════════════════════════════════════════════════════ */
 
 :root {

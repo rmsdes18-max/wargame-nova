@@ -1,12 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════════
-   NOVA — Shared stylesheet (Discord-style gray dashboard)
-   Used by: index.html, members.html
+   WARTL — components.css
+   All component classes. Tokens defined in theme.css.
    ══════════════════════════════════════════════════════════════════════ */
-
-/* ── DESIGN TOKENS ─────────────────────────────────────────────────── */
-/* NOTE: All color/token values are now defined in design-tokens.css
-   which loads AFTER this file and overrides these defaults.
-   These remain as fallbacks only. */
 :root {
   /* Layout (not overridden by design-tokens.css) */
   --sidebar-width:  240px;
