@@ -489,9 +489,9 @@ function renderPreview(){
       var dot=roleColor(m.role);
       var kpv = totalDef>0&&m.defeat>0 ? (m.defeat/totalDef*100) : 0;
       var bw = Math.min(100,kpv*6).toFixed(0);
-      var dc = m.defeat>=20?var(--accent):(m.defeat>0?'var(--text-muted)':'var(--text-label)');
+      var dc = m.defeat>=20?'var(--accent)':(m.defeat>0?'var(--text-muted)':'var(--text-label)');
       var hc = m.healed>500000?'var(--heal)':'var(--text-muted)';
-      var kc = m.defeat>0?'var(--gold)':'var(--text-label)';
+      var kc = m.defeat>0?'var(--accent)':'var(--text-label)';
       html += '<tr>';
       html += '<td><div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></div><span style="font-size:12px;font-weight:600;color:var(--text);">'+m.name+'</span></div></td>';
       html += '<td style="color:'+dc+';font-weight:700;">'+fmtF(m.defeat)+'</td>';
