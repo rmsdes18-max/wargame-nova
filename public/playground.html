@@ -81,62 +81,13 @@
   <!-- ── 2. PARTY CARD ───────────────────────────────────── -->
   <div class="pg-section">
     <div class="pg-section-title">PartyCard</div>
-    <div style="max-width:340px;">
-      <div class="party-card">
-        <div class="party-card-hdr">
-          <span>Alpha Squad</span>
-          <span class="ptag">Party 1</span>
-        </div>
-        <div class="party-member">
-          <div class="role-dot dot-TANK"></div>
-          <span class="role-pill role-TANK">TANK</span>
-          <span class="member-name">Darkblade</span>
-        </div>
-        <div class="party-member">
-          <div class="role-dot dot-HEALER"></div>
-          <span class="role-pill role-HEALER">HEALER</span>
-          <span class="member-name">Lumina</span>
-        </div>
-        <div class="party-member">
-          <div class="role-dot dot-DPS"></div>
-          <span class="role-pill role-DPS">DPS</span>
-          <span class="member-name">Shadowfang</span>
-        </div>
-        <div class="party-member">
-          <div class="role-dot dot-DPS"></div>
-          <span class="role-pill role-DPS">DPS</span>
-          <span class="member-name">Pyrostorm</span>
-        </div>
-      </div>
-    </div>
+    <div style="max-width:380px;" id="partycard-demo"></div>
   </div>
 
   <!-- ── 3. MEMBER DROPDOWN ──────────────────────────────── -->
   <div class="pg-section">
     <div class="pg-section-title">MemberDropdown</div>
-    <div class="pg-dropdown">
-      <button class="pg-dropdown-toggle" onclick="this.nextElementSibling.classList.toggle('open')">
-        Darkblade
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-      <div class="pg-dropdown-menu" style="display:block;">
-        <div class="pg-dropdown-item">
-          <div class="role-dot dot-TANK"></div> Set TANK
-        </div>
-        <div class="pg-dropdown-item">
-          <div class="role-dot dot-HEALER"></div> Set HEALER
-        </div>
-        <div class="pg-dropdown-item">
-          <div class="role-dot dot-DPS"></div> Set DPS
-        </div>
-        <div class="pg-dropdown-item" style="border-top:1px solid var(--border-subtle);margin-top:4px;padding-top:10px;">
-          Move to Party 2
-        </div>
-        <div class="pg-dropdown-item danger">
-          Remove from war
-        </div>
-      </div>
-    </div>
+    <div id="dropdown-demo"></div>
   </div>
 
   <!-- ── 4. STATS ROW ────────────────────────────────────── -->
@@ -148,25 +99,17 @@
   <!-- ── 5. MODAL ────────────────────────────────────────── -->
   <div class="pg-section">
     <div class="pg-section-title">Modal</div>
-    <div class="pg-modal-static">
-      <div class="modal-overlay open">
-        <div class="modal-card">
-          <div class="modal-title">
-            Paste Party Data
-            <span style="cursor:pointer;color:var(--text-muted);font-size:20px;">&times;</span>
-          </div>
-          <div class="modal-sub">Paste the scoreboard text or party list below. Click Parse to preview.</div>
-          <textarea class="modal-textarea" readonly>Darkblade    TANK    K:12  A:30  D:540K  H:0
-Lumina       HEALER  K:3   A:45  D:180K  H:820K
-Shadowfang   DPS     K:18  A:22  D:1.2M  H:0
-Pyrostorm    DPS     K:7   A:33  D:890K  H:0</textarea>
-          <div class="modal-actions">
-            <button class="btn-modal-parse">Parse</button>
-            <button class="btn-modal-apply ready">Apply</button>
-            <button class="btn-modal-cancel">Cancel</button>
-          </div>
-        </div>
-      </div>
+    <div class="pg-modal-static" id="modal-demo"></div>
+  </div>
+
+  <!-- ── 6. TOAST ────────────────────────────────────────── -->
+  <div class="pg-section">
+    <div class="pg-section-title">Toast</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="pg-dropdown-toggle" onclick="Toast.success('War saved successfully!')">Success</button>
+      <button class="pg-dropdown-toggle" onclick="Toast.error('Failed to save war')">Error</button>
+      <button class="pg-dropdown-toggle" onclick="Toast.warning('CSV is empty')">Warning</button>
+      <button class="pg-dropdown-toggle" onclick="Toast.info('3 new aliases saved')">Info</button>
     </div>
   </div>
 
@@ -174,6 +117,16 @@ Pyrostorm    DPS     K:7   A:33  D:890K  H:0</textarea>
 
 <script src="js/components/role-badge.js"></script>
 <script src="js/components/stats-row.js"></script>
+<script src="js/components/party-card.js"></script>
+<script src="js/components/member-dropdown.js"></script>
+<script src="js/components/modal.js"></script>
+<script src="js/components/toast.js"></script>
+<script>
+  // escHtml stub for playground (provided by index.html in production)
+  if (typeof escHtml === 'undefined') {
+    window.escHtml = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  }
+</script>
 <script>
   document.getElementById('rolebadge-demo').innerHTML =
     '<div style="display:flex;align-items:center;gap:6px;">' + RoleBadge('DPS') + '</div>'
@@ -202,6 +155,58 @@ Pyrostorm    DPS     K:7   A:33  D:890K  H:0</textarea>
     + '<span style="font-family:monospace;font-size:12px;">' + StatsRow.inline(demoStats, { colored: true }) + '</span>'
     + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Summary totals:</strong>'
     + StatsRow.summary({ defeat: 420, assist: 730, dmg_dealt: 31000000, healed: 1500000 });
+</script>
+<script>
+  var demoParty = {
+    name: 'Alpha Squad', label: 'Party 1',
+    members: [
+      { name: 'Darkblade',  role: 'TANK',   defeat: 12, assist: 30, dmg_dealt: 540000,  healed: 0 },
+      { name: 'Lumina',     role: 'HEALER', defeat: 3,  assist: 45, dmg_dealt: 180000,  healed: 820000 },
+      { name: 'Shadowfang', role: 'DPS',    defeat: 18, assist: 22, dmg_dealt: 1200000, healed: 0 },
+      { name: 'Pyrostorm',  role: 'DPS',    defeat: 7,  assist: 33, dmg_dealt: 890000,  healed: 0 }
+    ]
+  };
+  var sm3Lookup = {};
+  demoParty.members.forEach(function(m){ sm3Lookup[m.name] = m; });
+  var sm3Result = PartyCard(demoParty, {
+    variant: 'sm3', partyIndex: 0, dotColor: '#7c3aed',
+    memberStatsLookup: sm3Lookup, newMembers: { Pyrostorm: true }
+  });
+  document.getElementById('partycard-demo').innerHTML =
+    '<strong style="color:var(--text-muted);font-size:12px;">Simple variant:</strong>'
+    + PartyCard(demoParty)
+    + '<br><strong style="color:var(--text-muted);font-size:12px;">With stats:</strong>'
+    + PartyCard(demoParty, { showStats: true })
+    + '<br><strong style="color:var(--text-muted);font-size:12px;">SM3 variant (match preview):</strong>'
+    + sm3Result.html;
+</script>
+<script>
+  document.getElementById('dropdown-demo').innerHTML =
+    '<strong style="color:var(--text-muted);font-size:12px;">Default (closed):</strong><br><br>'
+    + MemberDropdown({
+        memberName: 'Darkblade', currentRole: 'TANK',
+        parties: [{ name: 'Party 2', index: 1 }],
+        onRoleChange: "Toast.info('Set role to {role}')",
+        onMove: "Toast.info('Moved to party {partyIndex}')",
+        onRemove: "Toast.warning('Removed from war')"
+      })
+    + '<br><br><strong style="color:var(--text-muted);font-size:12px;">Open:</strong><br><br>'
+    + MemberDropdown({
+        memberName: 'Lumina', currentRole: 'HEALER',
+        parties: [{ name: 'Party 1', index: 0 }, { name: 'Party 3', index: 2 }],
+        open: true
+      });
+</script>
+<script>
+  document.getElementById('modal-demo').innerHTML = Modal({
+    title: 'Paste Party Data',
+    subtitle: 'Paste the scoreboard text or party list below. Click Parse to preview.',
+    body: '<textarea class="modal-textarea" readonly>Darkblade    TANK    K:12  A:30  D:540K  H:0\nLumina       HEALER  K:3   A:45  D:180K  H:820K\nShadowfang   DPS     K:18  A:22  D:1.2M  H:0\nPyrostorm    DPS     K:7   A:33  D:890K  H:0</textarea>',
+    footer: '<button class="btn-modal-parse">Parse</button>'
+      + '<button class="btn-modal-apply ready">Apply</button>'
+      + '<button class="btn-modal-cancel">Cancel</button>',
+    open: true
+  });
 </script>
 </body>
 </html>

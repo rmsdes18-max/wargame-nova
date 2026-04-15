@@ -91,6 +91,10 @@ input[type=number]{-moz-appearance:textfield;}
 }
 </style>
 <script src="js/components/role-badge.js"></script>
+<script src="js/components/stats-row.js"></script>
+<script src="js/components/party-card.js"></script>
+<script src="js/components/modal.js"></script>
+<script src="js/components/toast.js"></script>
 </head>
 <body>
 
@@ -788,7 +792,7 @@ async function saveWarSimple(){
     if(!r.ok) throw new Error('HTTP '+r.status);
     if(_warsCache!==null) _warsCache.unshift(war);
     showPage('wars');
-  } catch(e){ alert('Eroare la salvare: '+e.message); state._saving = false; }
+  } catch(e){ Toast.error('Eroare la salvare: '+e.message); state._saving = false; }
 }
 
 // ── STEP 1: PARTY UPLOAD ──────────────────────────────────────────────────
@@ -862,11 +866,7 @@ function confirmParties(){
   // show confirmed view
   var html='';
   state.parties.forEach(function(p){
-    html += '<div class="party-card"><div class="party-card-hdr"><span>'+p.name+'</span><span class="ptag">'+p.label+'</span></div>';
-    p.members.forEach(function(m){
-      html += '<div class="party-member">'+RoleBadge(m.role)+'<span class="member-name">'+m.name+'</span></div>';
-    });
-    html += '</div>';
+    html += PartyCard(p);
   });
   document.getElementById('party-confirm-display').innerHTML = html;
   document.getElementById('party-manual-editor').style.display='none';
@@ -1135,7 +1135,6 @@ window._v3ResolvedItems = {};  // idx -> {type:'existing'|'new'|'skip', memberNa
 window._v3ManuallyAssigned = {}; // memberName -> true (for NEW badge in party preview)
 
 function renderStatsMatchingV3(results){
-  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
   var roleClass = function(r){ return (r||'DPS')==='TANK'?'tank':(r||'DPS')==='HEALER'?'heal':'dps'; };
 
   window._v3ResolvedItems = {};
@@ -1246,8 +1245,8 @@ function renderStatsMatchingV3(results){
       +'<span style="color:#888;font-size:11px;font-family:monospace;margin-left:auto;">'
         +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'defeat\',this)" title="Click to edit">K:'+(m.stats.defeat||0)+'</span> '
         +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'assist\',this)" title="Click to edit">A:'+(m.stats.assist||0)+'</span> '
-        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'dmg_dealt\',this)" title="Click to edit">D:'+fmtS(m.stats.dmg_dealt||0)+'</span> '
-        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'healed\',this)" title="Click to edit">H:'+fmtS(m.stats.healed||0)+'</span>'
+        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'dmg_dealt\',this)" title="Click to edit">D:'+fmtShort(m.stats.dmg_dealt||0)+'</span> '
+        +'<span class="sm3-editable-stat" onclick="editStatV3('+mi+',\'healed\',this)" title="Click to edit">H:'+fmtShort(m.stats.healed||0)+'</span>'
       +'</span>'
     +'</div>';
   });
@@ -1264,24 +1263,10 @@ function renderStatsMatchingV3(results){
     totalDamage += (m.stats.dmg_dealt||0);
     totalHealed += (m.stats.healed||0);
   });
-  html += '<div id="sm3-summary-totals" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">'
-    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
-      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Kills</div>'
-      +'<div style="font-size:20px;font-weight:700;color:#e84040;font-family:monospace;" id="sm3-total-kills">'+fmtS(totalKills)+'</div>'
-    +'</div>'
-    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
-      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Assists</div>'
-      +'<div style="font-size:20px;font-weight:700;color:#c9a06a;font-family:monospace;" id="sm3-total-assists">'+fmtS(totalAssists)+'</div>'
-    +'</div>'
-    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
-      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Damage</div>'
-      +'<div style="font-size:20px;font-weight:700;color:#f0c040;font-family:monospace;" id="sm3-total-damage">'+fmtS(totalDamage)+'</div>'
-    +'</div>'
-    +'<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px 14px;text-align:center;">'
-      +'<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Healed</div>'
-      +'<div style="font-size:20px;font-weight:700;color:#3ecf6e;font-family:monospace;" id="sm3-total-healed">'+fmtS(totalHealed)+'</div>'
-    +'</div>'
-  +'</div>';
+  html += StatsRow.summary(
+    { defeat: totalKills, assist: totalAssists, dmg_dealt: totalDamage, healed: totalHealed },
+    { ids: { kills: 'sm3-total-kills', assists: 'sm3-total-assists', damage: 'sm3-total-damage', healed: 'sm3-total-healed' } }
+  );
 
   // ── NEEDS YOUR ATTENTION section ──
   html += '<div class="sm3-attention-section" id="sm3-attention-section">';
@@ -1316,8 +1301,8 @@ function renderStatsMatchingV3(results){
         +'<div class="sm3-attention-stats">'
           +'<span class="k">K:'+(r.stats.defeat||0)+'</span>'
           +'<span>A:'+(r.stats.assist||0)+'</span>'
-          +'<span class="d">D:'+fmtS(r.stats.dmg_dealt||0)+'</span>'
-          +'<span class="h">H:'+fmtS(r.stats.healed||0)+'</span>'
+          +'<span class="d">D:'+fmtShort(r.stats.dmg_dealt||0)+'</span>'
+          +'<span class="h">H:'+fmtShort(r.stats.healed||0)+'</span>'
         +'</div>'
       +'</div>'
       +'<div class="sm3-attention-action" id="sm3-action-'+idx+'">'
@@ -1397,44 +1382,25 @@ function renderStatsMatchingV3(results){
   state.parties.forEach(function(party,pi){
     if(party._isExtras || party.name==='_Extras') return;
     var dotColor = partyDotColors[pi % partyDotColors.length];
-    var matchedCount = 0;
 
-    html += '<div class="sm3-party-card">'
-      +'<div class="sm3-party-card-header">'
-        +'<span class="sm3-party-card-title"><span class="sm3-party-dot" style="background:'+dotColor+';"></span> '+escHtml(party.name)+(party.label?' &#8212; '+escHtml(party.label):'')+'</span>'
-        +'<span style="font-size:11px;color:#888;" id="sm3-party-count-'+pi+'"></span>'
-      +'</div>'
-      +'<div style="display:flex;flex-direction:column;gap:6px;" id="sm3-party-members-'+pi+'">';
-
-    // Show ALL party members, with stats for those who are matched
-    party.members.forEach(function(pm, mi){
-      var memberStats = matchedStatsLookup[pm.name] || matchedStatsLookup[normalizeName(pm.name)] || null;
-      // Also try to find via matched array with namesMatch
-      if(!memberStats){
+    // Build a fully-resolved stats lookup for this party (name → stats)
+    var partyStatsLookup = {};
+    party.members.forEach(function(pm){
+      var s = matchedStatsLookup[pm.name] || matchedStatsLookup[normalizeName(pm.name)] || null;
+      if(!s){
         for(var k=0;k<results.matched.length;k++){
-          if(namesMatch(pm.name, results.matched[k].member.name)){
-            memberStats = results.matched[k].stats;
-            break;
-          }
+          if(namesMatch(pm.name, results.matched[k].member.name)){ s = results.matched[k].stats; break; }
         }
       }
-      if(memberStats) matchedCount++;
-      var memberRole = pm.role||'DPS';
-      var isNew = !!window._v3ManuallyAssigned[pm.name];
-      html += '<div class="sm3-party-member'+(isNew?' new-match':'')+'">'
-        +'<span class="sm3-party-role-badge" onclick="cyclePartyRoleV3('+pi+','+mi+')" title="Click to cycle role" style="cursor:pointer;">'
-          +RoleBadge.inline(memberRole)
-        +'</span>'
-        +'<span class="name">'+escHtml(pm.name)+'</span>'
-        +(memberStats
-          ?'<span class="stats">K:'+(memberStats.defeat||0)+' D:'+fmtS(memberStats.dmg_dealt||0)+' H:'+fmtS(memberStats.healed||0)+'</span>'
-          :'<span class="stats" style="color:#555;">--</span>')
-        +(isNew?'<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>':'')
-      +'</div>';
+      if(s) partyStatsLookup[pm.name] = s;
     });
 
-    if(!party.members.length) html += '<div style="font-size:11px;color:#888;padding:4px 0;">No members</div>';
-    html += '</div></div>';
+    var result = PartyCard(party, {
+      variant: 'sm3', partyIndex: pi, dotColor: dotColor,
+      memberStatsLookup: partyStatsLookup,
+      newMembers: window._v3ManuallyAssigned
+    });
+    html += result.html;
 
     // Inject count after render via setTimeout
     setTimeout((function(idx, mc, total){
@@ -1442,7 +1408,7 @@ function renderStatsMatchingV3(results){
         var el = document.getElementById('sm3-party-count-'+idx);
         if(el) el.textContent = mc+'/'+total;
       };
-    })(pi, matchedCount, party.members.length), 10);
+    })(pi, result.matchedCount, party.members.length), 10);
   });
   html += '</div></div>';
 
@@ -1650,7 +1616,6 @@ function updateAttentionCountV3(){
 function updatePartyPreviewV3(){
   // Rebuild party preview based on current matched results
   if(!window._currentMatchResults) return;
-  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
 
   // Build matched stats lookup
   var matchedStatsLookup = {};
@@ -1664,42 +1629,30 @@ function updatePartyPreviewV3(){
     var container = document.getElementById('sm3-party-members-'+pi);
     if(!container) return;
 
-    var matchedCount = 0;
-    var html = '';
-    party.members.forEach(function(pm, mi){
-      var memberStats = matchedStatsLookup[pm.name] || matchedStatsLookup[normalizeName(pm.name)] || null;
-      if(!memberStats){
+    // Build fully-resolved stats lookup for this party
+    var partyStatsLookup = {};
+    party.members.forEach(function(pm){
+      var s = matchedStatsLookup[pm.name] || matchedStatsLookup[normalizeName(pm.name)] || null;
+      if(!s){
         for(var k=0;k<window._currentMatchResults.matched.length;k++){
-          if(namesMatch(pm.name, window._currentMatchResults.matched[k].member.name)){
-            memberStats = window._currentMatchResults.matched[k].stats;
-            break;
-          }
+          if(namesMatch(pm.name, window._currentMatchResults.matched[k].member.name)){ s = window._currentMatchResults.matched[k].stats; break; }
         }
       }
-      if(memberStats) matchedCount++;
-      var memberRole = pm.role||'DPS';
-      var isNew = !!window._v3ManuallyAssigned[pm.name];
-      html += '<div class="sm3-party-member'+(isNew?' new-match':'')+'">'
-        +'<span class="sm3-party-role-badge" onclick="cyclePartyRoleV3('+pi+','+mi+')" title="Click to cycle role" style="cursor:pointer;">'
-          +RoleBadge.inline(memberRole)
-        +'</span>'
-        +'<span class="name">'+escHtml(pm.name)+'</span>'
-        +(memberStats
-          ?'<span class="stats">K:'+(memberStats.defeat||0)+' D:'+fmtS(memberStats.dmg_dealt||0)+' H:'+fmtS(memberStats.healed||0)+'</span>'
-          :'<span class="stats" style="color:#555;">--</span>')
-        +(isNew?'<span style="font-size:8px;background:#f0c040;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">NEW</span>':'')
-      +'</div>';
+      if(s) partyStatsLookup[pm.name] = s;
     });
 
-    if(!party.members.length) html = '<div style="font-size:11px;color:#888;padding:4px 0;">No members</div>';
-    container.innerHTML = html;
+    var result = PartyCard.sm3Members(party, {
+      partyIndex: pi,
+      memberStatsLookup: partyStatsLookup,
+      newMembers: window._v3ManuallyAssigned
+    });
+    container.innerHTML = result.html;
 
     // Update count
     var countEl = document.getElementById('sm3-party-count-'+pi);
-    if(countEl) countEl.textContent = matchedCount+'/'+party.members.length;
-    // Also try the old selector as fallback
+    if(countEl) countEl.textContent = result.matchedCount+'/'+party.members.length;
     var headerEl = container.parentElement.querySelector('.sm3-party-card-header span:last-child');
-    if(headerEl) headerEl.textContent = matchedCount+'/'+party.members.length;
+    if(headerEl) headerEl.textContent = result.matchedCount+'/'+party.members.length;
   });
 
   // Also update summary totals
@@ -1737,19 +1690,18 @@ function editStatV3(matchIdx, field, spanEl){
   input.type = 'number';
   input.value = curVal;
   input.style.cssText = 'width:60px;background:#252525;border:1px solid #f0c040;border-radius:4px;color:#e0e0e0;font-size:11px;font-family:monospace;padding:2px 4px;text-align:right;';
-  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
   var commit = function(){
     var val = parseInt(input.value)||0;
     if(val<0) val=0;
     m.stats[field] = val;
-    spanEl.textContent = label+':'+fmtS(val);
+    spanEl.textContent = label+':'+fmtShort(val);
     updateSummaryTotalsV3();
     updatePartyPreviewV3();
   };
   input.addEventListener('blur', commit);
   input.addEventListener('keydown', function(e){
     if(e.key==='Enter'){ e.preventDefault(); commit(); }
-    if(e.key==='Escape'){ spanEl.textContent = label+':'+fmtS(curVal); }
+    if(e.key==='Escape'){ spanEl.textContent = label+':'+fmtShort(curVal); }
   });
   spanEl.textContent = '';
   spanEl.appendChild(document.createTextNode(label+':'));
@@ -1761,7 +1713,6 @@ function editStatV3(matchIdx, field, spanEl){
 // ── V3: Update summary totals from current matched results ──
 function updateSummaryTotalsV3(){
   if(!window._currentMatchResults) return;
-  var fmtS = function(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return n||0; };
   var totalKills=0, totalAssists=0, totalDamage=0, totalHealed=0;
   window._currentMatchResults.matched.forEach(function(m){
     totalKills += (m.stats.defeat||0);
@@ -1770,10 +1721,10 @@ function updateSummaryTotalsV3(){
     totalHealed += (m.stats.healed||0);
   });
   var el;
-  el = document.getElementById('sm3-total-kills');   if(el) el.textContent = fmtS(totalKills);
-  el = document.getElementById('sm3-total-assists'); if(el) el.textContent = fmtS(totalAssists);
-  el = document.getElementById('sm3-total-damage');  if(el) el.textContent = fmtS(totalDamage);
-  el = document.getElementById('sm3-total-healed');  if(el) el.textContent = fmtS(totalHealed);
+  el = document.getElementById('sm3-total-kills');   if(el) el.textContent = fmtShort(totalKills);
+  el = document.getElementById('sm3-total-assists'); if(el) el.textContent = fmtShort(totalAssists);
+  el = document.getElementById('sm3-total-damage');  if(el) el.textContent = fmtShort(totalDamage);
+  el = document.getElementById('sm3-total-healed');  if(el) el.textContent = fmtShort(totalHealed);
 }
 
 // ── Save War V3: builds confirmed state from match results ──
@@ -1879,11 +1830,6 @@ function renderMatchPreview(){
 }
 
 // ── STEP 5: PREVIEW ───────────────────────────────────────────────────────
-function fmtN(n){
-  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
-  if(n>=1000) return (n/1000).toFixed(0)+'K';
-  return n?String(n):'—';
-}
 function fmtF(n){ return n?n.toLocaleString():'—'; }
 
 function renderPreview(){
@@ -1923,9 +1869,9 @@ function renderPreview(){
     html += '<div class="result-footer">';
     html += '<div class="rf-item"><div class="rf-label">Defeats</div><div class="rf-val" style="color:#ffcc44;">'+td+'</div></div>';
     html += '<div class="rf-item"><div class="rf-label">Assists</div><div class="rf-val" style="color:#999;">'+ta+'</div></div>';
-    html += '<div class="rf-item"><div class="rf-label">Dmg Dealt</div><div class="rf-val" style="color:#e8a030;">'+fmtN(tdd)+'</div></div>';
-    html += '<div class="rf-item"><div class="rf-label">Dmg Taken</div><div class="rf-val" style="color:#cc4444;">'+fmtN(tdt)+'</div></div>';
-    html += '<div class="rf-item"><div class="rf-label">Healed</div><div class="rf-val" style="color:var(--heal);">'+fmtN(th)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Dmg Dealt</div><div class="rf-val" style="color:#e8a030;">'+fmtShort(tdd)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Dmg Taken</div><div class="rf-val" style="color:#cc4444;">'+fmtShort(tdt)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Healed</div><div class="rf-val" style="color:var(--heal);">'+fmtShort(th)+'</div></div>';
     html += '</div></div>';
   });
   document.getElementById('preview-content').innerHTML = html;
@@ -1964,7 +1910,6 @@ function renderWarsList(){
         });
       }
     });
-    var fmtStat = function(n){ if(n>=1000000) return (n/1000000).toFixed(2)+'M'; if(n>=1000) return (n/1000).toFixed(0)+'K'; return n?String(n):'0'; };
 
     var partyDotsHtml = '';
     if(w.parties){
@@ -1988,8 +1933,8 @@ function renderWarsList(){
       +'<div class="war-card-stats">'
         +'<div class="war-card-stat"><span class="lbl">Kills</span><span class="val">'+totalK+'</span></div>'
         +'<div class="war-card-stat"><span class="lbl">Assists</span><span class="val">'+totalA+'</span></div>'
-        +'<div class="war-card-stat"><span class="lbl">Dmg Dealt</span><span class="val">'+fmtStat(totalDmg)+'</span></div>'
-        +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtStat(totalHeal)+'</span></div>'
+        +'<div class="war-card-stat"><span class="lbl">Dmg Dealt</span><span class="val">'+fmtShort(totalDmg)+'</span></div>'
+        +'<div class="war-card-stat"><span class="lbl">Healed</span><span class="val">'+fmtShort(totalHeal)+'</span></div>'
       +'</div>'
       +partyDotsHtml
       +'</div>'
@@ -2008,7 +1953,7 @@ async function confirmDeleteWar(warId){
       throw new Error('HTTP '+r.status+' — '+(errBody||'unknown'));
     }
     if(_warsCache!==null) _warsCache = _warsCache.filter(function(w){ return String(w.id)!==String(warId); });
-  } catch(e){ alert('Eroare la ștergere: '+e.message); return; }
+  } catch(e){ Toast.error('Eroare la ștergere: '+e.message); return; }
   showPage('wars');
 }
 
@@ -2018,7 +1963,6 @@ var _vwWarId = null;
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function roleColor(role){ return role==='TANK'?'var(--tank)':role==='HEALER'?'var(--heal)':'var(--dps)'; }
 function roleClass(role){ return role==='TANK'?'name-tank':role==='HEALER'?'name-heal':'name-dps'; }
-function fmtNum(n){ return n ? n.toLocaleString() : '0'; }
 function getWar(warId){ var wars=loadWars(); return wars.find(function(x){return x.id===warId;}); }
 
 function editableCell(cls, val, warId, pi, mi, field){
@@ -2098,13 +2042,10 @@ function viewWar(warId){
   html += '</div>';
 
   // ── Stat cards ──
-  html += '<div class="stats-row">';
-  html += '<div class="stat-card"><div class="label">Kills</div><div class="value" style="color:#e84040;">'+(totalDefeats||'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Assists</div><div class="value">'+(totalAssists||'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Dmg Dealt</div><div class="value" style="color:#c9a06a;">'+(totalDmg?totalDmg.toLocaleString():'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Dmg Taken</div><div class="value" style="color:#a08090;">'+(totalTaken?totalTaken.toLocaleString():'—')+'</div></div>';
-  html += '<div class="stat-card"><div class="label">Healed</div><div class="value" style="color:#3ecf6e;">'+(totalHealed?totalHealed.toLocaleString():'—')+'</div></div>';
-  html += '</div>';
+  html += StatsRow(
+    { defeat: totalDefeats, assist: totalAssists, dmg_dealt: totalDmg, dmg_taken: totalTaken, healed: totalHealed },
+    { emptyText: '—' }
+  );
 
   // ── Tabs ──
   html += '<div class="tabs">';
@@ -2189,16 +2130,16 @@ function viewWar(warId){
       if(_vwEditMode){
         html += editableCell('num-k', (m.defeat||0), w.id, pi, mi, 'defeat');
         html += editableCell('', (m.assist||0), w.id, pi, mi, 'assist');
-        html += editableCell('num-dmg', fmtNum(m.dmg_dealt), w.id, pi, mi, 'dmg_dealt');
-        html += editableCell('num-taken', fmtNum(m.dmg_taken), w.id, pi, mi, 'dmg_taken');
-        html += editableCell('num-heal', fmtNum(m.healed), w.id, pi, mi, 'healed');
+        html += editableCell('num-dmg', fmtFull(m.dmg_dealt), w.id, pi, mi, 'dmg_dealt');
+        html += editableCell('num-taken', fmtFull(m.dmg_taken), w.id, pi, mi, 'dmg_taken');
+        html += editableCell('num-heal', fmtFull(m.healed), w.id, pi, mi, 'healed');
         html += '<td class="action-cell"><button class="btn-icon" onclick="removeWarMember('+w.id+','+pi+','+mi+')">×</button></td>';
       } else {
         html += '<td class="num num-k">'+(m.defeat||0)+'</td>';
         html += '<td class="num">'+(m.assist||0)+'</td>';
-        html += '<td class="num num-dmg">'+fmtNum(m.dmg_dealt)+'</td>';
-        html += '<td class="num num-taken">'+fmtNum(m.dmg_taken)+'</td>';
-        html += '<td class="num num-heal">'+fmtNum(m.healed)+'</td>';
+        html += '<td class="num num-dmg">'+fmtFull(m.dmg_dealt)+'</td>';
+        html += '<td class="num num-taken">'+fmtFull(m.dmg_taken)+'</td>';
+        html += '<td class="num num-heal">'+fmtFull(m.healed)+'</td>';
       }
 
       html += '</tr>';
@@ -2252,9 +2193,9 @@ function viewWar(warId){
         +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
           +'<div><span style="color:var(--text-muted);">K</span> <span style="color:#cf4444;">'+(ex.defeat||0)+'</span></div>'
           +'<div><span style="color:var(--text-muted);">A</span> <span>'+(ex.assist||0)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">'+fmtNum(ex.dmg_dealt)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:#a08090;">'+fmtNum(ex.dmg_taken)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:#5eb882;">'+fmtNum(ex.healed)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">'+fmtFull(ex.dmg_dealt)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:#a08090;">'+fmtFull(ex.dmg_taken)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:#5eb882;">'+fmtFull(ex.healed)+'</span></div>'
         +'</div>'
         +'</div>';
     });
@@ -2766,7 +2707,7 @@ async function saveWarEdits(warId){
     var r = await fetch('/api/wars/'+warId,{method:'PUT',headers:apiHeaders(true),
       body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties,extras:w.extras||[]})});
     if(!r.ok) throw new Error('HTTP '+r.status);
-  } catch(e){ alert('Eroare la salvare: '+e.message); return; }
+  } catch(e){ Toast.error('Eroare la salvare: '+e.message); return; }
   _vwEditMode = false;
   viewWar(warId); // re-render with updated data
 }
@@ -2902,7 +2843,7 @@ function renderUsersList(){
 
 function changeUserRole(id, newRole){
   fetch('/api/users/'+id, {method:'PATCH', headers:apiHeaders(true), body:JSON.stringify({role:newRole})})
-    .then(function(r){ if(!r.ok) alert('Failed to update role'); })
+    .then(function(r){ if(!r.ok) Toast.error('Failed to update role'); })
     .then(function(){ renderUsersList(); });
 }
 
@@ -3431,21 +3372,21 @@ async function cycleRole(encodedName, newRole){
   try{
     await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({role:newRole})});
     renderMembersPage();
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function archiveMember(encodedName){
   try{
     await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({active:false})});
     renderMembersPage();
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function restoreMember(encodedName){
   try{
     await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({active:true})});
     renderMembersPage();
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function syncRosterFromScreenshot(input){
@@ -3495,7 +3436,7 @@ async function syncRosterFromScreenshot(input){
 // ── CSV IMPORT ──
 var _csvMerged = null;
 
-function closeCsvModal(){ document.getElementById('csv-modal').style.display='none'; }
+function closeCsvModal(){ Modal.close('csv-modal'); }
 
 function importTlgmCsv(input){
   var file = input.files[0]; if(!file) return;
@@ -3503,7 +3444,7 @@ function importTlgmCsv(input){
   reader.onload = function(ev){
     var text = ev.target.result;
     var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
-    if(lines.length<2){ alert('CSV is empty'); return; }
+    if(lines.length<2){ Toast.warning('CSV is empty'); return; }
 
     // Parse CSV (skip header)
     var csvMembers = [];
@@ -3521,7 +3462,7 @@ function importTlgmCsv(input){
       else if(/advisor/i.test(rank)) guildRole='Advisor';
       csvMembers.push({name:name, role:role, guildRole:guildRole, active:status!=='inactive'});
     }
-    if(!csvMembers.length){ alert('No members found in CSV'); return; }
+    if(!csvMembers.length){ Toast.warning('No members found in CSV'); return; }
 
     // Compare with existing roster
     var existingMap = {};
@@ -3585,7 +3526,7 @@ function importTlgmCsv(input){
     html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">After sync: <b style="color:#fff;">'+activeCount+' active</b>, '+archivedCount+' archived</div>';
 
     document.getElementById('csv-preview-content').innerHTML = html;
-    document.getElementById('csv-modal').style.display = 'flex';
+    Modal.open('csv-modal');
   };
   reader.readAsText(file);
   input.value = '';
@@ -3593,8 +3534,8 @@ function importTlgmCsv(input){
 
 async function syncTlGameAliases(input){
   var files = Array.from(input.files); if(!files.length) return;
-  if(files.length > 10){ alert('Max 10 screenshots at once.'); input.value=''; return; }
-  if(!_rosterData.length){ alert('Import TLGM CSV first to set up your roster.'); input.value=''; return; }
+  if(files.length > 10){ Toast.warning('Max 10 screenshots at once.'); input.value=''; return; }
+  if(!_rosterData.length){ Toast.warning('Import TLGM CSV first to set up your roster.'); input.value=''; return; }
 
   var container = document.getElementById('members-list-container');
   container.innerHTML = '<div style="padding:20px;text-align:center;"><div class="processing"><span class="spin">◌</span> Reading in-game names from '+files.length+' screenshot'+(files.length>1?'s':'')+'...</div></div>';
@@ -3744,7 +3685,7 @@ async function clearAllMembersAndAliases(){
     await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify([])});
     await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({})});
     renderMembersPage();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 function refreshUnmatchedDropdowns(){
@@ -3788,7 +3729,7 @@ async function saveAllUnmatched(){
     aliases[key] = gameName;
     count++;
   });
-  if(!count){ alert('No names to save'); return; }
+  if(!count){ Toast.warning('No names to save'); return; }
   try{
     var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
     if(!r.ok) throw new Error('Failed');
@@ -3800,14 +3741,14 @@ async function saveAllUnmatched(){
       });
     }
     renderMembersList();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 function saveUnmatchedMember(encodedName){
   var name = decodeURIComponent(encodedName);
   var manualInput = document.getElementById('manual-'+encodedName);
   var gameName = manualInput ? manualInput.value.trim() : '';
-  if(!gameName){ alert('Enter an in-game name'); return; }
+  if(!gameName){ Toast.warning('Enter an in-game name'); return; }
   var key = name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
   var aliases = Object.assign({}, _memberAliases);
   aliases[key] = gameName;
@@ -3816,12 +3757,12 @@ function saveUnmatchedMember(encodedName){
     window._unmatchedGameNames = window._unmatchedGameNames.filter(function(gn){ return gn.toLowerCase() !== gameName.toLowerCase(); });
   }
   fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
-    .then(function(r){ if(r.ok){ _memberAliases = aliases; renderMembersList(); } else alert('Failed'); })
-    .catch(function(e){ alert(e.message); });
+    .then(function(r){ if(r.ok){ _memberAliases = aliases; renderMembersList(); } else Toast.error('Failed'); })
+    .catch(function(e){ Toast.error(e.message); });
 }
 
 // ── MEMBER PROFILE ──
-function closeMemberProfile(){ document.getElementById('member-profile-modal').style.display='none'; }
+function closeMemberProfile(){ Modal.close('member-profile-modal'); }
 
 function openMemberProfile(encodedName){
   var name = decodeURIComponent(encodedName);
@@ -3871,7 +3812,6 @@ function openMemberProfile(encodedName){
   });
 
   var warCount = warHistory.length;
-  var fmtBig = function(n){ if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(0)+'K'; return n||0; };
 
   // Header
   document.getElementById('mp-header').innerHTML =
@@ -3908,13 +3848,13 @@ function openMemberProfile(encodedName){
       +'</div>'
       +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Damage Dealt</div>'
-        +'<div style="font-size:22px;font-weight:700;color:var(--gold);">'+fmtBig(totalDmg)+'</div>'
-        +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtBig(avgDmg)+'/war</div>'
+        +'<div style="font-size:22px;font-weight:700;color:var(--gold);">'+fmtShort(totalDmg)+'</div>'
+        +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtShort(avgDmg)+'/war</div>'
       +'</div>'
       +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Healed</div>'
-        +'<div style="font-size:22px;font-weight:700;color:#3ecf6e;">'+fmtBig(totalHeal)+'</div>'
-        +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtBig(avgHeal)+'/war</div>'
+        +'<div style="font-size:22px;font-weight:700;color:#3ecf6e;">'+fmtShort(totalHeal)+'</div>'
+        +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtShort(avgHeal)+'/war</div>'
       +'</div>'
     +'</div>';
 
@@ -3935,7 +3875,7 @@ function openMemberProfile(encodedName){
     var bestWar = warHistory.slice().sort(function(a,b){return(b.k+b.dmg)-(a.k+a.dmg);})[0];
     document.getElementById('mp-stats').innerHTML += '<div style="display:flex;gap:20px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;">'
       +'<div><span style="color:var(--text-muted);">Trend: </span><span style="color:'+trendColor+';font-weight:600;">'+trend+'</span></div>'
-      +(bestWar?'<div><span style="color:var(--text-muted);">Best War: </span><span style="color:#fff;font-weight:600;">vs '+escHtml(bestWar.opponent)+' ('+bestWar.k+'K, '+fmtBig(bestWar.dmg)+' DMG)</span></div>':'')
+      +(bestWar?'<div><span style="color:var(--text-muted);">Best War: </span><span style="color:#fff;font-weight:600;">vs '+escHtml(bestWar.opponent)+' ('+bestWar.k+'K, '+fmtShort(bestWar.dmg)+' DMG)</span></div>':'')
       +'</div>';
   }
 
@@ -3956,8 +3896,8 @@ function openMemberProfile(encodedName){
         +'<div style="width:70px;color:var(--text-muted);">'+escHtml(wh.party)+'</div>'
         +'<div style="width:40px;text-align:right;color:#e84040;">'+wh.k+'</div>'
         +'<div style="width:40px;text-align:right;">'+wh.a+'</div>'
-        +'<div style="width:60px;text-align:right;color:var(--gold);">'+fmtBig(wh.dmg)+'</div>'
-        +'<div style="width:60px;text-align:right;color:#3ecf6e;">'+fmtBig(wh.heal)+'</div>'
+        +'<div style="width:60px;text-align:right;color:var(--gold);">'+fmtShort(wh.dmg)+'</div>'
+        +'<div style="width:60px;text-align:right;color:#3ecf6e;">'+fmtShort(wh.heal)+'</div>'
         +'</div>';
     });
     warsHtml += '</div>';
@@ -3966,7 +3906,7 @@ function openMemberProfile(encodedName){
   }
   document.getElementById('mp-wars').innerHTML = warsHtml;
 
-  document.getElementById('member-profile-modal').style.display = 'flex';
+  Modal.open('member-profile-modal');
 }
 
 function renameMember(encodedName){
@@ -3976,8 +3916,8 @@ function renameMember(encodedName){
   var newName = input.value.trim();
   if(!newName || newName === oldName){ input.style.borderColor=''; return; }
   fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({name:newName})})
-    .then(function(r){ if(r.ok){ input.style.borderColor='var(--heal)'; setTimeout(function(){ renderMembersPage(); },500); } else alert('Failed to rename'); })
-    .catch(function(e){ alert(e.message); });
+    .then(function(r){ if(r.ok){ input.style.borderColor='var(--heal)'; setTimeout(function(){ renderMembersPage(); },500); } else Toast.error('Failed to rename'); })
+    .catch(function(e){ Toast.error(e.message); });
 }
 
 function saveInlineAlias(encodedName){
@@ -3990,8 +3930,8 @@ function saveInlineAlias(encodedName){
   if(newAlias) aliases[key] = newAlias;
   else delete aliases[key];
   fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
-    .then(function(r){ if(r.ok){ _memberAliases = aliases; input.style.borderColor='var(--heal)'; setTimeout(function(){input.style.borderColor='';},800); } else alert('Failed'); })
-    .catch(function(e){ alert(e.message); });
+    .then(function(r){ if(r.ok){ _memberAliases = aliases; input.style.borderColor='var(--heal)'; setTimeout(function(){input.style.borderColor='';},800); } else Toast.error('Failed'); })
+    .catch(function(e){ Toast.error(e.message); });
 }
 
 function skipUnmatched(btn){
@@ -4033,7 +3973,7 @@ async function applyAliasSync(){
 
     window._pendingAliases = null;
     renderMembersPage();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function applyCsvImport(){
@@ -4043,14 +3983,14 @@ async function applyCsvImport(){
     if(!r.ok) throw new Error('Failed to save');
     closeCsvModal();
     renderMembersPage();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function updateDefaultInviteRole(role){
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({settings:{default_invite_role:role}})});
-    if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); }
-  }catch(e){ alert(e.message); }
+    if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function renameGuild(){
@@ -4058,14 +3998,14 @@ async function renameGuild(){
   if(!name) return;
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({name:name})});
-    if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); return; }
+    if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); return; }
     // Update topbar
     var nameEl = document.getElementById('topbar-guild-name');
     if(nameEl) nameEl.textContent = name;
     // Update guilds cache
     var g = _guilds.find(function(g){ return g.id === _currentGuildId; });
     if(g) g.name = name;
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function changeGuildMemberRole(userId, newRole){
@@ -4074,9 +4014,9 @@ async function changeGuildMemberRole(userId, newRole){
   }
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId+'/members/'+userId+'/role',{method:'POST',headers:apiHeaders(),body:JSON.stringify({role:newRole})});
-    if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); }
+    if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); }
     initGuildSettings();
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 async function kickGuildMember(userId, username){
@@ -4084,7 +4024,7 @@ async function kickGuildMember(userId, username){
   try{
     await fetch('/api/guilds/'+_currentGuildId+'/members/'+userId,{method:'DELETE',headers:apiHeaders()});
     initGuildSettings();
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 function copyInviteCode(){
@@ -4115,11 +4055,11 @@ async function leaveCurrentGuild(){
   if(!confirm('Leave this guild? You will lose access to all guild data.')) return;
   try{
     var r = await fetch('/api/guilds/'+_currentGuildId+'/leave',{method:'POST',headers:apiHeaders()});
-    if(!r.ok){ var d=await r.json(); alert(d.error||'Failed'); return; }
+    if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); return; }
     localStorage.removeItem('nova_guild_id');
     _currentGuildId = '';
     handleGuildRouting();
-  }catch(e){ alert(e.message); }
+  }catch(e){ Toast.error(e.message); }
 }
 
 function showAppShell(loggedIn){
@@ -5091,32 +5031,19 @@ async function goStep3WithVision(){
   <div id="members-list-container"></div>
 </div>
 
-<!-- CSV Import Preview Modal -->
-<div id="csv-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:min(520px,92vw);max-height:80vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#fff;">Import Preview</div>
-      <button onclick="closeCsvModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
-    </div>
-    <div id="csv-preview-content"></div>
-    <div style="display:flex;gap:8px;margin-top:16px;">
-      <button id="csv-apply-btn" onclick="applyCsvImport()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply Changes</button>
-      <button onclick="closeCsvModal()" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ MEMBER PROFILE MODAL ═══════════════ -->
-<div id="member-profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center;overflow-y:auto;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:min(640px,92vw);max-height:85vh;overflow-y:auto;margin:20px auto;">
-    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px;">
-      <div id="mp-header"></div>
-      <button onclick="closeMemberProfile()" style="background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;">&times;</button>
-    </div>
-    <div id="mp-stats"></div>
-    <div id="mp-wars" style="margin-top:20px;"></div>
-  </div>
-</div>
+<script>
+document.write(Modal.inline({
+  id: 'csv-modal', title: 'Import Preview', size: 'md',
+  body: '<div id="csv-preview-content"></div>',
+  footer: '<button id="csv-apply-btn" onclick="applyCsvImport()" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Apply Changes</button>'
+    + '<button onclick="Modal.close(\'csv-modal\')" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>'
+}));
+document.write(Modal.inline({
+  id: 'member-profile-modal', size: 'lg', scrollable: true,
+  bodyId: 'mp-header',
+  body: '<div id="mp-stats"></div><div id="mp-wars" style="margin-top:20px;"></div>'
+}));
+</script>
 
 <!-- ═══════════════ GUILD SETTINGS ═══════════════ -->
 <div class="page" id="page-guild-settings">
