@@ -17,15 +17,60 @@ function logout(){
 
 // ── SHARE WAR ─────────────────────────────────────────────────────────────
 function shareWar(warId){
-  var url = window.location.origin + window.location.pathname + '#war-' + warId;
-  navigator.clipboard.writeText(url).then(function(){
-    // Brief visual feedback
-    var btn = event.target;
-    var orig = btn.textContent;
-    btn.textContent = '\u2713 Copied!';
-    setTimeout(function(){ btn.textContent = orig; }, 1500);
+  var btn = event.target;
+  var orig = btn.textContent;
+  btn.textContent = '...';
+  apiPost('/api/wars/' + warId + '/share', {}).then(function(data){
+    var token = data && data.share_token;
+    var url;
+    if(token){
+      url = window.location.origin + window.location.pathname + '#share-' + token;
+    } else {
+      url = window.location.origin + window.location.pathname + '#war-' + warId;
+    }
+    navigator.clipboard.writeText(url).then(function(){
+      btn.textContent = '\u2713 Copied!';
+      setTimeout(function(){ btn.textContent = orig; }, 1500);
+    }).catch(function(){
+      prompt('Copy this link:', url);
+      btn.textContent = orig;
+    });
   }).catch(function(){
-    prompt('Copy this link:', url);
+    var url = window.location.origin + window.location.pathname + '#war-' + warId;
+    navigator.clipboard.writeText(url).then(function(){
+      btn.textContent = '\u2713 Copied!';
+      setTimeout(function(){ btn.textContent = orig; }, 1500);
+    }).catch(function(){
+      prompt('Copy this link:', url);
+      btn.textContent = orig;
+    });
+  });
+}
+
+function loadPublicWar(token){
+  hideAppChrome();
+  fetch('/api/wars/share/' + token).then(function(r){
+    if(!r.ok) return null;
+    return r.json();
+  }).then(function(data){
+    if(!data){
+      var el = document.getElementById('view-war-content');
+      if(el){
+        el.innerHTML = '<div style="text-align:center;padding:80px 20px;">' +
+          '<h2 style="color:var(--text-primary);">Link invalid sau expirat</h2>' +
+          '<p style="color:var(--text-secondary);margin:16px 0;">Acest link de share nu mai este valabil.</p>' +
+          '<a href="/api/auth/discord" class="btn btn-primary" style="margin-top:16px;">Login with Discord</a>' +
+          '</div>';
+      }
+      showPage('view-war');
+      return;
+    }
+    _isPublicView = true;
+    _publicWarData = data;
+    showPage('view-war');
+    viewWar(data.id);
+  }).catch(function(){
+    showPage('login');
   });
 }
 
@@ -432,8 +477,13 @@ function showAppShell(loggedIn){
 }
 
 function checkAuth(){
-  // Check if Discord just redirected back with a token
   var hash = window.location.hash;
+  // Public share link — skip all auth
+  if(hash.indexOf('#share-') === 0){
+    loadPublicWar(hash.replace('#share-', ''));
+    return;
+  }
+  // Check if Discord just redirected back with a token
   if(hash.startsWith('#auth=')){
     var token = hash.replace('#auth=','');
     localStorage.setItem('nova_token', token);

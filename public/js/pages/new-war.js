@@ -521,9 +521,13 @@ async function initApp(){
   // Auth first, then guild routing loads data
   checkAuth();
 
-  // Hash routing: #war-{id} opens that war
+  // Hash routing: #war-{id} or #share-{token} opens that war
   function checkHashRoute(){
     var hash = window.location.hash;
+    if(hash.indexOf('#share-') === 0){
+      loadPublicWar(hash.replace('#share-', ''));
+      return;
+    }
     if(hash.startsWith('#war-')){
       var warId = +hash.replace('#war-','');
       if(warId && _currentGuildId) setTimeout(function(){ viewWar(warId); }, 500);

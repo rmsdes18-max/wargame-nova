@@ -80,6 +80,8 @@ async function confirmDeleteWar(warId){
 
 var _vwEditMode = false;
 var _vwWarId = null;
+var _isPublicView = false;
+var _publicWarData = null;
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 // roleColor(), roleClass() moved to js/utils/party-helpers.js
@@ -116,8 +118,14 @@ function makeEditable(span){
 
 function viewWar(warId){
   _vwWarId = warId;
-  var wars = loadWars();
-  var w = wars.find(function(x){ return x.id===warId; });
+  var w;
+  if(_isPublicView && _publicWarData){
+    w = _publicWarData;
+    _vwEditMode = false;
+  } else {
+    var wars = loadWars();
+    w = wars.find(function(x){ return x.id===warId; });
+  }
   if(!w) return;
 
   // Compute aggregates from parties
@@ -133,29 +141,34 @@ function viewWar(warId){
   }); });
 
   // ── War header ──
+  var guildName = _isPublicView ? (w.guild_name || '') : _currentGuildName;
   var html = '<div class="war-header">';
   html += '<div class="war-title">';
-  if(_vwEditMode){
-    html += '<h2>'+escHtml(_currentGuildName)+' vs <span contenteditable="true" style="outline:none;border-bottom:1px dashed var(--accent);cursor:text;" onblur="document.getElementById(\'edit-opponent\').value=this.textContent.trim()">'+escHtml(w.opponent)+'</span></h2>';
+  if(!_isPublicView && _vwEditMode){
+    html += '<h2>'+escHtml(guildName)+' vs <span contenteditable="true" style="outline:none;border-bottom:1px dashed var(--accent);cursor:text;" onblur="document.getElementById(\'edit-opponent\').value=this.textContent.trim()">'+escHtml(w.opponent)+'</span></h2>';
   } else {
-    html += '<h2>'+escHtml(_currentGuildName)+' vs '+escHtml(w.opponent)+'</h2>';
+    html += '<h2>'+escHtml(guildName)+' vs '+escHtml(w.opponent)+'</h2>';
   }
   html += '<span class="date">'+escHtml(w.date)+'</span>';
   html += '</div>';
   html += '<div class="war-actions">';
-  html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
-  html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
-  html += '<button class="btn btn-secondary" onclick="shareWar('+w.id+')">&#x1F517; Share</button>';
-  html += '<button class="btn btn-secondary" onclick="exportWarImage()">&#x1F4F8; Export</button>';
-  if(_vwEditMode){
-    html += '<button class="btn btn-secondary" onclick="cancelEditMode()">Cancel</button>';
-    if(_userRole === 'admin' || _userRole === 'editor'){
-      html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete</button>';
-    }
-    html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
+  if(_isPublicView){
+    html += '<a href="/api/auth/discord" class="btn btn-primary">Login with Discord</a>';
   } else {
-    if(_userRole === 'admin' || _userRole === 'editor'){
-      html += '<button class="btn btn-secondary" onclick="enterEditMode('+w.id+')">&#x270E; Edit</button>';
+    html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
+    html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
+    html += '<button class="btn btn-secondary" onclick="shareWar('+w.id+')">&#x1F517; Share</button>';
+    html += '<button class="btn btn-secondary" onclick="exportWarImage()">&#x1F4F8; Export</button>';
+    if(_vwEditMode){
+      html += '<button class="btn btn-secondary" onclick="cancelEditMode()">Cancel</button>';
+      if(_userRole === 'admin' || _userRole === 'editor'){
+        html += '<button class="btn btn-danger" onclick="if(confirm(\'Delete this war?\'))confirmDeleteWar('+w.id+')">Delete</button>';
+      }
+      html += '<button class="btn btn-primary" onclick="saveWarEdits('+w.id+')">Save</button>';
+    } else {
+      if(_userRole === 'admin' || _userRole === 'editor'){
+        html += '<button class="btn btn-secondary" onclick="enterEditMode('+w.id+')">&#x270E; Edit</button>';
+      }
     }
   }
   html += '</div>';

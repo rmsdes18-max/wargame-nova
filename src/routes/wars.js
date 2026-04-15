@@ -4,6 +4,42 @@ const { requireAuth, guildContext, requireGuildRole, checkFreeTierLimits } = req
 const { logActivity } = require('../services/activityLog');
 const router = Router();
 
+// GET public shared war (no auth required)
+router.get('/share/:token', async (req, res) => {
+  try {
+    const token = req.params.token;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) {
+      return res.status(400).json({ error: 'Invalid share token' });
+    }
+    const { rows } = await pool.query(
+      'SELECT w.id, w.opponent, w.date, w.parties, g.name as guild_name FROM wars w JOIN guilds g ON g.id = w.guild_id WHERE w.share_token = $1',
+      [token]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Shared war not found' });
+    const r = rows[0];
+    res.json({ id: Number(r.id), opponent: r.opponent, date: r.date, parties: r.parties, guild_name: r.guild_name });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST generate/get share token for a war (editor+)
+router.post('/:id/share', requireAuth, guildContext, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT share_token FROM wars WHERE id = $1 AND guild_id = $2',
+      [req.params.id, req.guild.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'War not found' });
+    if (rows[0].share_token) {
+      return res.json({ share_token: rows[0].share_token });
+    }
+    const { rows: updated } = await pool.query(
+      'UPDATE wars SET share_token = gen_random_uuid() WHERE id = $1 AND guild_id = $2 RETURNING share_token',
+      [req.params.id, req.guild.id]
+    );
+    res.json({ share_token: updated[0].share_token });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET all wars for current guild (newest first)
 router.get('/', requireAuth, guildContext, async (req, res) => {
   try {
