@@ -1,0 +1,104 @@
+/* ══════════════════════════════════════════════════════════════════════
+   WARTL Design Tokens — single source of truth for all design values
+   Import AFTER nova.css:  <link rel="stylesheet" href="css/design-tokens.css">
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── Spacing Scale ──────────────────────────────────────────────── */
+  --spacing-2xs:  2px;
+  --spacing-xs:   4px;
+  --spacing-sm:   8px;
+  --spacing-md:  12px;
+  --spacing-lg:  16px;
+  --spacing-xl:  20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  --spacing-5xl: 60px;
+
+  /* ── Border Radius (extend nova.css) ────────────────────────────── */
+  /* nova.css already defines: --radius-sm:4px, --radius-md:6px, --radius-lg:8px, --radius-xl:12px */
+  --radius-xs:    3px;
+  --radius-full:  99px;
+  --radius-circle: 50%;
+
+  /* ── Font Sizes ─────────────────────────────────────────────────── */
+  --font-size-2xs:  8px;
+  --font-size-xs:   9px;
+  --font-size-sm:  10px;
+  --font-size-base: 12px;
+  --font-size-md:  13px;
+  --font-size-lg:  14px;
+  --font-size-xl:  16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 20px;
+  --font-size-4xl: 22px;
+  --font-size-5xl: 28px;
+
+  /* ── Font Weights ─���─────────────────────────────────────────────── */
+  --font-weight-normal:    400;
+  --font-weight-medium:    500;
+  --font-weight-semibold:  600;
+  --font-weight-bold:      700;
+  --font-weight-extrabold: 800;
+
+  /* ── Font Families ──────────────────────────────────────────────── */
+  --font-display: 'Rajdhani', sans-serif;
+  --font-body:    'Plus Jakarta Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* ── Stat Colors ────────────────────────────────────────────────── */
+  /* These are semantic aliases for stat-specific colors.
+     Role colors (--tank, --heal, --dps) are in nova.css. */
+  --color-kills:      var(--dps);        /* #e84040 */
+  --color-assists:    #c9a06a;
+  --color-dmg-dealt:  var(--accent-primary); /* #f0c040 */
+  --color-dmg-taken:  #a08090;
+  --color-healed:     var(--heal);       /* #3ecf6e */
+
+  /* ── Status Colors ──────────────────────────────────────────────── */
+  --color-success:    var(--heal);       /* #3ecf6e */
+  --color-error:      var(--dps);        /* #e84040 */
+  --color-warning:    var(--accent-primary); /* #f0c040 */
+  --color-info:       #5b8fff;
+
+  /* ── Status Backgrounds (subtle) ────────────────────────────────── */
+  --color-success-bg: rgba(62, 207, 110, .15);
+  --color-error-bg:   rgba(232, 64, 64, .15);
+  --color-warning-bg: rgba(240, 192, 64, .15);
+  --color-info-bg:    rgba(91, 143, 255, .15);
+
+  /* ── Role Badge Backgrounds ─────────────────────────────────────── */
+  /* nova.css has --tank-bg, --heal-bg, --dps-bg at .12 opacity.
+     These are .2 opacity variants used in inline badges. */
+  --role-tank-bg:   rgba(139, 92, 246, .2);
+  --role-heal-bg:   rgba(62, 207, 110, .2);
+  --role-dps-bg:    rgba(232, 64, 64, .2);
+
+  /* ── Modal Widths ───────────────────────────────────────────────── */
+  --modal-width-sm:  400px;
+  --modal-width-md:  560px;
+  --modal-width-lg:  720px;
+
+  /* ── Shadows ──────────────────────────────────────────────��─────── */
+  --shadow-sm:   0 2px 8px rgba(0, 0, 0, .2);
+  --shadow-md:   0 4px 16px rgba(0, 0, 0, .3);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, .5);
+  --shadow-overlay: 0 0 40px rgba(0, 0, 0, .6);
+
+  /* ── Overlay ────────────────────────────────────────────────────── */
+  --overlay-bg:  rgba(0, 0, 0, .7);
+
+  /* ── Opacity Scale ──────────────────────────────────────────────── */
+  --opacity-icon-dim:   .15;
+  --opacity-disabled:   .4;
+  --opacity-secondary:  .6;
+  --opacity-hover:      .75;
+  --opacity-subtle:     .88;
+
+  /* ── Z-Index Scale ──────────────────────────────────────────────── */
+  --z-dropdown:   10;
+  --z-modal:     200;
+  --z-toast:    9999;
+}

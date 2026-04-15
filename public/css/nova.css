@@ -4,58 +4,13 @@
    ══════════════════════════════════════════════════════════════════════ */
 
 /* ── DESIGN TOKENS ─────────────────────────────────────────────────── */
+/* NOTE: All color/token values are now defined in design-tokens.css
+   which loads AFTER this file and overrides these defaults.
+   These remain as fallbacks only. */
 :root {
-  /* Surfaces */
-  --bg-primary:    #1e1f22;
-  --bg-secondary:  #2b2d31;
-  --bg-tertiary:   #313338;
-  --bg-card:       #2b2d31;
-  --bg-hover:      #383a40;
-  --bg-active:     rgba(255,255,255,0.10);
-  /* Borders */
-  --border-subtle:  #3f4147;
-  --border-default: #4a4c52;
-  /* Text */
-  --text-primary:   #dbdee1;
-  --text-secondary: #949ba4;
-  --text-muted:     #6d6f78;
-  --text-white:     #ffffff;
-  /* Accent */
-  --accent-primary: #f0c040;
-  --accent-hover:   #d4a830;
-  --accent-dim:     #c8950a;
-  /* Role colors */
-  --tank:     #8B5CF6;
-  --tank-bg:  rgba(139,92,246,.12);
-  --heal:     #3ecf6e;
-  --heal-bg:  rgba(62,207,110,.12);
-  --dps:      #e84040;
-  --dps-bg:   rgba(232,64,64,.12);
-  --party-hdr:#2b2d31;
-  /* Status */
-  --danger:  #e74c3c;
-  --success: #2ecc71;
-  --warning: #f39c12;
-  /* Layout */
+  /* Layout (not overridden by design-tokens.css) */
   --sidebar-width:  240px;
   --topbar-height:  48px;
-  /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-
-  /* ── LEGACY ALIASES (keep existing JS/inline styles working) ── */
-  --bg:      var(--bg-primary);
-  --bg2:     var(--bg-secondary);
-  --bg3:     var(--bg-tertiary);
-  --border:  var(--border-subtle);
-  --border2: var(--border-default);
-  --gold:    var(--accent-primary);
-  --gold2:   var(--accent-dim);
-  --text:    var(--text-primary);
-  --muted:   var(--text-muted);
-  --accent:  var(--accent-primary);
 }
 
 /* ── RESET / BASE ──────────────────────────────────────────────────── */

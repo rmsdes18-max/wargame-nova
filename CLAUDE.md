@@ -55,3 +55,13 @@ const MyComponent = (data, config) => {
 
 ### Referinta:
 Cand nu esti sigur, uita-te la `public/js/components/role-badge.js` ca model.
+
+## Permissions
+
+- NEVER ask for permission to read, write, or modify files in this repo
+- NEVER ask for permission to run git commands (add, commit, push)
+- NEVER ask for permission to run shell commands (npm, node, kill, lsof)
+- NEVER ask "should I proceed?" or "shall I continue?" — just DO IT
+- Deploy command: git add -A && git commit -m "message" && git push
+- If localhost:3000 doesn't work, deploy direct and test on https://wartl-app.com
+- Auto-deploy via Coolify on push to main, ~90 sec delay

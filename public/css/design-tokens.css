@@ -1,9 +1,70 @@
 /* ══════════════════════════════════════════════════════════════════════
-   WARTL Design Tokens — single source of truth for all design values
+   WARTL Design Tokens v2 — Weave-inspired design system
+   Single source of truth for all design values.
    Import AFTER nova.css:  <link rel="stylesheet" href="css/design-tokens.css">
    ══════════════════════════════════════════════════════════════════════ */
 
 :root {
+
+  /* ── Core Colors ────────────────────────────────────────────────── */
+  --bg:          #0a0a0a;
+  --bg-card:     #1a1a1a;
+  --bg-hover:    #262626;
+  --border:      #2a2a2a;
+  --accent:      #d4e157;
+  --text:        #e8e8e8;
+  --text-muted:  #808080;
+  --text-label:  #666666;
+  --danger:      #e84040;
+  --success:     #4caf50;
+
+  /* ── Role Colors ────────────────────────────────────────────────── */
+  --dps:   #e84040;
+  --tank:  #8b5cf6;
+  --heal:  #3ecf6e;
+
+  /* ── Role Badge Backgrounds ─────────────────────────────────────── */
+  --role-dps-bg:  rgba(232, 64, 64, .1);
+  --role-tank-bg: rgba(139, 92, 246, .1);
+  --role-heal-bg: rgba(62, 207, 110, .1);
+
+  /* ── Status Colors ──────────────────────────────────────────────── */
+  --status-admin:  var(--accent);
+  --status-editor: #5b8fff;
+  --status-viewer: var(--text-muted);
+
+  /* ── Stat Colors ────────────────────────────────────────────────── */
+  --color-kills:     var(--dps);
+  --color-assists:   #c9a06a;
+  --color-dmg-dealt: var(--accent);
+  --color-dmg-taken: #a08090;
+  --color-healed:    var(--heal);
+
+  /* ── Status Backgrounds (subtle) ────────────────────────────────── */
+  --color-success:    var(--success);
+  --color-error:      var(--danger);
+  --color-warning:    var(--accent);
+  --color-info:       #5b8fff;
+  --color-success-bg: rgba(76, 175, 80, .15);
+  --color-error-bg:   rgba(232, 64, 64, .15);
+  --color-warning-bg: rgba(212, 225, 87, .15);
+  --color-info-bg:    rgba(91, 143, 255, .15);
+
+  /* ── Border Radius ──────────────────────────────────────────────── */
+  --r-card:  12px;
+  --r-btn:    8px;
+  --r-badge:  4px;
+  --r-pill: 9999px;
+  --r-input:  8px;
+
+  /* Keep v1 aliases for component compatibility */
+  --radius-xs:     3px;
+  --radius-sm:     var(--r-badge);
+  --radius-md:     6px;
+  --radius-lg:     var(--r-btn);
+  --radius-xl:     var(--r-card);
+  --radius-full:   var(--r-pill);
+  --radius-circle: 50%;
 
   /* ── Spacing Scale ──────────────────────────────────────────────── */
   --spacing-2xs:  2px;
@@ -16,12 +77,6 @@
   --spacing-3xl: 32px;
   --spacing-4xl: 40px;
   --spacing-5xl: 60px;
-
-  /* ── Border Radius (extend nova.css) ────────────────────────────── */
-  /* nova.css already defines: --radius-sm:4px, --radius-md:6px, --radius-lg:8px, --radius-xl:12px */
-  --radius-xs:    3px;
-  --radius-full:  99px;
-  --radius-circle: 50%;
 
   /* ── Font Sizes ─────────────────────────────────────────────────── */
   --font-size-2xs:  8px;
@@ -36,7 +91,7 @@
   --font-size-4xl: 22px;
   --font-size-5xl: 28px;
 
-  /* ── Font Weights ─���─────────────────────────────────────────────── */
+  /* ── Font Weights ───────────────────────────────────────────────── */
   --font-weight-normal:    400;
   --font-weight-medium:    500;
   --font-weight-semibold:  600;
@@ -45,60 +100,65 @@
 
   /* ── Font Families ──────────────────────────────────────────────── */
   --font-display: 'Rajdhani', sans-serif;
-  --font-body:    'Plus Jakarta Sans', sans-serif;
+  --font-body:    'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
-  /* ── Stat Colors ────────────────────────────────────────────────── */
-  /* These are semantic aliases for stat-specific colors.
-     Role colors (--tank, --heal, --dps) are in nova.css. */
-  --color-kills:      var(--dps);        /* #e84040 */
-  --color-assists:    #c9a06a;
-  --color-dmg-dealt:  var(--accent-primary); /* #f0c040 */
-  --color-dmg-taken:  #a08090;
-  --color-healed:     var(--heal);       /* #3ecf6e */
-
-  /* ── Status Colors ──────────────────────────────────────────────── */
-  --color-success:    var(--heal);       /* #3ecf6e */
-  --color-error:      var(--dps);        /* #e84040 */
-  --color-warning:    var(--accent-primary); /* #f0c040 */
-  --color-info:       #5b8fff;
-
-  /* ── Status Backgrounds (subtle) ────────────────────────────────── */
-  --color-success-bg: rgba(62, 207, 110, .15);
-  --color-error-bg:   rgba(232, 64, 64, .15);
-  --color-warning-bg: rgba(240, 192, 64, .15);
-  --color-info-bg:    rgba(91, 143, 255, .15);
-
-  /* ── Role Badge Backgrounds ─────────────────────────────────────── */
-  /* nova.css has --tank-bg, --heal-bg, --dps-bg at .12 opacity.
-     These are .2 opacity variants used in inline badges. */
-  --role-tank-bg:   rgba(139, 92, 246, .2);
-  --role-heal-bg:   rgba(62, 207, 110, .2);
-  --role-dps-bg:    rgba(232, 64, 64, .2);
+  /* ── Component Heights ──────────────────────────────────────────── */
+  --h-btn-sm:  32px;
+  --h-btn-md:  40px;
+  --h-btn-lg:  48px;
+  --h-input:   40px;
+  --h-row:     48px;
 
   /* ── Modal Widths ───────────────────────────────────────────────── */
   --modal-width-sm:  400px;
   --modal-width-md:  560px;
   --modal-width-lg:  720px;
 
-  /* ── Shadows ──────────────────────────────────────────────��─────── */
-  --shadow-sm:   0 2px 8px rgba(0, 0, 0, .2);
-  --shadow-md:   0 4px 16px rgba(0, 0, 0, .3);
-  --shadow-lg:   0 8px 24px rgba(0, 0, 0, .5);
+  /* ── Shadows ────────────────────────────────────────────────────── */
+  --shadow-sm:      0 2px 8px rgba(0, 0, 0, .2);
+  --shadow-md:      0 4px 16px rgba(0, 0, 0, .3);
+  --shadow-lg:      0 8px 24px rgba(0, 0, 0, .5);
   --shadow-overlay: 0 0 40px rgba(0, 0, 0, .6);
 
   /* ── Overlay ────────────────────────────────────────────────────── */
-  --overlay-bg:  rgba(0, 0, 0, .7);
+  --overlay-bg: rgba(0, 0, 0, .7);
 
   /* ── Opacity Scale ──────────────────────────────────────────────── */
-  --opacity-icon-dim:   .15;
-  --opacity-disabled:   .4;
-  --opacity-secondary:  .6;
-  --opacity-hover:      .75;
-  --opacity-subtle:     .88;
+  --opacity-icon-dim:  .15;
+  --opacity-disabled:  .4;
+  --opacity-secondary: .6;
+  --opacity-hover:     .75;
+  --opacity-subtle:    .88;
 
   /* ── Z-Index Scale ──────────────────────────────────────────────── */
-  --z-dropdown:   10;
-  --z-modal:     200;
-  --z-toast:    9999;
+  --z-dropdown:  10;
+  --z-modal:    200;
+  --z-toast:   9999;
+
+  /* ── Legacy Aliases (nova.css compatibility) ────────────────────── */
+  --bg-primary:    var(--bg);
+  --bg-secondary:  var(--bg-card);
+  --bg-tertiary:   var(--bg-hover);
+  --bg-card-alias: var(--bg-card);
+  --bg-active:     rgba(255,255,255,0.10);
+  --border-subtle:  var(--border);
+  --border-default: #3a3a3a;
+  --text-primary:   var(--text);
+  --text-secondary: var(--text-muted);
+  --text-white:     #ffffff;
+  --accent-primary: var(--accent);
+  --accent-hover:   #c0cc40;
+  --accent-dim:     #a8b830;
+  --gold:           var(--accent);
+  --gold2:          var(--accent-dim);
+  --muted:          var(--text-muted);
+  --party-hdr:      var(--bg-card);
+  --warning:        var(--accent);
+  --tank-bg:  var(--role-tank-bg);
+  --heal-bg:  var(--role-heal-bg);
+  --dps-bg:   var(--role-dps-bg);
+  --bg2:      var(--bg-card);
+  --bg3:      var(--bg-hover);
+  --border2:  var(--border-default);
 }
