@@ -71,6 +71,18 @@
   }
   .pg-dropdown-item:hover { background: var(--bg-tertiary); }
   .pg-dropdown-item.danger { color: var(--danger); }
+
+  /* Audit grid */
+  .audit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .audit-grid-wide { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .audit-cell {
+    background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg); padding: 14px; position: relative;
+  }
+  .audit-cell-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-muted); margin-bottom: 10px; font-weight: 700;
+  }
 </style>
 </head>
 <body>
@@ -91,6 +103,7 @@
     <button class="pg-nav-btn" onclick="pgShow('members')">Members</button>
     <button class="pg-nav-btn" onclick="pgShow('settings')">Settings</button>
     <button class="pg-nav-btn" onclick="pgShow('new-war')">New War</button>
+    <button class="pg-nav-btn" onclick="pgShow('audit')" style="margin-left:auto;border-color:var(--dps);color:var(--dps);">Audit</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -256,6 +269,43 @@
     <div class="pg-section">
       <div class="pg-section-title">Wizard Buttons</div>
       <div id="newwar-buttons-demo"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- COMPONENT AUDIT                                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="pg-page" id="pg-audit">
+
+    <div class="pg-section">
+      <div class="pg-section-title">Buttons</div>
+      <div class="audit-grid" id="audit-buttons"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Cards</div>
+      <div class="audit-grid-wide" id="audit-cards"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Badges</div>
+      <div class="audit-grid" id="audit-badges"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Inputs / Forms</div>
+      <div class="audit-grid-wide" id="audit-inputs"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Tables / Lists</div>
+      <div id="audit-tables" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+    </div>
+
+    <div class="pg-section">
+      <div class="pg-section-title">Empty States</div>
+      <div class="audit-grid-wide" id="audit-empty"></div>
     </div>
 
   </div>
@@ -663,6 +713,175 @@
         + '<button class="btn btn-secondary" style="padding:10px 24px;font-size:13px;border-radius:8px;color:var(--dps);">&#x2715; Cancel</button>'
       + '</div>';
   })();
+</script>
+
+<!-- ── COMPONENT AUDIT DEMOS ─────────────────────────────── -->
+<script>
+(function(){
+  var cell = function(label, html) {
+    return '<div class="audit-cell"><div class="audit-cell-label">' + label + '</div>' + html + '</div>';
+  };
+
+  // ═══ BUTTONS ═══
+  var btnSmall = 'padding:6px 14px;font-size:12px;border-radius:6px;cursor:pointer;';
+  var btnMed = 'padding:8px 20px;font-size:13px;border-radius:6px;cursor:pointer;';
+  var btnLg = 'padding:12px 28px;font-size:14px;border-radius:8px;cursor:pointer;';
+
+  document.getElementById('audit-buttons').innerHTML =
+    cell('Primary (wars)', '<button class="btn btn-primary" style="' + btnMed + '">+ New War</button>')
+    + cell('Primary (members)', '<button class="btn btn-primary" style="' + btnMed + '">Add Member</button>')
+    + cell('Primary (settings)', '<button class="btn btn-primary" style="' + btnMed + '">Create Guild</button>')
+    + cell('Primary Large', '<button class="btn btn-primary" style="' + btnLg + '">+ Add First War</button>')
+    + cell('Secondary', '<button class="btn btn-secondary" style="' + btnMed + '">Cancel</button>')
+    + cell('Secondary (edit)', '<button class="btn btn-secondary" style="' + btnSmall + '">&#x270E; Edit</button>')
+    + cell('Secondary (share)', '<button class="btn btn-secondary" style="' + btnSmall + '">&#x1F517; Share</button>')
+    + cell('Save War (green)', '<button style="background:var(--color-success);color:#000;border:none;border-radius:var(--radius-lg);' + btnLg + 'font-weight:700;">Save War &#8594;</button>')
+    + cell('Danger', '<button class="btn btn-secondary" style="' + btnSmall + 'color:var(--dps);">&#x2715; Delete</button>')
+    + cell('Confirm (gold)', '<button style="background:var(--gold);color:#000;border:none;border-radius:var(--radius-md);' + btnMed + 'font-weight:600;">Confirm</button>')
+    + cell('Back', '<button class="btn btn-secondary" style="' + btnMed + 'border-radius:var(--radius-lg);">&#8592; Back</button>')
+    + cell('Icon button', '<button class="btn-icon" style="font-size:16px;">&#x2715;</button>');
+
+  // ═══ CARDS ═══
+  var warCardHtml = '<div class="war-card" style="cursor:default;">'
+    + '<div class="war-card-header"><span class="war-card-opponent">vs Shadow Legion</span></div>'
+    + '<div class="war-card-stats">'
+      + '<div class="war-card-stat"><span class="lbl">Kills</span><span class="val">42</span></div>'
+      + '<div class="war-card-stat"><span class="lbl">Assists</span><span class="val">87</span></div>'
+      + '<div class="war-card-stat"><span class="lbl">DMG</span><span class="val">' + fmtShort(4200000) + '</span></div>'
+    + '</div>'
+    + '<div class="war-card-parties"><div class="war-card-party-dot" style="background:' + PARTY_DOT_COLORS[0] + ';"></div><div class="war-card-party-dot" style="background:' + PARTY_DOT_COLORS[1] + ';"></div></div>'
+    + '</div>';
+
+  var partyCardHtml = PartyCard({ name: 'Alpha Squad', label: 'Party 1', members: MOCK_MEMBERS.slice(0, 3) });
+
+  var memberCardHtml = '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-tertiary);border-radius:var(--radius-lg);">'
+    + '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-muted);">S</div>'
+    + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#fff;">suuo</div><div style="font-size:10px;color:var(--text-muted);">Joined 2026-01-15</div></div>'
+    + '<span style="font-size:9px;padding:2px 6px;border-radius:var(--radius-xs);background:var(--color-warning-bg);color:var(--gold);font-weight:600;">ADMIN</span>'
+    + '</div>';
+
+  var profileCardHtml = '<div style="display:flex;align-items:center;gap:12px;">'
+    + '<div style="width:44px;height:44px;border-radius:50%;background:var(--role-tank-bg);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--tank);">D</div>'
+    + '<div><div style="font-size:16px;font-weight:700;color:#fff;">Darkblade</div>'
+    + '<span style="font-size:10px;padding:2px 8px;border-radius:var(--radius-xs);font-weight:600;background:var(--role-tank-bg);color:var(--tank);">TANK</span></div>'
+    + '</div>';
+
+  var guildCardHtml = '<div style="display:flex;align-items:center;gap:12px;">'
+    + '<div style="width:40px;height:40px;border-radius:var(--radius-lg);background:var(--color-warning-bg);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gold);">N</div>'
+    + '<div><div style="font-size:14px;font-weight:700;color:#fff;">Nova Guild</div>'
+    + '<div style="font-size:11px;color:var(--text-muted);">EU &middot; Croxus</div></div>'
+    + '<span style="font-size:10px;padding:2px 8px;border-radius:var(--radius-xs);background:var(--color-warning-bg);color:var(--gold);font-weight:600;margin-left:auto;">PRO</span>'
+    + '</div>';
+
+  document.getElementById('audit-cards').innerHTML =
+    cell('War Card (Wars List)', warCardHtml)
+    + cell('Party Card (War View)', partyCardHtml)
+    + cell('User Card (Settings)', memberCardHtml)
+    + cell('Member Profile (Members)', profileCardHtml)
+    + cell('Guild Card (Settings)', guildCardHtml)
+    + cell('Extra Player (War View)',
+      '<div style="padding:10px 14px;">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+          + '<span class="role-dot" style="background:var(--dps);"></span>'
+          + '<span style="font-weight:600;color:#fff;font-size:13px;">LostSoul</span></div>'
+        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
+          + '<div><span style="color:var(--text-muted);">K</span> <span style="color:var(--color-kills);">2</span></div>'
+          + '<div><span style="color:var(--text-muted);">A</span> <span>5</span></div>'
+          + '<div><span style="color:var(--text-muted);">DMG</span> <span style="color:var(--color-assists);">120K</span></div>'
+        + '</div></div>');
+
+  // ═══ BADGES ═══
+  document.getElementById('audit-badges').innerHTML =
+    cell('Role: DPS', '<div style="display:flex;align-items:center;gap:8px;">' + RoleBadge('DPS') + RoleBadge.inline('DPS') + '</div>')
+    + cell('Role: TANK', '<div style="display:flex;align-items:center;gap:8px;">' + RoleBadge('TANK') + RoleBadge.inline('TANK') + '</div>')
+    + cell('Role: HEALER', '<div style="display:flex;align-items:center;gap:8px;">' + RoleBadge('HEALER') + RoleBadge.inline('HEALER') + '</div>')
+    + cell('Status: ADMIN', '<span style="font-size:9px;padding:2px 6px;border-radius:var(--radius-xs);background:var(--color-warning-bg);color:var(--gold);font-weight:600;">ADMIN</span>')
+    + cell('Status: EDITOR', '<span style="font-size:9px;padding:2px 6px;border-radius:var(--radius-xs);background:var(--color-info-bg);color:var(--color-info);font-weight:600;">EDITOR</span>')
+    + cell('Status: VIEWER', '<span style="font-size:9px;padding:2px 6px;border-radius:var(--radius-xs);background:rgba(255,255,255,.06);color:var(--text-muted);font-weight:600;">VIEWER</span>')
+    + cell('NEW badge', '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>')
+    + cell('Party tag', '<span class="ptag">Party 1</span>')
+    + cell('PRO tier', '<span style="font-size:10px;padding:2px 8px;border-radius:var(--radius-xs);background:var(--color-warning-bg);color:var(--gold);font-weight:600;">PRO</span>')
+    + cell('Match count', '<span style="background:var(--gold);color:#000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">5</span>')
+    + cell('Attention count', '<span style="background:var(--color-warning);color:#000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--radius-full);">3</span>')
+    + cell('Stat inline', '<span style="font-family:var(--font-mono);font-size:var(--font-size-sm);color:var(--text-muted);">' + StatsRow.inline(MOCK_MEMBERS[0]) + '</span>');
+
+  // ═══ INPUTS / FORMS ═══
+  var inputStyle = 'width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:10px 14px;color:#fff;font-size:13px;outline:none;';
+  var inputSmall = 'width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:var(--radius-sm);padding:4px 8px;color:var(--gold);font-size:12px;outline:none;';
+  var selectStyle = 'width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:10px 14px;color:var(--text-muted);font-size:13px;';
+
+  document.getElementById('audit-inputs').innerHTML =
+    cell('Text input (settings)', '<input placeholder="Guild name" style="' + inputStyle + '">')
+    + cell('Text input (members)', '<input placeholder="Member name..." style="' + inputStyle + '">')
+    + cell('Small input (alias)', '<input value="DarkBlade_TL" style="' + inputSmall + '">')
+    + cell('Invite code input', '<input value="NOVA-X7K9-BETA" style="' + inputStyle + 'font-family:var(--font-mono);color:var(--gold);letter-spacing:.05em;">')
+    + cell('Select (region)', '<select style="' + selectStyle + '"><option>Select region...</option><option>EU</option><option>NA</option></select>')
+    + cell('Select (role)', '<select style="' + selectStyle + '"><option>DPS</option><option>Tank</option><option>Healer</option></select>')
+    + cell('SM3 dropdown', '<select style="flex:1;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:10px 14px;color:var(--text-primary);font-size:13px;width:100%;"><option>Select member...</option><option>Darkblade (fuzzy)</option></select>')
+    + cell('Upload zone', '<div class="upload-zone" style="padding:24px 16px;">'
+        + '<div style="font-size:24px;opacity:.3;margin-bottom:8px;">&#128247;</div>'
+        + '<div style="font-size:12px;font-weight:600;color:#fff;">Upload Screenshot</div>'
+        + '<div style="font-size:10px;color:var(--text-muted);">Drag & drop or click</div>'
+      + '</div>')
+    + cell('Search/filter', '<input placeholder="Filter by name..." style="' + inputStyle + '">')
+    + cell('Error message', '<div style="font-size:12px;color:var(--dps);padding:8px 0;">Guild name required</div>');
+
+  // ═══ TABLES / LISTS ═══
+  var miniTable = '<table class="data-table"><thead><tr>'
+    + '<th style="width:40%;">Player</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th></tr></thead><tbody>';
+  MOCK_MEMBERS.slice(0, 4).forEach(function(m){
+    var rc = roleColor(m.role);
+    var rl = m.role === 'HEALER' ? 'HEAL' : m.role;
+    miniTable += '<tr><td><div class="player-cell">'
+      + '<span style="font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;background:' + rc + '22;color:' + rc + ';margin-right:6px;">' + rl + '</span>'
+      + '<span class="player-name ' + roleClass(m.role) + '">' + m.name + '</span></div></td>'
+      + '<td class="num num-k">' + m.defeat + '</td>'
+      + '<td class="num">' + m.assist + '</td>'
+      + '<td class="num num-dmg">' + fmtFull(m.dmg_dealt) + '</td></tr>';
+  });
+  miniTable += '</tbody></table>';
+
+  var membersList = '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;">';
+  membersList += '<div style="display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border-subtle);font-size:10px;text-transform:uppercase;color:var(--text-muted);">'
+    + '<div style="min-width:50px;">Role</div><div style="flex:1;">Name</div><div style="min-width:100px;">Alias</div></div>';
+  MOCK_MEMBERS.slice(0, 4).forEach(function(m){
+    var c = roleHex(m.role);
+    var aliases = { Darkblade: 'DarkBlade_TL', Lumina: 'Lumina_TL', Shadowfang: '', Pyrostorm: 'Pyro_TL' };
+    var a = aliases[m.name] || '';
+    membersList += '<div style="display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
+      + '<span style="font-size:10px;padding:2px 8px;border-radius:var(--radius-xs);font-weight:600;background:' + c + '22;color:' + c + ';min-width:50px;text-align:center;">' + m.role + '</span>'
+      + '<div style="flex:1;font-size:13px;font-weight:600;color:#fff;">' + m.name + '</div>'
+      + '<span style="font-size:12px;color:var(--gold);min-width:100px;">' + (a || '<span style="color:var(--text-muted);">--</span>') + '</span>'
+      + '</div>';
+  });
+  membersList += '</div>';
+
+  var leaderboard = '<div class="party-card"><div class="party-header" style="border-bottom:1px solid var(--border-subtle);"><div class="party-name" style="font-size:13px;">Top Kills</div></div>'
+    + '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">';
+  var medals = ['var(--accent-primary)', '#c0c0c0', '#cd7f32'];
+  var sorted = MOCK_MEMBERS.slice().sort(function(a,b){ return b.defeat - a.defeat; }).slice(0, 3);
+  sorted.forEach(function(m, idx){
+    leaderboard += '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<span style="font-size:' + (idx === 0 ? '18' : '16') + 'px;font-weight:700;color:' + medals[idx] + ';width:24px;">' + (idx + 1) + '</span>'
+      + '<div style="flex:1;"><div style="font-weight:600;color:#fff;font-size:13px;">' + m.name + '</div></div>'
+      + '<span class="role-dot" style="background:' + roleColor(m.role) + ';"></span></div>';
+  });
+  leaderboard += '</div></div>';
+
+  document.getElementById('audit-tables').innerHTML =
+    '<div>' + cell('Party Table (War View)', '<div style="overflow-x:auto;">' + miniTable + '</div>') + '</div>'
+    + '<div>' + cell('Members List (Members)', membersList) + '</div>'
+    + '<div>' + cell('Leaderboard (War View)', leaderboard) + '</div>'
+    + '<div>' + cell('Stats Cards', StatsRow({ defeat: 42, assist: 87, dmg_dealt: 4200000, dmg_taken: 1900000, healed: 1770000 })) + '</div>';
+
+  // ═══ EMPTY STATES ═══
+  document.getElementById('audit-empty').innerHTML =
+    cell('No Wars', EmptyState({ icon: '&#9876;', title: 'No wars recorded yet', description: 'Upload a party screenshot to start tracking.', buttonText: '+ Add First War', buttonAction: '' }))
+    + cell('No Members', EmptyState({ icon: '&#9670;', title: 'No members yet', description: 'Import TLGM CSV to set up roster.' }))
+    + cell('No Match', EmptyState.inline('No members match current filter'))
+    + cell('No Participation', EmptyState.inline('No war participation recorded'))
+    + cell('Loading', '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading...</div>');
+})();
 </script>
 
 </body>
