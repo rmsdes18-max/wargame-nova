@@ -24,7 +24,7 @@ tailwind.config = {
           card: '#2b2d31',
           surface: '#313338',
           border: '#3f4147',
-          gold: '#f0c040',
+          gold: '#d4e157',
           'gold-dim': '#c8950a',
           tank: '#8B5CF6',
           heal: '#3ecf6e',
@@ -33,7 +33,7 @@ tailwind.config = {
         }
       },
       boxShadow: {
-        'glow-gold': '0 0 20px rgba(240,192,64,0.15)',
+        'glow-gold': '0 0 20px rgba(212,225,87,0.15)',
         'glow-purple': '0 0 30px rgba(43,45,49,0.5)',
       }
     }
@@ -49,10 +49,10 @@ tailwind.config = {
 .vw-row:hover{background:rgba(255,255,255,.02);}
 .vw-row.vw-dragging{opacity:.4;cursor:grabbing!important;}
 .vw-row input{cursor:text;}
-.vw-row.vw-drop-above{box-shadow:inset 0 2px 0 0 var(--gold);}
-.vw-row.vw-drop-below{box-shadow:inset 0 -2px 0 0 var(--gold);}
+.vw-row.vw-drop-above{box-shadow:inset 0 2px 0 0 var(--accent);}
+.vw-row.vw-drop-below{box-shadow:inset 0 -2px 0 0 var(--accent);}
 .vw-dropzone-end{transition:background .15s,border-color .15s;}
-.vw-dropzone-end.vw-drop-target button{border-color:var(--gold)!important;background:rgba(240,192,64,.06)!important;color:var(--gold)!important;}
+.vw-dropzone-end.vw-drop-target button{border-color:var(--accent)!important;background:rgba(212,225,87,.06)!important;color:var(--accent)!important;}
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;}
@@ -61,7 +61,7 @@ input[type=number]{-moz-appearance:textfield;}
 .war-timeline{position:relative;padding-left:32px;margin-top:8px;}
 .war-timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--border,#3f4147);}
 .war-timeline-item{position:relative;margin-bottom:20px;}
-.war-timeline-item::before{content:'';position:absolute;left:-25px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--gold,#f0c040);border:2px solid var(--bg2,#2b2d31);z-index:1;}
+.war-timeline-item::before{content:'';position:absolute;left:-25px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--gold,#d4e157);border:2px solid var(--bg2,#2b2d31);z-index:1;}
 .war-timeline-date{font-size:11px;font-weight:600;color:var(--text-muted,#8b8d94);margin-bottom:4px;letter-spacing:.03em;}
 .war-timeline-item .war-card{margin:0;}
 
@@ -70,11 +70,11 @@ input[type=number]{-moz-appearance:textfield;}
 .landing-left{flex:0 0 42%;display:flex;flex-direction:column;justify-content:center;padding:60px 48px;}
 .landing-right{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;background:rgba(255,255,255,.02);border-left:1px solid var(--border,#3f4147);overflow:hidden;}
 .landing-title{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:8px;}
-.landing-title span{color:var(--gold,#f0c040);}
+.landing-title span{color:var(--gold,#d4e157);}
 .landing-sub{font-size:15px;color:var(--text-muted,#8b8d94);line-height:1.6;margin-bottom:32px;max-width:380px;}
 .landing-features{list-style:none;padding:0;margin:0 0 36px 0;}
 .landing-features li{font-size:13px;color:var(--text-secondary,#b5bac1);padding:6px 0;display:flex;align-items:center;gap:10px;}
-.landing-features li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold,#f0c040);flex-shrink:0;}
+.landing-features li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold,#d4e157);flex-shrink:0;}
 .landing-discord-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 28px;background:#5865F2;border-radius:8px;color:#fff;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;}
 .landing-discord-btn:hover{opacity:.9;}
 .landing-mock-card{background:var(--card,#2b2d31);border:1px solid var(--border,#3f4147);border-radius:10px;padding:16px 20px;width:100%;max-width:380px;margin-bottom:16px;}
@@ -155,7 +155,7 @@ input[type=number]{-moz-appearance:textfield;}
       <div class="topbar-spacer"></div>
       <div class="topbar-actions" style="display:flex;align-items:center;gap:12px;">
         <button onclick="startNewWar()" class="btn btn-primary btn-sm guild-nav" data-t="newWarBtn" style="display:none">+ New War</button>
-        <button id="lang-btn" onclick="toggleLang()" style="background:transparent;border:1px solid var(--border2);color:var(--text-muted);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">EN</button>
+        <button id="lang-btn" onclick="toggleLang()" style="background:transparent;border:1px solid var(--border-default);color:var(--text-muted);font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;">EN</button>
         <div id="topbar-user" style="display:flex;align-items:center;gap:8px;"></div>
       </div>
     </div>
@@ -196,7 +196,7 @@ input[type=number]{-moz-appearance:textfield;}
           <span style="flex:3;background:#8B5CF6;"></span>
           <span style="flex:2;background:#3ecf6e;"></span>
           <span style="flex:4;background:#e84040;"></span>
-          <span style="flex:1;background:#f0c040;"></span>
+          <span style="flex:1;background:#d4e157;"></span>
         </div>
       </div>
       <div class="landing-mock-card">
@@ -214,7 +214,7 @@ input[type=number]{-moz-appearance:textfield;}
           <span style="flex:4;background:#8B5CF6;"></span>
           <span style="flex:3;background:#3ecf6e;"></span>
           <span style="flex:2;background:#e84040;"></span>
-          <span style="flex:1.5;background:#f0c040;"></span>
+          <span style="flex:1.5;background:#d4e157;"></span>
         </div>
       </div>
       <div class="landing-mock-card" style="opacity:.5;">
@@ -232,7 +232,7 @@ input[type=number]{-moz-appearance:textfield;}
           <span style="flex:2;background:#8B5CF6;"></span>
           <span style="flex:3;background:#3ecf6e;"></span>
           <span style="flex:3;background:#e84040;"></span>
-          <span style="flex:2;background:#f0c040;"></span>
+          <span style="flex:2;background:#d4e157;"></span>
         </div>
       </div>
     </div>
@@ -244,30 +244,30 @@ input[type=number]{-moz-appearance:textfield;}
   <div style="min-height:80vh;display:flex;align-items:center;justify-content:center;">
     <div style="max-width:600px;width:100%;padding:40px 24px;">
       <div style="text-align:center;margin-bottom:32px;">
-        <div style="font-family:Rajdhani,sans-serif;font-size:28px;font-weight:700;color:#fff;">Welcome to <span style="color:var(--gold);">Wartl</span></div>
+        <div style="font-family:Rajdhani,sans-serif;font-size:28px;font-weight:700;color:#fff;">Welcome to <span style="color:var(--accent);">Wartl</span></div>
         <div style="font-size:14px;color:var(--text-muted);margin-top:6px;">Create your guild or join an existing one</div>
       </div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
         <!-- Create Guild Card -->
-        <div id="onboard-create" style="flex:1;min-width:240px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:border-color .15s;" onclick="showOnboardForm('create')">
+        <div id="onboard-create" style="flex:1;min-width:240px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:border-color .15s;" onclick="showOnboardForm('create')">
           <div style="font-size:24px;margin-bottom:8px;">+</div>
           <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Create Guild</div>
           <div style="font-size:12px;color:var(--text-muted);">Start tracking wars for your guild</div>
         </div>
         <!-- Join Guild Card -->
-        <div id="onboard-join" style="flex:1;min-width:240px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:border-color .15s;" onclick="showOnboardForm('join')">
+        <div id="onboard-join" style="flex:1;min-width:240px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:border-color .15s;" onclick="showOnboardForm('join')">
           <div style="font-size:24px;margin-bottom:8px;">&#x1F517;</div>
           <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;">Join Guild</div>
           <div style="font-size:12px;color:var(--text-muted);">I have an invite code</div>
         </div>
       </div>
       <!-- Create Form (hidden) — 3 steps -->
-      <div id="onboard-create-form" style="display:none;margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div id="onboard-create-form" style="display:none;margin-top:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;">
         <!-- Step 1: Region -->
         <div id="create-step-1">
           <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Step 1: Select Region</div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Choose your Throne & Liberty server region</div>
-          <select id="create-guild-region" onchange="loadServersForRegion()" style="width:100%;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+          <select id="create-guild-region" onchange="loadServersForRegion()" style="width:100%;margin-bottom:12px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
             <option value="">Loading regions...</option>
           </select>
           <button onclick="showCreateStep(2)" class="btn btn-primary" style="width:100%;padding:10px;font-size:14px;" id="create-next-1" disabled>Next</button>
@@ -276,7 +276,7 @@ input[type=number]{-moz-appearance:textfield;}
         <div id="create-step-2" style="display:none;">
           <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Step 2: Select Server</div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Which server does your guild play on?</div>
-          <select id="create-guild-server" style="width:100%;margin-bottom:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+          <select id="create-guild-server" style="width:100%;margin-bottom:12px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
             <option value="">Select server...</option>
           </select>
           <div style="display:flex;gap:8px;">
@@ -287,7 +287,7 @@ input[type=number]{-moz-appearance:textfield;}
         <!-- Step 3: Name + Create -->
         <div id="create-step-3" style="display:none;">
           <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;">Step 3: Guild Name</div>
-          <input id="create-guild-name" type="text" placeholder="Your guild name" style="width:100%;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+          <input id="create-guild-name" type="text" placeholder="Your guild name" style="width:100%;margin-bottom:14px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
           <div id="create-guild-error" style="display:none;font-size:12px;color:#e84040;margin-bottom:10px;"></div>
           <div style="display:flex;gap:8px;">
             <button onclick="showCreateStep(2)" class="btn btn-secondary" style="flex:1;padding:10px;font-size:14px;">Back</button>
@@ -296,9 +296,9 @@ input[type=number]{-moz-appearance:textfield;}
         </div>
       </div>
       <!-- Join Form (hidden) -->
-      <div id="onboard-join-form" style="display:none;margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div id="onboard-join-form" style="display:none;margin-top:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;">
         <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;">Join with invite code</div>
-        <input id="join-guild-code" type="text" placeholder="Enter invite code" style="width:100%;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
+        <input id="join-guild-code" type="text" placeholder="Enter invite code" style="width:100%;margin-bottom:14px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;">
         <div id="join-guild-error" style="display:none;font-size:12px;color:#e84040;margin-bottom:10px;"></div>
         <button onclick="doJoinGuild()" class="btn btn-primary" style="width:100%;padding:10px;font-size:14px;">Join Guild</button>
       </div>
@@ -577,8 +577,8 @@ function toggleLang(){
 (function(){
   var btn = document.getElementById('lang-btn');
   if(btn) btn.innerHTML = (_lang==='ro'
-    ? '<span style="color:var(--gold);font-weight:800;">RO</span> <span style="opacity:.4;">EN</span>'
-    : '<span style="opacity:.4;">RO</span> <span style="color:var(--gold);font-weight:800;">EN</span>');
+    ? '<span style="color:var(--accent);font-weight:800;">RO</span> <span style="opacity:.4;">EN</span>'
+    : '<span style="opacity:.4;">RO</span> <span style="color:var(--accent);font-weight:800;">EN</span>');
 })();
 
 // ── USER ROLE ─────────────────────────────────────────────────────────────
@@ -731,10 +731,10 @@ initApp();
     </div>
   </div>
   <!-- Add member form (hidden) -->
-  <div id="add-member-form" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
+  <div id="add-member-form" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
     <div style="display:flex;gap:8px;align-items:center;">
-      <input id="add-member-name" type="text" placeholder="Player name" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;">
-      <select id="add-member-role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;">
+      <input id="add-member-name" type="text" placeholder="Player name" style="flex:1;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;">
+      <select id="add-member-role" style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;">
         <option value="TANK">Tank</option>
         <option value="HEALER">Healer</option>
         <option value="DPS">DPS</option>
@@ -779,21 +779,21 @@ document.write(Modal.inline({
   <div class="section-sub">Manage your guild, members, and invites</div>
   <div style="max-width:600px;">
     <!-- Guild Info -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;">Guild Info</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Name</span>
-        <input id="gs-guild-name" type="text" style="flex:1;font-weight:600;color:#fff;font-size:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;outline:none;">
-        <button onclick="renameGuild()" style="background:var(--gold);border:none;color:#000;font-size:11px;font-weight:600;padding:6px 12px;border-radius:4px;cursor:pointer;">Save</button>
+        <input id="gs-guild-name" type="text" style="flex:1;font-weight:600;color:#fff;font-size:14px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:6px 10px;outline:none;">
+        <button onclick="renameGuild()" style="background:var(--accent);border:none;color:#000;font-size:11px;font-weight:600;padding:6px 12px;border-radius:4px;cursor:pointer;">Save</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Invite Code</span>
-        <code id="gs-invite-code" style="font-family:JetBrains Mono,monospace;font-size:13px;color:var(--gold);background:var(--bg3);padding:3px 8px;border-radius:4px;"></code>
+        <code id="gs-invite-code" style="font-family:JetBrains Mono,monospace;font-size:13px;color:var(--accent);background:var(--bg-hover);padding:3px 8px;border-radius:4px;"></code>
         <button onclick="copyInviteCode()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;">Copy</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <span style="font-size:11px;color:var(--text-muted);min-width:80px;">Join as</span>
-        <select id="gs-default-role" onchange="updateDefaultInviteRole(this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;cursor:pointer;">
+        <select id="gs-default-role" onchange="updateDefaultInviteRole(this.value)" style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;cursor:pointer;">
           <option value="viewer">Viewer</option>
           <option value="editor">Editor</option>
         </select>
@@ -806,15 +806,15 @@ document.write(Modal.inline({
     </div>
 
     <!-- Invite Links -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Invite Links</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Generate temporary invite links with expiration</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-        <select id="invite-link-role" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
+        <select id="invite-link-role" style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
           <option value="viewer">Join as Viewer</option>
           <option value="editor">Join as Editor</option>
         </select>
-        <select id="invite-expires" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
+        <select id="invite-expires" style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
           <option value="">No expiration</option>
           <option value="24">Expires in 24h</option>
           <option value="72">Expires in 3 days</option>
@@ -822,17 +822,17 @@ document.write(Modal.inline({
         </select>
         <button onclick="generateInviteLink()" class="btn btn-primary" style="padding:6px 14px;font-size:12px;">Generate Link</button>
       </div>
-      <div id="invite-link-result" style="display:none;background:var(--bg3);border-radius:6px;padding:10px;font-size:12px;"></div>
+      <div id="invite-link-result" style="display:none;background:var(--bg-hover);border-radius:6px;padding:10px;font-size:12px;"></div>
     </div>
 
     <!-- Guild Members -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Members</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Manage roles and access</div>
       <div id="gs-members-list"></div>
       <!-- Role permissions info -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text-muted);line-height:1.8;margin-top:12px;">
-        <div><span style="color:var(--gold);font-weight:600;">Admin</span> — Full access, manage users, settings</div>
+      <div style="background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text-muted);line-height:1.8;margin-top:12px;">
+        <div><span style="color:var(--accent);font-weight:600;">Admin</span> — Full access, manage users, settings</div>
         <div><span style="color:#5b8fff;font-weight:600;">Editor</span> — Create &amp; edit wars, manage parties</div>
         <div><span style="color:var(--text-muted);font-weight:600;">Viewer</span> — View wars and stats only</div>
       </div>
@@ -840,7 +840,7 @@ document.write(Modal.inline({
 
     <!-- Switch / Leave Guild -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button onclick="showPage('guild-picker')" style="background:transparent;border:1px solid var(--border2);color:var(--text-muted);font-size:12px;padding:8px 14px;border-radius:6px;cursor:pointer;">Switch Guild</button>
+      <button onclick="showPage('guild-picker')" style="background:transparent;border:1px solid var(--border-default);color:var(--text-muted);font-size:12px;padding:8px 14px;border-radius:6px;cursor:pointer;">Switch Guild</button>
       <button onclick="leaveCurrentGuild()" style="background:transparent;border:1px solid rgba(232,64,64,.3);color:#e84040;font-size:12px;padding:8px 14px;border-radius:6px;cursor:pointer;">Leave Guild</button>
     </div>
   </div>

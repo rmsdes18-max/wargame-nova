@@ -92,8 +92,8 @@ function renderMembersList(){
     });
     availableGameNames.sort(function(a,b){ return a.localeCompare(b); });
 
-    output += '<div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:14px;margin-bottom:16px;">';
-    output += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:14px;">⚠</span><span style="font-size:13px;font-weight:600;color:var(--gold);">'+unmatchedMembers.length+' members need in-game name</span>'
+    output += '<div style="background:rgba(212,225,87,.06);border:1px solid rgba(212,225,87,.2);border-radius:10px;padding:14px;margin-bottom:16px;">';
+    output += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:14px;">⚠</span><span style="font-size:13px;font-weight:600;color:var(--accent);">'+unmatchedMembers.length+' members need in-game name</span>'
       +(!_membersEditMode ? '<span style="font-size:11px;color:var(--text-muted);margin-left:8px;">Click Edit to assign names</span>' : '')
       +'</div>';
 
@@ -116,10 +116,10 @@ function renderMembersList(){
         var roleCls = m.role === 'TANK' ? 'tank' : m.role === 'HEALER' ? 'heal' : 'dps';
         var opts = '<option value="">-- Select --</option>';
         availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
-        output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
+        output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(212,225,87,.1);">'
           +'<span class="badge badge-' + roleCls + '" onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="cursor:pointer;">'+(m.role==='HEALER'?'HEAL':m.role)+'</span>'
           +'<span style="font-size:13px;font-weight:600;color:var(--text);flex:1;">'+escHtml(m.name)+'</span>'
-          +'<input id="manual-'+safeName+'" list="game-names-datalist" placeholder="Type or search..." style="width:180px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
+          +'<input id="manual-'+safeName+'" list="game-names-datalist" placeholder="Type or search..." style="width:180px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:4px;padding:4px 8px;color:var(--accent);font-size:12px;outline:none;">'
           +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
           +'</div>';
       });
@@ -132,7 +132,7 @@ function renderMembersList(){
       output += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">';
       unmatchedMembers.forEach(function(m){
         var color = roleHex(m.role);
-        output += '<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
+        output += '<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bg-hover);color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
           +'<span style="width:6px;height:6px;border-radius:50%;background:'+color+';"></span>'
           +escHtml(m.name)+'</span>';
       });
@@ -159,7 +159,7 @@ function renderMembersList(){
       +'<div style="flex:1;min-width:0;">'
         +(_membersEditMode
           ? '<div style="display:flex;align-items:center;gap:4px;">'
-            +'<input id="tlgm-'+safeName+'" value="'+escHtml(m.name)+'" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:12px;outline:none;max-width:180px;">'
+            +'<input id="tlgm-'+safeName+'" value="'+escHtml(m.name)+'" style="flex:1;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:4px;padding:3px 6px;color:var(--text);font-size:12px;outline:none;max-width:180px;">'
             +'<button onclick="renameMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:14px;padding:2px;">&#x2713;</button>'
             +'</div>'
           : '<div onclick="openMemberProfile(\''+safeName+'\')" style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="View profile">'+escHtml(m.name)+'</div>')
@@ -168,9 +168,9 @@ function renderMembersList(){
       // IN-GAME NAME
       +'<div style="min-width:140px;text-align:left;">'
         +(_membersEditMode
-          ? '<input id="alias-'+safeName+'" value="'+escHtml(inGameName||'')+'" placeholder="—" style="width:120px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--gold);font-size:11px;outline:none;">'
+          ? '<input id="alias-'+safeName+'" value="'+escHtml(inGameName||'')+'" placeholder="—" style="width:120px;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:4px;padding:3px 6px;color:var(--accent);font-size:11px;outline:none;">'
             +'<button onclick="saveInlineAlias(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:14px;padding:2px;">&#x2713;</button>'
-          : '<span style="font-size:12px;color:var(--gold);">'+escHtml(inGameName)+'</span>')
+          : '<span style="font-size:12px;color:var(--accent);">'+escHtml(inGameName)+'</span>')
       +'</div>'
       // ACTIONS
       +(_membersEditMode && !showArchived ? '<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:4px 8px;">Archive</button>' : '')
@@ -185,7 +185,7 @@ function renderMembersList(){
       +'<div style="min-width:140px;text-align:left;">In-Game Name</div>'
       +(_membersEditMode?'<div style="min-width:55px;"></div>':'')
       +'</div>';
-    output += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+header+rows+'</div>';
+    output += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+header+rows+'</div>';
   } else if(!unmatchedMembers.length){
     output = EmptyState.inline('No members match current filter');
   }
@@ -228,7 +228,7 @@ function setRoleFilter(role){
     var btn = document.getElementById('rf-'+r);
     if(!btn) return;
     if(r===role){
-      btn.style.background = r==='ALL'?'var(--gold)':r==='TANK'?'var(--tank)':r==='HEALER'?'var(--heal)':'var(--dps)';
+      btn.style.background = r==='ALL'?'var(--accent)':r==='TANK'?'var(--tank)':r==='HEALER'?'var(--heal)':'var(--dps)';
       btn.style.color = r==='ALL'?'#000':'#fff';
     } else {
       btn.style.background = 'transparent';
@@ -240,9 +240,9 @@ function setRoleFilter(role){
 
 function switchMembersTab(tab){
   _membersTab = tab;
-  document.getElementById('members-tab-active').style.borderBottomColor = tab==='active' ? 'var(--gold)' : 'transparent';
+  document.getElementById('members-tab-active').style.borderBottomColor = tab==='active' ? 'var(--accent)' : 'transparent';
   document.getElementById('members-tab-active').style.color = tab==='active' ? 'var(--text)' : 'var(--text-muted)';
-  document.getElementById('members-tab-archived').style.borderBottomColor = tab==='archived' ? 'var(--gold)' : 'transparent';
+  document.getElementById('members-tab-archived').style.borderBottomColor = tab==='archived' ? 'var(--accent)' : 'transparent';
   document.getElementById('members-tab-archived').style.color = tab==='archived' ? 'var(--text)' : 'var(--text-muted)';
   renderMembersList();
 }
@@ -416,7 +416,7 @@ function importTlgmCsv(input){
     var html = '';
     if(newMembers.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--heal);font-weight:600;">&#x1F7E2; '+newMembers.length+' new members</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+newMembers.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
     if(archived.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--dps);font-weight:600;">&#x1F534; '+archived.length+' will be archived</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+archived.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
-    if(roleChanged.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--gold);font-weight:600;">&#x1F7E1; '+roleChanged.length+' role changes</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+roleChanged.map(function(m){return escHtml(m.name)+' ('+m.from+'→'+m.to+')';}).join(', ')+'</div></div>';
+    if(roleChanged.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--accent);font-weight:600;">&#x1F7E1; '+roleChanged.length+' role changes</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+roleChanged.map(function(m){return escHtml(m.name)+' ('+m.from+'→'+m.to+')';}).join(', ')+'</div></div>';
     if(reactivated.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--color-info);font-weight:600;">&#x1F504; '+reactivated.length+' reactivated</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+reactivated.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
     if(!newMembers.length && !archived.length && !roleChanged.length && !reactivated.length) html = '<div style="color:var(--text-muted);">No changes detected — roster is already in sync.</div>';
 
@@ -508,7 +508,7 @@ function renderAliasSyncPreview(){
     if(sel.value) usedTlgm[sel.value.toLowerCase()] = true;
   });
 
-  var typeColors = {exact:'var(--heal)',fuzzy:'var(--gold)',manual:'var(--color-info)'};
+  var typeColors = {exact:'var(--heal)',fuzzy:'var(--accent)',manual:'var(--color-info)'};
 
   // Header
   var html = '<div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:16px;">Alias Sync Preview</div>';
@@ -553,9 +553,9 @@ function renderAliasSyncPreview(){
       }
 
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
-        +'<select id="unmatched-'+idx+'" data-game="'+escHtml(gn)+'" onchange="renderAliasSyncPreview()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;">'+opts+'</select>'
+        +'<select id="unmatched-'+idx+'" data-game="'+escHtml(gn)+'" onchange="renderAliasSyncPreview()" style="flex:1;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12px;">'+opts+'</select>'
         +'<div style="width:20px;color:var(--text-muted);font-size:10px;text-align:center;">→</div>'
-        +'<div style="flex:1;font-size:12px;color:var(--gold);font-weight:600;">'+escHtml(gn)+'</div>'
+        +'<div style="flex:1;font-size:12px;color:var(--accent);font-weight:600;">'+escHtml(gn)+'</div>'
         +'<div style="width:50px;text-align:right;"><button onclick="this.closest(\'div\').parentElement.style.display=\'none\'" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:10px;">Skip</button></div>'
         +'</div>';
     });
@@ -575,7 +575,7 @@ function renderAliasSyncPreview(){
     +'</div>'
     +'</div>';
 
-  container.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">'+html+'</div>';
+  container.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;">'+html+'</div>';
 }
 
 async function clearAllMembersAndAliases(){
@@ -718,7 +718,7 @@ function openMemberProfile(encodedName){
       +'<div style="width:48px;height:48px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:'+color+';">'+name.charAt(0).toUpperCase()+'</div>'
       +'<div>'
         +'<div style="font-size:18px;font-weight:700;color:var(--text);">'+escHtml(name)+'</div>'
-        +(alias?'<div style="font-size:12px;color:var(--gold);margin-top:2px;">In-game: '+escHtml(alias)+'</div>':'')
+        +(alias?'<div style="font-size:12px;color:var(--accent);margin-top:2px;">In-game: '+escHtml(alias)+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:4px;">'
           +'<span class="badge badge-' + (member.role === 'TANK' ? 'tank' : member.role === 'HEALER' ? 'heal' : 'dps') + '">'+(member.role==='HEALER'?'HEAL':member.role)+'</span>'
           +(member.guildRole?'<span class="badge badge-viewer">'+escHtml(member.guildRole)+'</span>':'')
@@ -735,22 +735,22 @@ function openMemberProfile(encodedName){
 
   document.getElementById('mp-stats').innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;">'
-      +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
+      +'<div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Total Kills</div>'
         +'<div style="font-size:22px;font-weight:700;color:var(--dps);">'+totalK+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+avgK+'/war</div>'
       +'</div>'
-      +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
+      +'<div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Total Assists</div>'
         +'<div style="font-size:22px;font-weight:700;color:var(--text-muted);">'+totalA+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+avgA+'/war</div>'
       +'</div>'
-      +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
+      +'<div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Damage Dealt</div>'
-        +'<div style="font-size:22px;font-weight:700;color:var(--gold);">'+fmtShort(totalDmg)+'</div>'
+        +'<div style="font-size:22px;font-weight:700;color:var(--accent);">'+fmtShort(totalDmg)+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtShort(avgDmg)+'/war</div>'
       +'</div>'
-      +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
+      +'<div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Healed</div>'
         +'<div style="font-size:22px;font-weight:700;color:var(--heal);">'+fmtShort(totalHeal)+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtShort(avgHeal)+'/war</div>'
@@ -760,7 +760,7 @@ function openMemberProfile(encodedName){
   // Performance indicators
   if(warCount >= 2){
     var trend = 'stable';
-    var trendColor = 'var(--gold)';
+    var trendColor = 'var(--accent)';
     if(warHistory.length >= 5){
       var recent5 = warHistory.slice(0,5); // already sorted newest first? No, let's sort
       var sorted = warHistory.slice().sort(function(a,b){ return 0; }); // keep order (added chronologically)
@@ -769,7 +769,7 @@ function openMemberProfile(encodedName){
       var overallAvg = totalDmg/warCount;
       if(recentAvg > overallAvg*1.1){ trend='improving ↑'; trendColor='var(--heal)'; }
       else if(recentAvg < overallAvg*0.9){ trend='declining ↓'; trendColor='var(--dps)'; }
-      else { trend='stable →'; trendColor='var(--gold)'; }
+      else { trend='stable →'; trendColor='var(--accent)'; }
     }
     var bestWar = warHistory.slice().sort(function(a,b){return(b.k+b.dmg)-(a.k+a.dmg);})[0];
     document.getElementById('mp-stats').innerHTML += '<div style="display:flex;gap:20px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;">'
@@ -782,7 +782,7 @@ function openMemberProfile(encodedName){
   var warsHtml = '';
   if(warHistory.length){
     warsHtml = '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">War History</div>';
-    warsHtml += '<div style="background:var(--bg3);border-radius:8px;overflow:hidden;">';
+    warsHtml += '<div style="background:var(--bg-hover);border-radius:8px;overflow:hidden;">';
     warsHtml += '<div style="display:flex;padding:6px 10px;font-size:10px;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);">'
       +'<div style="width:80px;">Date</div><div style="flex:1;">Opponent</div><div style="width:70px;">Party</div>'
       +'<div style="width:40px;text-align:right;">K</div><div style="width:40px;text-align:right;">A</div>'
@@ -795,7 +795,7 @@ function openMemberProfile(encodedName){
         +'<div style="width:70px;color:var(--text-muted);">'+escHtml(wh.party)+'</div>'
         +'<div style="width:40px;text-align:right;color:var(--dps);">'+wh.k+'</div>'
         +'<div style="width:40px;text-align:right;">'+wh.a+'</div>'
-        +'<div style="width:60px;text-align:right;color:var(--gold);">'+fmtShort(wh.dmg)+'</div>'
+        +'<div style="width:60px;text-align:right;color:var(--accent);">'+fmtShort(wh.dmg)+'</div>'
         +'<div style="width:60px;text-align:right;color:var(--heal);">'+fmtShort(wh.heal)+'</div>'
         +'</div>';
     });

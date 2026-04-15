@@ -57,7 +57,7 @@ function PartyMemberRow(member, options) {
 
   // NEW badge
   if (isNew) {
-    html += '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
+    html += '<span style="font-size:var(--font-size-2xs);background:var(--accent);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
   }
 
   html += '</div>';
@@ -177,7 +177,7 @@ function _renderSm3PartyCard(party, opts) {
 
     // NEW badge
     if (isNew) {
-      html += '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
+      html += '<span style="font-size:var(--font-size-2xs);background:var(--accent);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
     }
 
     html += '</div>';
@@ -239,7 +239,7 @@ PartyCard.sm3Members = function(party, options) {
     }
 
     if (isNew) {
-      html += '<span style="font-size:var(--font-size-2xs);background:var(--gold);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
+      html += '<span style="font-size:var(--font-size-2xs);background:var(--accent);color:#000;padding:1px var(--spacing-xs);border-radius:var(--radius-xs);font-weight:var(--font-weight-bold);">NEW</span>';
     }
 
     html += '</div>';

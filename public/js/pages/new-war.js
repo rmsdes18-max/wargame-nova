@@ -137,7 +137,7 @@ var DEFAULT_PARTIES = [
 function renderPartyEditor(){
   state.parties = matchPartiesAgainstRoster(JSON.parse(JSON.stringify(DEFAULT_PARTIES)));
   var html = '<div style="margin-top:16px;">';
-  html += '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Editează dacă party-urile din poză sunt diferite față de cele de mai jos:</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Editează dacă party-urile din poză sunt diferite față de cele de mai jos:</div>';
   html += '<div class="parties-confirm" id="party-editor-cards">';
   state.parties.forEach(function(p,pi){
     html += '<div class="inner-card party-card">';
@@ -148,11 +148,11 @@ function renderPartyEditor(){
     p.members.forEach(function(m,mi){
       var matchDot = m.tlgmKey
         ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
-        : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
+        : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--text-muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
       html += '<div class="party-card-member">';
       html += RoleBadge(m.role, {pill:false});
-      html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
-      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColor(m.role)+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
+      html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--accent)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
+      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border-default);color:'+roleColor(m.role)+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
       ['TANK','HEALER','DPS'].forEach(function(r){
         html += '<option value="'+r+'"'+(r===m.role?' selected':'')+'>'+r+'</option>';
       });
@@ -186,7 +186,7 @@ function confirmParties(){
   var matched  = state.parties.reduce(function(a,p){return a+p.members.filter(function(m){return !!m.tlgmKey;}).length;},0);
   var unmatched= total-matched;
   var summary  = '<span style="color:var(--heal);">✓ '+matched+' identificați</span>'
-               + (unmatched ? ' · <span style="color:var(--muted);">'+unmatched+' neidentificați</span>' : '')
+               + (unmatched ? ' · <span style="color:var(--text-muted);">'+unmatched+' neidentificați</span>' : '')
                + ' · '+total+' total';
   document.getElementById('step1-confirm-btns').innerHTML =
     '<div class="btn-row" style="margin-top:16px;"><div style="font-size:12px;margin-right:auto;">'+summary+'</div>'
@@ -269,7 +269,7 @@ function handleExcelUpload(e){
       prev.innerHTML =
         '<div style="background:rgba(62,207,110,.08);border:1px solid rgba(62,207,110,.2);border-radius:8px;padding:10px 14px;">'
         +'<span style="color:var(--heal);font-size:13px;font-weight:600;">✓ '+state.excelData.length+' jucători încărcați</span>'
-        +'<span style="font-size:11px;color:var(--muted);margin-left:12px;">Coloane: '
+        +'<span style="font-size:11px;color:var(--text-muted);margin-left:12px;">Coloane: '
         +[colName,colDefeat,colAssist,colDealt,colTaken,colHealed].filter(Boolean).join(' · ')
         +'</span></div>';
       document.getElementById('step2-next').disabled = false;
@@ -301,11 +301,11 @@ function goStep3FromExcel(){
   if(!state.excelData || !state.excelData.length){
     var s3 = document.getElementById('step3-status');
     s3.innerHTML = '⚠ Niciun fișier Excel încărcat. '
-      +'<button onclick="goStep(2)" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Înapoi la Step 2</button>';
+      +'<button onclick="goStep(2)" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Înapoi la Step 2</button>';
     s3.style.display='block';
-    s3.style.background='rgba(240,192,64,.08)';
-    s3.style.borderColor='rgba(240,192,64,.2)';
-    s3.style.color='var(--gold)';
+    s3.style.background='rgba(212,225,87,.08)';
+    s3.style.borderColor='rgba(212,225,87,.2)';
+    s3.style.color='var(--accent)';
     renderStatsList();
     return;
   }
@@ -356,8 +356,8 @@ function goStep3FromExcel(){
   statusEl.innerHTML =
     '<span style="color:var(--heal);">✅ '+cC+' confirmați</span>'
     +'  <span style="color:var(--color-assists);">⚠ '+mC+' lipsă</span>'
-    +'  <span style="color:var(--gold);">➕ '+eC+' extra</span>'
-    +'  <button onclick="goStep(2)" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Schimbă fișier</button>';
+    +'  <span style="color:var(--accent);">➕ '+eC+' extra</span>'
+    +'  <button onclick="goStep(2)" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Schimbă fișier</button>';
   statusEl.style.background='rgba(10,16,32,.6)';
   statusEl.style.borderColor='rgba(255,255,255,.08)';
   statusEl.style.color='var(--text)';
@@ -378,8 +378,8 @@ function renderStatsRow(p, i){
     rowStyle = 'background:rgba(232,160,48,.05);border-left:2px solid rgba(232,160,48,.35);';
     statusBadge = '<span style="font-size:10px;color:var(--color-assists);">⚠ lipsă</span>';
   } else { // extra
-    rowStyle = 'background:rgba(240,192,64,.05);border-left:2px solid rgba(240,192,64,.3);';
-    statusBadge = '<span style="font-size:10px;color:var(--gold);">➕ extra</span>';
+    rowStyle = 'background:rgba(212,225,87,.05);border-left:2px solid rgba(212,225,87,.3);';
+    statusBadge = '<span style="font-size:10px;color:var(--accent);">➕ extra</span>';
   }
 
   // Party cell: dropdown pentru extra, text pentru ceilalți
@@ -389,9 +389,9 @@ function renderStatsRow(p, i){
     state.parties.forEach(function(pt){
       opts += '<option value="'+pt.name+'"'+(p.party===pt.name?' selected':'')+'>'+pt.name+'</option>';
     });
-    partyCell = '<select onchange="assignExtraToParty('+i+',this.value)" style="background:var(--bg3);border:1px solid var(--border2);color:var(--gold);font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;max-width:90px;">'+opts+'</select>';
+    partyCell = '<select onchange="assignExtraToParty('+i+',this.value)" style="background:var(--bg-hover);border:1px solid var(--border-default);color:var(--accent);font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;max-width:90px;">'+opts+'</select>';
   } else {
-    partyCell = '<span style="font-size:10px;color:var(--muted);">'+p.party+'</span>';
+    partyCell = '<span style="font-size:10px;color:var(--text-muted);">'+p.party+'</span>';
   }
 
   var html = '<div class="nova-row" style="'+rowStyle+'">';
@@ -402,11 +402,11 @@ function renderStatsRow(p, i){
   html += partyCell;
   html += statusBadge;
   html += '</div>';
-  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--accent);font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'defeat\',+this.value)"></div>';
-  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text-muted);font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'assist\',+this.value)"></div>';
-  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--color-assists);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_dealt\',+this.value)"></div>';
-  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--color-dmg-taken);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_taken\',+this.value)"></div>';
-  html += '<div class="stat-num"><input type="number" min="0" value="'+p.healed+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--heal);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'healed\',+this.value)"></div>';
+  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;color:var(--accent);font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'defeat\',+this.value)"></div>';
+  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;color:var(--text-muted);font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'assist\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;color:var(--color-assists);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_dealt\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;color:var(--color-dmg-taken);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_taken\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.healed+'" style="width:100px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;color:var(--heal);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'healed\',+this.value)"></div>';
   html += '</div>';
   return html;
 }
@@ -450,17 +450,17 @@ function renderMatchPreview(){
       return Object.assign({},m,stats||{defeat:0,assist:0,dmg_dealt:0,dmg_taken:0,healed:0});
     });
     var tot_def = matched.reduce(function(a,m){return a+m.defeat;},0);
-    html += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">';
+    html += '<div style="background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">';
     html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--text);min-width:80px;">'+p.name+'</div>';
-    html += '<div style="font-size:11px;color:var(--muted);">'+p.label+'</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);">'+p.label+'</div>';
     html += '<div style="margin-left:auto;display:flex;gap:16px;align-items:center;">';
     p.members.forEach(function(m){
       var dot=roleColor(m.role);
       var has = findStatsByNameOrAlias(state.confirmed, m.name);
-      html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'var(--text)':'var(--muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
+      html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'var(--text)':'var(--text-muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
     });
     html += '</div>';
-    html += '<div style="font-size:13px;font-weight:700;color:var(--gold);min-width:60px;text-align:right;">'+tot_def+' kills</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--accent);min-width:60px;text-align:right;">'+tot_def+' kills</div>';
     html += '</div>';
   });
   document.getElementById('match-preview').innerHTML = html;
@@ -484,7 +484,7 @@ function renderPreview(){
     var th=members.reduce(function(a,m){return a+m.healed;},0);
     html += '<div class="result-party">';
     html += '<div class="result-party-hdr"><span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--text);">'+p.name+'</span><span style="font-size:10px;color:var(--tank);background:rgba(255,255,255,.08);padding:1px 8px;border-radius:99px;">'+p.label+'</span></div>';
-    html += '<table class="result-tbl"><thead><tr><th style="text-align:left;">Name</th><th>Def</th><th>Ast</th><th>Dmg Dealt</th><th>Dmg Taken</th><th>Healed</th><th style="color:var(--gold);">Kill Part.</th></tr></thead><tbody>';
+    html += '<table class="result-tbl"><thead><tr><th style="text-align:left;">Name</th><th>Def</th><th>Ast</th><th>Dmg Dealt</th><th>Dmg Taken</th><th>Healed</th><th style="color:var(--accent);">Kill Part.</th></tr></thead><tbody>';
     members.forEach(function(m){
       var dot=roleColor(m.role);
       var kpv = totalDef>0&&m.defeat>0 ? (m.defeat/totalDef*100) : 0;
@@ -583,18 +583,18 @@ function renderAliasTable(){
   var keys = Object.keys(aliases);
   var html = '';
   if(!keys.length){
-    html = '<div style="font-size:11px;color:var(--muted);padding:6px 0;">Niciun alias definit.</div>';
+    html = '<div style="font-size:11px;color:var(--text-muted);padding:6px 0;">Niciun alias definit.</div>';
   } else {
     html = '<div style="display:flex;flex-direction:column;gap:6px;">';
     keys.forEach(function(k){
       var safeK = k.replace(/'/g,"\\'");
       html += '<div style="display:flex;gap:8px;align-items:center;">'
         +'<input type="text" value="'+k+'" placeholder="Nume Guild Manager" '
-        +'style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px;" '
+        +'style="flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:5px 8px;" '
         +'onchange="renameAliasKey(\''+safeK+'\',this.value)">'
-        +'<span style="color:var(--muted);font-size:14px;">→</span>'
+        +'<span style="color:var(--text-muted);font-size:14px;">→</span>'
         +'<input type="text" value="'+aliases[k]+'" placeholder="Nume în joc" '
-        +'style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--gold);font-size:12px;padding:5px 8px;" '
+        +'style="flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:5px;color:var(--accent);font-size:12px;padding:5px 8px;" '
         +'onchange="updateAliasValue(\''+safeK+'\',this.value)">'
         +'<button onclick="removeAlias(\''+safeK+'\')" style="background:transparent;border:none;color:var(--dps);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>'
         +'</div>';
@@ -1041,7 +1041,7 @@ async function handlePartyUploadWithVision(e){
       }
     } else {
       document.getElementById('party-manual-editor').innerHTML =
-        '<div style="color:var(--gold);font-size:11px;padding:8px 10px;background:rgba(240,192,64,.06);border-radius:6px;margin-bottom:10px;">Fără API key — party-uri default. <a href="#" onclick="showPage(\'settings\')" style="color:var(--gold);">Settings →</a></div>';
+        '<div style="color:var(--accent);font-size:11px;padding:8px 10px;background:rgba(212,225,87,.06);border-radius:6px;margin-bottom:10px;">Fără API key — party-uri default. <a href="#" onclick="showPage(\'settings\')" style="color:var(--accent);">Settings →</a></div>';
       state.parties = matchPartiesAgainstRoster(JSON.parse(JSON.stringify(DEFAULT_PARTIES)));
       renderPartyEditorFromData(state.parties);
     }
@@ -1247,11 +1247,11 @@ async function goStep3WithVision(){
   if(!hasKey){
     var s3 = document.getElementById('step3-status');
     s3.innerHTML = '⚠ Fără API key — <b>introdu manual statisticile în tabelul de mai jos</b>. '
-      +'<a href="#" onclick="showPage(\'settings\')" style="color:var(--gold);">Configurează API →</a>';
+      +'<a href="#" onclick="showPage(\'settings\')" style="color:var(--accent);">Configurează API →</a>';
     s3.style.display='block';
-    s3.style.background='rgba(240,192,64,.08)';
-    s3.style.borderColor='rgba(240,192,64,.2)';
-    s3.style.color='var(--gold)';
+    s3.style.background='rgba(212,225,87,.08)';
+    s3.style.borderColor='rgba(212,225,87,.2)';
+    s3.style.color='var(--accent)';
     renderStatsList();
     return;
   }
@@ -1352,7 +1352,7 @@ async function goStep3WithVision(){
   var extraCount     = state.novaPlayers.filter(function(p){return p.status==='extra';}).length;
   var statusEl = document.getElementById('step3-status');
   statusEl.style.display='block';
-  var retryBtn = ' <button onclick="goStep3WithVision()" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">↺ Reîncearcă</button>';
+  var retryBtn = ' <button onclick="goStep3WithVision()" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">↺ Reîncearcă</button>';
 
   var totalFound = confirmedCount + extraCount;
   if(totalFound > 0){
@@ -1360,7 +1360,7 @@ async function goStep3WithVision(){
     statusEl.innerHTML =
       '<span style="color:var(--heal);">✅ '+confirmedCount+' confirmați</span>'
       +'  <span style="color:var(--color-assists);">⚠ '+missingCount+' lipsă</span>'
-      +'  <span style="color:var(--gold);">➕ '+extraCount+' extra</span>'
+      +'  <span style="color:var(--accent);">➕ '+extraCount+' extra</span>'
       +'  <small style="color:var(--text-label);">'+log.join(' | ')+'</small>'
       +retryBtn;
     statusEl.style.background='rgba(10,16,32,.6)';

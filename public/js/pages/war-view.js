@@ -136,7 +136,7 @@ function viewWar(warId){
   var html = '<div class="war-header">';
   html += '<div class="war-title">';
   if(_vwEditMode){
-    html += '<h2>'+escHtml(_currentGuildName)+' vs <span contenteditable="true" style="outline:none;border-bottom:1px dashed var(--gold);cursor:text;" onblur="document.getElementById(\'edit-opponent\').value=this.textContent.trim()">'+escHtml(w.opponent)+'</span></h2>';
+    html += '<h2>'+escHtml(_currentGuildName)+' vs <span contenteditable="true" style="outline:none;border-bottom:1px dashed var(--accent);cursor:text;" onblur="document.getElementById(\'edit-opponent\').value=this.textContent.trim()">'+escHtml(w.opponent)+'</span></h2>';
   } else {
     html += '<h2>'+escHtml(_currentGuildName)+' vs '+escHtml(w.opponent)+'</h2>';
   }
@@ -353,13 +353,13 @@ function viewWar(warId){
   html += '</div></div>';
 
   // Member picker panel
-  html += '<div id="member-picker" class="hidden" style="width:260px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:fixed;right:16px;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;z-index:40;">'
+  html += '<div id="member-picker" class="hidden" style="width:260px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;position:fixed;right:16px;top:70px;max-height:calc(100vh - 100px);overflow-y:auto;z-index:40;">'
     +'<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;">'
-      +'<span style="font-size:14px;font-weight:700;color:var(--gold);flex:1;">Selectează membru</span>'
-      +'<button onclick="closeMemberPicker()" style="background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;">×</button>'
+      +'<span style="font-size:14px;font-weight:700;color:var(--accent);flex:1;">Selectează membru</span>'
+      +'<button onclick="closeMemberPicker()" style="background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">×</button>'
     +'</div>'
     +'<div style="padding:8px 10px;">'
-      +'<input id="picker-search" type="text" placeholder="Caută..." oninput="filterPicker()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">'
+      +'<input id="picker-search" type="text" placeholder="Caută..." oninput="filterPicker()" style="width:100%;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">'
     +'</div>'
     +'<div id="picker-list" style="padding:4px 6px;"></div>'
   +'</div>';
@@ -435,15 +435,15 @@ function renderPickerList(){
     listHtml += '<div style="font-size:10px;color:'+rc+';font-weight:700;padding:6px 8px 3px;letter-spacing:.06em;">'+role+'</div>';
     roles[role].forEach(function(r){
       var used = usedNames[normalizeName(r.name)];
-      listHtml += '<div data-name="'+escHtml(r.name)+'" data-role="'+r.role+'" class="picker-item" style="color:'+(used?'var(--muted)':'var(--text)')+';'+(used?'opacity:.5;':'')+'">'
+      listHtml += '<div data-name="'+escHtml(r.name)+'" data-role="'+r.role+'" class="picker-item" style="color:'+(used?'var(--text-muted)':'var(--text)')+';'+(used?'opacity:.5;':'')+'">'
         +'<span style="width:7px;height:7px;border-radius:50%;background:'+rc+';"></span>'
         +escHtml(r.name)
-        +(used?'<span style="margin-left:auto;font-size:9px;color:var(--muted);">in war</span>':'')
+        +(used?'<span style="margin-left:auto;font-size:9px;color:var(--text-muted);">in war</span>':'')
         +'</div>';
     });
   });
 
-  if(!listHtml) listHtml = '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center;">Niciun rezultat</div>';
+  if(!listHtml) listHtml = '<div style="padding:12px;color:var(--text-muted);font-size:12px;text-align:center;">Niciun rezultat</div>';
   document.getElementById('picker-list').innerHTML = listHtml;
 }
 
@@ -844,8 +844,8 @@ function updateUIForRole(){
     if(_userName && _authToken){
       var avatarHtml = _userAvatar
         ? '<img src="'+_userAvatar+'" style="width:34px;height:34px;border-radius:50%;">'
-        : '<div style="width:34px;height:34px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-muted);">'+_userName.charAt(0).toUpperCase()+'</div>';
-      var userRoleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);font-weight:600;">ADMIN</span>'
+        : '<div style="width:34px;height:34px;border-radius:50%;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-muted);">'+_userName.charAt(0).toUpperCase()+'</div>';
+      var userRoleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(212,225,87,.15);color:var(--accent);font-weight:600;">ADMIN</span>'
         : _userRole === 'editor' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(91,143,255,.15);color:var(--color-info);font-weight:600;">EDITOR</span>'
         : '';
       userEl.innerHTML = avatarHtml

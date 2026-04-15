@@ -13,7 +13,7 @@ var PARTY_DOT_COLORS = [
  * Shorter palette variant used in the smart-match panel.
  */
 var PARTY_DOT_COLORS_SM3 = [
-  '#5b8fff', '#3ecf6e', '#e84040', '#f0c040', '#8B5CF6', '#f97316', '#0891b2'
+  '#5b8fff', '#3ecf6e', '#e84040', '#d4e157', '#8B5CF6', '#f97316', '#0891b2'
 ];
 
 /**
