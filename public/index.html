@@ -90,9 +90,13 @@ input[type=number]{-moz-appearance:textfield;}
   .landing-right{flex:none;padding:24px;border-left:none;border-top:1px solid var(--border,#3f4147);}
 }
 </style>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/party-helpers.js"></script>
+<script src="js/utils/dom.js"></script>
 <script src="js/components/role-badge.js"></script>
 <script src="js/components/stats-row.js"></script>
 <script src="js/components/party-card.js"></script>
+<script src="js/components/empty-state.js"></script>
 <script src="js/components/modal.js"></script>
 <script src="js/components/toast.js"></script>
 </head>
@@ -606,17 +610,7 @@ function setCurrentGuild(guildId){
   localStorage.setItem('nova_guild_id', guildId);
 }
 
-function apiHeaders(isAdmin){
-  var h = {'Content-Type':'application/json'};
-  var token = localStorage.getItem('nova_token');
-  if(token) h['Authorization'] = 'Bearer ' + token;
-  if(_currentGuildId) h['X-Guild-ID'] = _currentGuildId;
-  if(isAdmin){
-    var s = localStorage.getItem('nova_admin_secret')||'';
-    if(s) h['X-Admin-Secret'] = s;
-  }
-  return h;
-}
+// apiHeaders() moved to js/utils/api.js
 
 // ── IN-MEMORY CACHE (populat de initApp la incarcare) ──────────────────────
 var _warsCache   = null; // array | null = neîncarcat
@@ -639,7 +633,7 @@ function loadAliases(){
 }
 function saveAliases(a){
   _aliasCache = a;
-  fetch('/api/aliases/war',{method:'PUT',headers:apiHeaders(true),body:JSON.stringify(a)})
+  apiPut('/api/aliases/war',a,{admin:true})
     .catch(function(e){ console.warn('alias save failed',e); });
 }
 
@@ -788,7 +782,7 @@ async function saveWarSimple(){
   state._saving = true;
   var war = {id:Date.now(), opponent:opp, date:dt, parties:state.parties};
   try{
-    var r = await fetch('/api/wars',{method:'POST',headers:apiHeaders(true),body:JSON.stringify(war)});
+    var r = await apiPost('/api/wars',war,{admin:true});
     if(!r.ok) throw new Error('HTTP '+r.status);
     if(_warsCache!==null) _warsCache.unshift(war);
     showPage('wars');
@@ -834,14 +828,13 @@ function renderPartyEditor(){
     html += '<input type="text" value="'+p.label+'" style="background:rgba(255,255,255,.08);border:none;color:#9080cc;font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
     html += '</div>';
     p.members.forEach(function(m,mi){
-      var roleColors = {TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'};
       var matchDot = m.tlgmKey
         ? '<span title="TLGM: '+m.tlgmName+(m.matchedVia==='alias'?' (alias)':'')+'" style="width:7px;height:7px;border-radius:50%;background:var(--heal);flex-shrink:0;display:inline-block;margin-left:4px;"></span>'
         : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
       html += '<div class="party-member">';
       html += RoleBadge(m.role, {pill:false});
       html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:#ddd;font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
-      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColors[m.role]+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
+      html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColor(m.role)+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
       ['TANK','HEALER','DPS'].forEach(function(r){
         html += '<option value="'+r+'"'+(r===m.role?' selected':'')+'>'+r+'</option>';
       });
@@ -1055,7 +1048,7 @@ function goStep3FromExcel(){
 
 // ── STEP 3: NOVA PLAYERS ──────────────────────────────────────────────────
 function renderStatsRow(p, i){
-  var dot = {TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[p.role]||'#888';
+  var dot = roleColor(p.role);
   var status = p.status || (p.extra ? 'extra' : 'missing');
 
   var rowStyle = '';
@@ -1370,7 +1363,7 @@ function renderStatsMatchingV3(results){
     +'<h3>Party Breakdown</h3>'
   +'</div>';
   html += '<div class="sm3-party-grid">';
-  var partyDotColors = ['#5b8fff','#3ecf6e','#e84040','#f0c040','#8B5CF6','#f97316','#0891b2'];
+  var partyDotColors = PARTY_DOT_COLORS_SM3;
   // Build a lookup of matched stats by member name for party breakdown
   var matchedStatsLookup = {};
   results.matched.forEach(function(m){
@@ -1380,7 +1373,7 @@ function renderStatsMatchingV3(results){
   });
 
   state.parties.forEach(function(party,pi){
-    if(party._isExtras || party.name==='_Extras') return;
+    if(isExtrasParty(party)) return;
     var dotColor = partyDotColors[pi % partyDotColors.length];
 
     // Build a fully-resolved stats lookup for this party (name → stats)
@@ -1525,7 +1518,7 @@ function resolveItemV3(idx, type){
       if(!_memberAliases[key] || _memberAliases[key] !== review.ocrName){
         _memberAliases[key] = review.ocrName;
         // Save aliases to backend
-        try{ fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_memberAliases)}); }catch(e){}
+        try{ apiPut('/api/aliases/member',_memberAliases); }catch(e){}
       }
     }
 
@@ -1556,14 +1549,14 @@ function resolveItemV3(idx, type){
     if(aliasCheck && aliasCheck.checked){
       var key2 = normalizeName(memberName);
       _memberAliases[key2] = review.ocrName;
-      try{ fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_memberAliases)}); }catch(e){}
+      try{ apiPut('/api/aliases/member',_memberAliases); }catch(e){}
     }
 
     // Add to roster cache
     if(_rosterCache){
       _rosterCache.push(member);
       // Also save roster
-      try{ fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_rosterCache)}); }catch(e){}
+      try{ apiPut('/api/roster',_rosterCache); }catch(e){}
     }
 
     // Move to matched
@@ -1625,7 +1618,7 @@ function updatePartyPreviewV3(){
   });
 
   state.parties.forEach(function(party,pi){
-    if(party._isExtras || party.name==='_Extras') return;
+    if(isExtrasParty(party)) return;
     var container = document.getElementById('sm3-party-members-'+pi);
     if(!container) return;
 
@@ -1665,8 +1658,7 @@ function cyclePartyRoleV3(partyIdx, memberIdx){
   if(!party || !party.members[memberIdx]) return;
   var m = party.members[memberIdx];
   var cur = m.role||'DPS';
-  var next = cur==='DPS'?'TANK':cur==='TANK'?'HEALER':'DPS';
-  m.role = next;
+  m.role = nextRole(cur);
   // Also update in matched results if present
   if(window._currentMatchResults){
     window._currentMatchResults.matched.forEach(function(mr){
@@ -1818,7 +1810,7 @@ function renderMatchPreview(){
     html += '<div style="font-size:11px;color:var(--muted);">'+p.label+'</div>';
     html += '<div style="margin-left:auto;display:flex;gap:16px;align-items:center;">';
     p.members.forEach(function(m){
-      var dot={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[m.role];
+      var dot=roleColor(m.role);
       var has = findStatsByNameOrAlias(state.confirmed, m.name);
       html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'#ddd':'var(--muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
     });
@@ -1849,7 +1841,7 @@ function renderPreview(){
     html += '<div class="result-party-hdr"><span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;">'+p.name+'</span><span style="font-size:10px;color:#9080cc;background:rgba(255,255,255,.08);padding:1px 8px;border-radius:99px;">'+p.label+'</span></div>';
     html += '<table class="result-tbl"><thead><tr><th style="text-align:left;">Name</th><th>Def</th><th>Ast</th><th>Dmg Dealt</th><th>Dmg Taken</th><th>Healed</th><th style="color:var(--gold);">Kill Part.</th></tr></thead><tbody>';
     members.forEach(function(m){
-      var dot={TANK:'var(--tank)',HEALER:'var(--heal)',DPS:'var(--dps)'}[m.role];
+      var dot=roleColor(m.role);
       var kpv = totalDef>0&&m.defeat>0 ? (m.defeat/totalDef*100) : 0;
       var bw = Math.min(100,kpv*6).toFixed(0);
       var dc = m.defeat>=20?'#ffcc44':(m.defeat>0?'#bbb':'#444');
@@ -1884,22 +1876,22 @@ function renderWarsList(){
   if(!wars.length){
     var isEditor = _userRole === 'admin' || _userRole === 'editor';
     el.className = '';
-    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center;">'
-      +'<div style="font-size:56px;opacity:.15;margin-bottom:20px;">⚔</div>'
-      +'<div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:8px;">No wars recorded yet</div>'
-      +'<div style="font-size:13px;color:var(--text-muted);max-width:320px;margin-bottom:24px;">Upload a party screenshot to start tracking your guild wars and stats.</div>'
-      +(isEditor?'<button onclick="startNewWar()" class="btn btn-primary" style="padding:12px 28px;font-size:14px;">+ Add First War</button>':'')
-      +'</div>';
+    el.innerHTML = EmptyState({
+      icon: '⚔', title: 'No wars recorded yet',
+      description: 'Upload a party screenshot to start tracking your guild wars and stats.',
+      buttonText: isEditor ? '+ Add First War' : '', buttonAction: 'startNewWar()',
+      padding: '80px 20px'
+    });
     return;
   }
   // Count members + stats per war
-  var partyDotColors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
+  var partyDotColors = PARTY_DOT_COLORS;
   el.className = 'war-timeline';
   el.innerHTML = wars.map(function(w,i){
     var totalMembers = 0, totalParties = 0;
     var totalK=0, totalA=0, totalDmg=0, totalHeal=0;
     if(w.parties) w.parties.forEach(function(p){
-      if(!p._isExtras && p.name!=='_Extras'){
+      if(!isExtrasParty(p)){
         totalParties++;
         p.members.forEach(function(m){
           totalMembers++;
@@ -1916,7 +1908,7 @@ function renderWarsList(){
       partyDotsHtml = '<div class="war-card-parties">';
       var dotIdx = 0;
       w.parties.forEach(function(p){
-        if(!p._isExtras && p.name!=='_Extras'){
+        if(!isExtrasParty(p)){
           partyDotsHtml += '<div class="war-card-party-dot" style="background:'+partyDotColors[dotIdx % partyDotColors.length]+';"></div>';
           dotIdx++;
         }
@@ -1946,7 +1938,7 @@ function renderWarsList(){
 async function confirmDeleteWar(warId){
   try{
     console.log('[DELETE] warId:', warId, 'guildId:', _currentGuildId);
-    var r = await fetch('/api/wars/'+warId,{method:'DELETE',headers:apiHeaders(true)});
+    var r = await apiDelete('/api/wars/'+warId);
     if(!r.ok){
       var errBody = await r.text().catch(function(){return '';});
       console.error('[DELETE] Error:', r.status, errBody);
@@ -1961,8 +1953,7 @@ var _vwEditMode = false;
 var _vwWarId = null;
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function roleColor(role){ return role==='TANK'?'var(--tank)':role==='HEALER'?'var(--heal)':'var(--dps)'; }
-function roleClass(role){ return role==='TANK'?'name-tank':role==='HEALER'?'name-heal':'name-dps'; }
+// roleColor(), roleClass() moved to js/utils/party-helpers.js
 function getWar(warId){ var wars=loadWars(); return wars.find(function(x){return x.id===warId;}); }
 
 function editableCell(cls, val, warId, pi, mi, field){
@@ -2053,10 +2044,10 @@ function viewWar(warId){
   html += '<div class="tab" onclick="showVwTab(\'leaderboard\',this)">Leaderboard</div>';
   html += '</div>';
 
-  var partyDotColorsVw = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
+  var partyDotColorsVw = PARTY_DOT_COLORS;
 
   // ── Extras data ──
-  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extrasParty = getExtrasParty(w);
   var extrasMembers = extrasParty ? extrasParty.members : [];
 
   // ── Parties tab ──
@@ -2065,7 +2056,7 @@ function viewWar(warId){
   html += '<div class="parties-grid"><div id="vw-parties-grid" style="display:contents;">';
 
   w.parties.forEach(function(p, pi){
-    if(p._isExtras || p.name==='_Extras') return;
+    if(isExtrasParty(p)) return;
     var pKills=0, pAssists=0, pDmg=0, pTaken=0, pHealed=0;
     p.members.forEach(function(m){ pKills+=m.defeat||0; pAssists+=m.assist||0; pDmg+=m.dmg_dealt||0; pTaken+=m.dmg_taken||0; pHealed+=m.healed||0; });
     var dotColor = partyDotColorsVw[pi % partyDotColorsVw.length];
@@ -2519,7 +2510,7 @@ function bindExtrasDragDrop(warId){
 function replaceWithExtra(warId, extraIdx, toPi, toMi){
   var w = getWar(warId);
   if(!w) return;
-  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extrasParty = getExtrasParty(w);
   if(!extrasParty || !extrasParty.members[extraIdx]) return;
   var extra = extrasParty.members[extraIdx];
   // Replace the missing player with the extra
@@ -2537,7 +2528,7 @@ function replaceWithExtra(warId, extraIdx, toPi, toMi){
   // Remove from extras
   extrasParty.members.splice(extraIdx, 1);
   if(!extrasParty.members.length){
-    w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
+    w.parties = w.parties.filter(function(p){ return !isExtrasParty(p); });
   }
   viewWar(warId);
 }
@@ -2545,7 +2536,7 @@ function replaceWithExtra(warId, extraIdx, toPi, toMi){
 function appendExtraToParty(warId, extraIdx, toPi){
   var w = getWar(warId);
   if(!w) return;
-  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extrasParty = getExtrasParty(w);
   if(!extrasParty || !extrasParty.members[extraIdx]) return;
   var extra = extrasParty.members[extraIdx];
   if(w.parties[toPi]){
@@ -2561,7 +2552,7 @@ function appendExtraToParty(warId, extraIdx, toPi){
   }
   extrasParty.members.splice(extraIdx, 1);
   if(!extrasParty.members.length){
-    w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
+    w.parties = w.parties.filter(function(p){ return !isExtrasParty(p); });
   }
   viewWar(warId);
 }
@@ -2590,20 +2581,16 @@ function updatePlayerNameInWar(warId, pi, mi, newName){
 function cycleWarMemberRole(warId, pi, mi){
   var war = _warsCache.find(function(w){ return w.id === warId; });
   if(!war || !war.parties[pi] || !war.parties[pi].members[mi]) return;
-  var roles = ['TANK','HEALER','DPS'];
-  var cur = war.parties[pi].members[mi].role || 'DPS';
-  war.parties[pi].members[mi].role = roles[(roles.indexOf(cur)+1)%3];
+  war.parties[pi].members[mi].role = nextRole(war.parties[pi].members[mi].role);
   viewWar(warId);
 }
 
 function cycleExtraRole(warId, extraIdx){
   var war = _warsCache.find(function(w){ return w.id === warId; });
   if(!war) return;
-  var extras = war.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extras = getExtrasParty(war);
   if(!extras || !extras.members[extraIdx]) return;
-  var roles = ['TANK','HEALER','DPS'];
-  var cur = extras.members[extraIdx].role || 'DPS';
-  extras.members[extraIdx].role = roles[(roles.indexOf(cur)+1)%3];
+  extras.members[extraIdx].role = nextRole(extras.members[extraIdx].role);
   viewWar(warId);
 }
 
@@ -2627,20 +2614,17 @@ function cancelEditMode(){
   // Reload from API/cache to discard changes
   if(_vwWarId){
     // Re-fetch to discard in-memory edits
-    fetch('/api/wars').then(function(r){ return r.ok?r.json():null; }).then(function(wars){
+    apiGet('/api/wars').then(function(wars){
       if(wars) _warsCache = wars;
       viewWar(_vwWarId);
-    }).catch(function(){ viewWar(_vwWarId); });
+    });
   }
 }
 
 function cycleRole(warId, pi, mi){
   var w = getWar(warId);
   if(!w || !w.parties[pi] || !w.parties[pi].members[mi]) return;
-  var roles = ['TANK','HEALER','DPS'];
-  var cur = w.parties[pi].members[mi].role;
-  var idx = roles.indexOf(cur);
-  w.parties[pi].members[mi].role = roles[(idx+1)%3];
+  w.parties[pi].members[mi].role = nextRole(w.parties[pi].members[mi].role);
   viewWar(warId);
 }
 
@@ -2656,7 +2640,7 @@ function moveExtraToParty(warId, extraIdx){
   if(!w) return;
 
   // Find _Extras party
-  var extrasParty = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+  var extrasParty = getExtrasParty(w);
   if(!extrasParty || !extrasParty.members[extraIdx]) return;
 
   var partyName = document.getElementById('extra-party-'+extraIdx).value;
@@ -2674,7 +2658,7 @@ function moveExtraToParty(warId, extraIdx){
   targetParty.members.push(ex);
   extrasParty.members.splice(extraIdx, 1);
   if(!extrasParty.members.length){
-    w.parties = w.parties.filter(function(p){ return !p._isExtras && p.name!=='_Extras'; });
+    w.parties = w.parties.filter(function(p){ return !isExtrasParty(p); });
   }
   viewWar(warId);
 }
@@ -2704,8 +2688,7 @@ async function saveWarEdits(warId){
     if(w.parties[pi]) w.parties[pi].color = sel.value;
   });
   try{
-    var r = await fetch('/api/wars/'+warId,{method:'PUT',headers:apiHeaders(true),
-      body:JSON.stringify({opponent:w.opponent,date:w.date,parties:w.parties,extras:w.extras||[]})});
+    var r = await apiPut('/api/wars/'+warId,{opponent:w.opponent,date:w.date,parties:w.parties,extras:w.extras||[]},{admin:true});
     if(!r.ok) throw new Error('HTTP '+r.status);
   } catch(e){ Toast.error('Eroare la salvare: '+e.message); return; }
   _vwEditMode = false;
@@ -2794,9 +2777,7 @@ function renderUsersList(){
   if(_userRole !== 'admin') return;
   var section = document.getElementById('users-section');
   if(section) section.style.display = '';
-  fetch('/api/users', {headers: apiHeaders(true)})
-    .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(users){
+  apiGet('/api/users', {fallback: []}).then(function(users){
       var html = '';
       users.forEach(function(u){
         var avatarHtml = u.avatar
@@ -2842,14 +2823,14 @@ function renderUsersList(){
 }
 
 function changeUserRole(id, newRole){
-  fetch('/api/users/'+id, {method:'PATCH', headers:apiHeaders(true), body:JSON.stringify({role:newRole})})
+  apiPatch('/api/users/'+id,{role:newRole})
     .then(function(r){ if(!r.ok) Toast.error('Failed to update role'); })
     .then(function(){ renderUsersList(); });
 }
 
 function deleteUser(id){
   if(!confirm('Delete this user?')) return;
-  fetch('/api/users/'+id, {method:'DELETE', headers:apiHeaders(true)})
+  apiDelete('/api/users/'+id)
     .then(function(){ renderUsersList(); });
 }
 
@@ -2904,34 +2885,32 @@ async function doCreateGuild(){
   var name = document.getElementById('create-guild-name').value.trim();
   var region = document.getElementById('create-guild-region').value;
   var server = document.getElementById('create-guild-server').value;
-  var errEl = document.getElementById('create-guild-error');
-  errEl.style.display='none';
-  if(!name){ errEl.textContent='Guild name required'; errEl.style.display=''; return; }
+  showError('create-guild-error');
+  if(!name){ showError('create-guild-error','Guild name required'); return; }
   try{
-    var r = await fetch('/api/guilds',{method:'POST',headers:apiHeaders(),body:JSON.stringify({name:name,region:region||undefined,server:server||undefined})});
+    var r = await apiPost('/api/guilds',{name:name,region:region||undefined,server:server||undefined});
     var data = await r.json();
     if(r.status===401){ handleExpiredSession(); return; }
-    if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
+    if(!r.ok){ showError('create-guild-error',data.error||'Failed'); return; }
     setCurrentGuild(data.id);
     _guilds.push(data);
     enterGuild(data);
-  }catch(e){ errEl.textContent=e.message; errEl.style.display=''; }
+  }catch(e){ showError('create-guild-error',e.message); }
 }
 
 async function doJoinGuild(){
   var code = document.getElementById('join-guild-code').value.trim();
-  var errEl = document.getElementById('join-guild-error');
-  errEl.style.display='none';
-  if(!code){ errEl.textContent='Invite code required'; errEl.style.display=''; return; }
+  showError('join-guild-error');
+  if(!code){ showError('join-guild-error','Invite code required'); return; }
   try{
-    var r = await fetch('/api/guilds/join',{method:'POST',headers:apiHeaders(),body:JSON.stringify({code:code})});
+    var r = await apiPost('/api/guilds/join',{code:code});
     var data = await r.json();
     if(r.status===401){ handleExpiredSession(); return; }
-    if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
+    if(!r.ok){ showError('join-guild-error',data.error||'Failed'); return; }
     setCurrentGuild(data.guild.id);
     await loadGuilds();
     enterGuild(data.guild);
-  }catch(e){ errEl.textContent=e.message; errEl.style.display=''; }
+  }catch(e){ showError('join-guild-error',e.message); }
 }
 
 async function loadGuilds(){
@@ -2968,10 +2947,10 @@ function enterGuild(guild){
 async function loadGuildData(){
   try{
     var results = await Promise.all([
-      fetch('/api/wars',{headers:apiHeaders()}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
-      fetch('/api/aliases/war',{headers:apiHeaders()}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
-      fetch('/api/roster',{headers:apiHeaders()}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }),
-      fetch('/api/aliases/member',{headers:apiHeaders()}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; })
+      apiGet('/api/wars'),
+      apiGet('/api/aliases/war'),
+      apiGet('/api/roster'),
+      apiGet('/api/aliases/member')
     ]);
     if(results[0]) _warsCache   = results[0];
     if(results[1]) _aliasCache  = results[1];
@@ -3091,7 +3070,7 @@ async function initGuildSettings(){
         +kickBtn
         +'</div>';
     });
-    document.getElementById('gs-members-list').innerHTML = html || '<div style="color:var(--text-muted);font-size:12px;">No members</div>';
+    document.getElementById('gs-members-list').innerHTML = html || EmptyState.inline('No members');
   }catch(e){ console.error('Guild settings error',e); }
 }
 
@@ -3114,8 +3093,8 @@ async function renderMembersPage(){
   container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Loading...</div>';
   try{
     var results = await Promise.all([
-      fetch('/api/roster',{headers:apiHeaders()}).then(function(r){return r.ok?r.json():[];}),
-      fetch('/api/aliases/member',{headers:apiHeaders()}).then(function(r){return r.ok?r.json():{};})
+      apiGet('/api/roster', {fallback: []}),
+      apiGet('/api/aliases/member', {fallback: {}})
     ]);
     _rosterData = results[0];
     _memberAliases = results[1];
@@ -3149,22 +3128,21 @@ function renderMembersList(){
 
   if(!_rosterData.length && !showArchived){
     document.getElementById('members-tabs').style.display = 'none';
-    container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;">'
-      +'<div style="font-size:48px;opacity:.15;margin-bottom:16px;">◆</div>'
-      +'<div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:6px;">No members yet</div>'
-      +'<div style="font-size:13px;color:var(--text-muted);max-width:340px;margin-bottom:24px;">Export CSV from your Telegram Guild Manager bot and import it here to set up your roster.</div>'
-      +(isEditor ? '<label class="btn btn-primary" style="cursor:pointer;padding:12px 28px;font-size:14px;">Import TLGM CSV<input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;"></label>' : '')
-      +'</div>';
+    container.innerHTML = EmptyState({
+      icon: '◆', title: 'No members yet',
+      description: 'Export CSV from your Telegram Guild Manager bot and import it here to set up your roster.',
+      buttonHtml: isEditor ? '<label class="btn btn-primary" style="cursor:pointer;padding:12px 28px;font-size:14px;">Import TLGM CSV<input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;"></label>' : ''
+    });
     return;
   }
   document.getElementById('members-tabs').style.display = 'flex';
 
   if(!filtered.length){
-    container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">No '+(showArchived?'archived':'active')+' members</div>';
+    container.innerHTML = EmptyState.inline('No '+(showArchived?'archived':'active')+' members');
     return;
   }
 
-  var roleColors = {TANK:'#8B5CF6',HEALER:'#3ecf6e',DPS:'#e84040'};
+  // roleHex() from party-helpers.js
 
   // Split into unmatched and matched
   var unmatchedMembers = [];
@@ -3209,14 +3187,13 @@ function renderMembersList(){
       output += '<datalist id="game-names-datalist">'+datalistOpts+'</datalist>';
 
       unmatchedMembers.forEach(function(m){
-        var color = roleColors[m.role] || 'var(--text-muted)';
+        var color = roleHex(m.role);
         var safeName = encodeURIComponent(m.name);
-        var roles = ['TANK','HEALER','DPS'];
-        var nextRole = roles[(roles.indexOf(m.role)+1)%3];
+        var nRole = nextRole(m.role);
         var opts = '<option value="">-- Select --</option>';
         availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
         output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
-          +'<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
+          +'<span onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
           +'<span style="font-size:13px;font-weight:600;color:#fff;flex:1;">'+escHtml(m.name)+'</span>'
           +'<input id="manual-'+safeName+'" list="game-names-datalist" placeholder="Type or search..." style="width:180px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
           +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
@@ -3230,7 +3207,7 @@ function renderMembersList(){
       // View mode: just list names
       output += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">';
       unmatchedMembers.forEach(function(m){
-        var color = roleColors[m.role] || 'var(--text-muted)';
+        var color = roleHex(m.role);
         output += '<span style="font-size:11px;padding:3px 8px;border-radius:4px;background:var(--bg3);color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
           +'<span style="width:6px;height:6px;border-radius:50%;background:'+color+';"></span>'
           +escHtml(m.name)+'</span>';
@@ -3243,17 +3220,16 @@ function renderMembersList(){
   // ── MAIN TABLE (matched members) ──
   var rows = '';
   (showArchived ? filtered : matchedMembers).forEach(function(m){
-    var color = roleColors[m.role] || 'var(--text-muted)';
+    var color = roleHex(m.role);
     var safeName = encodeURIComponent(m.name);
-    var roles = ['TANK','HEALER','DPS'];
-    var nextRole = roles[(roles.indexOf(m.role)+1)%3];
+    var nRole = nextRole(m.role);
     var aliasKey = m.name.toLowerCase().replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
     var inGameName = _memberAliases[aliasKey] || '';
 
     rows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
       // ROLE
       +(_membersEditMode&&isEditor
-        ? '<span onclick="cycleRole(\''+safeName+'\',\''+nextRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
+        ? '<span onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
         : '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';min-width:55px;text-align:center;">'+m.role+'</span>')
       // TLGM NAME
       +'<div style="flex:1;min-width:0;">'
@@ -3287,7 +3263,7 @@ function renderMembersList(){
       +'</div>';
     output += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">'+header+rows+'</div>';
   } else if(!unmatchedMembers.length){
-    output = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">No members match current filter</div>';
+    output = EmptyState.inline('No members match current filter');
   }
 
   container.innerHTML = output;
@@ -3355,36 +3331,35 @@ function showAddMemberForm(){
 async function addMember(){
   var name = document.getElementById('add-member-name').value.trim();
   var role = document.getElementById('add-member-role').value;
-  var errEl = document.getElementById('add-member-error');
-  errEl.style.display='none';
-  if(!name){ errEl.textContent='Name required'; errEl.style.display=''; return; }
+  showError('add-member-error');
+  if(!name){ showError('add-member-error','Name required'); return; }
   try{
-    var r = await fetch('/api/roster',{method:'POST',headers:apiHeaders(),body:JSON.stringify({name:name,role:role})});
+    var r = await apiPost('/api/roster',{name:name,role:role});
     var data = await r.json();
-    if(!r.ok){ errEl.textContent=data.error||'Failed'; errEl.style.display=''; return; }
+    if(!r.ok){ showError('add-member-error',data.error||'Failed'); return; }
     document.getElementById('add-member-name').value='';
-    document.getElementById('add-member-form').style.display='none';
+    hide('add-member-form');
     renderMembersPage();
-  }catch(e){ errEl.textContent=e.message; errEl.style.display=''; }
+  }catch(e){ showError('add-member-error',e.message); }
 }
 
 async function cycleRole(encodedName, newRole){
   try{
-    await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({role:newRole})});
+    await apiPatch('/api/roster/'+encodedName,{role:newRole});
     renderMembersPage();
   }catch(e){ Toast.error(e.message); }
 }
 
 async function archiveMember(encodedName){
   try{
-    await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({active:false})});
+    await apiPatch('/api/roster/'+encodedName,{active:false});
     renderMembersPage();
   }catch(e){ Toast.error(e.message); }
 }
 
 async function restoreMember(encodedName){
   try{
-    await fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({active:true})});
+    await apiPatch('/api/roster/'+encodedName,{active:true});
     renderMembersPage();
   }catch(e){ Toast.error(e.message); }
 }
@@ -3420,7 +3395,7 @@ async function syncRosterFromScreenshot(input){
       });
 
       // Save merged roster
-      var r = await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(merged)});
+      var r = await apiPut('/api/roster',merged);
       if(!r.ok) throw new Error('Failed to save roster');
       container.innerHTML = '<div style="padding:14px;color:var(--heal);font-size:13px;">Synced! '+added+' new members added ('+extracted.length+' detected total).</div>';
       setTimeout(function(){ renderMembersPage(); }, 1500);
@@ -3682,8 +3657,8 @@ function renderAliasSyncPreview(){
 async function clearAllMembersAndAliases(){
   if(!confirm('Șterge toți membrii și alias-urile? Vei putea reface procesul de import.')) return;
   try{
-    await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify([])});
-    await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({})});
+    await apiPut('/api/roster',[]);
+    await apiPut('/api/aliases/member',{});
     renderMembersPage();
   }catch(e){ Toast.error(e.message); }
 }
@@ -3731,7 +3706,7 @@ async function saveAllUnmatched(){
   });
   if(!count){ Toast.warning('No names to save'); return; }
   try{
-    var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
+    var r = await apiPut('/api/aliases/member',aliases);
     if(!r.ok) throw new Error('Failed');
     _memberAliases = aliases;
     // Update game names pool
@@ -3756,7 +3731,7 @@ function saveUnmatchedMember(encodedName){
   if(window._unmatchedGameNames){
     window._unmatchedGameNames = window._unmatchedGameNames.filter(function(gn){ return gn.toLowerCase() !== gameName.toLowerCase(); });
   }
-  fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
+  apiPut('/api/aliases/member',aliases)
     .then(function(r){ if(r.ok){ _memberAliases = aliases; renderMembersList(); } else Toast.error('Failed'); })
     .catch(function(e){ Toast.error(e.message); });
 }
@@ -3771,8 +3746,8 @@ function openMemberProfile(encodedName){
 
   var aliasKey = normalizeName(name);
   var alias = _memberAliases[aliasKey] || '';
-  var roleColors = {TANK:'#8B5CF6',HEALER:'#3ecf6e',DPS:'#e84040'};
-  var color = roleColors[member.role] || 'var(--text-muted)';
+  // roleHex() from party-helpers.js
+  var color = roleHex(member.role);
 
   // Find all wars this member participated in
   var wars = _warsCache || [];
@@ -3784,7 +3759,7 @@ function openMemberProfile(encodedName){
     var found = null;
     var partyName = '';
     w.parties.forEach(function(p){
-      if(p._isExtras || p.name==='_Extras') return;
+      if(isExtrasParty(p)) return;
       p.members.forEach(function(m){
         if(namesMatch(m.name, name) || (alias && namesMatch(m.name, alias))){
           found = m; partyName = p.name;
@@ -3793,7 +3768,7 @@ function openMemberProfile(encodedName){
     });
     // Also check extras
     if(!found){
-      var extras = w.parties.find(function(p){ return p._isExtras || p.name==='_Extras'; });
+      var extras = getExtrasParty(w);
       if(extras) extras.members.forEach(function(m){
         if(namesMatch(m.name, name) || (alias && namesMatch(m.name, alias))){
           found = m; partyName = 'Extra';
@@ -3902,7 +3877,7 @@ function openMemberProfile(encodedName){
     });
     warsHtml += '</div>';
   } else {
-    warsHtml = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">No war participation recorded</div>';
+    warsHtml = EmptyState.inline('No war participation recorded');
   }
   document.getElementById('mp-wars').innerHTML = warsHtml;
 
@@ -3915,7 +3890,7 @@ function renameMember(encodedName){
   if(!input) return;
   var newName = input.value.trim();
   if(!newName || newName === oldName){ input.style.borderColor=''; return; }
-  fetch('/api/roster/'+encodedName,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({name:newName})})
+  apiPatch('/api/roster/'+encodedName,{name:newName})
     .then(function(r){ if(r.ok){ input.style.borderColor='var(--heal)'; setTimeout(function(){ renderMembersPage(); },500); } else Toast.error('Failed to rename'); })
     .catch(function(e){ Toast.error(e.message); });
 }
@@ -3929,7 +3904,7 @@ function saveInlineAlias(encodedName){
   var aliases = Object.assign({}, _memberAliases);
   if(newAlias) aliases[key] = newAlias;
   else delete aliases[key];
-  fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)})
+  apiPut('/api/aliases/member',aliases)
     .then(function(r){ if(r.ok){ _memberAliases = aliases; input.style.borderColor='var(--heal)'; setTimeout(function(){input.style.borderColor='';},800); } else Toast.error('Failed'); })
     .catch(function(e){ Toast.error(e.message); });
 }
@@ -3968,7 +3943,7 @@ async function applyAliasSync(){
 
   try{
     // Save aliases only (do NOT add unmatched game names to roster)
-    var r = await fetch('/api/aliases/member',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(aliases)});
+    var r = await apiPut('/api/aliases/member',aliases);
     if(!r.ok) throw new Error('Failed to save aliases');
 
     window._pendingAliases = null;
@@ -3979,7 +3954,7 @@ async function applyAliasSync(){
 async function applyCsvImport(){
   if(!_csvMerged||!_csvMerged.length) return;
   try{
-    var r = await fetch('/api/roster',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(_csvMerged)});
+    var r = await apiPut('/api/roster',_csvMerged);
     if(!r.ok) throw new Error('Failed to save');
     closeCsvModal();
     renderMembersPage();
@@ -3988,7 +3963,7 @@ async function applyCsvImport(){
 
 async function updateDefaultInviteRole(role){
   try{
-    var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({settings:{default_invite_role:role}})});
+    var r = await apiPatch('/api/guilds/'+_currentGuildId,{settings:{default_invite_role:role}});
     if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); }
   }catch(e){ Toast.error(e.message); }
 }
@@ -3997,7 +3972,7 @@ async function renameGuild(){
   var name = document.getElementById('gs-guild-name').value.trim();
   if(!name) return;
   try{
-    var r = await fetch('/api/guilds/'+_currentGuildId,{method:'PATCH',headers:apiHeaders(),body:JSON.stringify({name:name})});
+    var r = await apiPatch('/api/guilds/'+_currentGuildId,{name:name});
     if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); return; }
     // Update topbar
     var nameEl = document.getElementById('topbar-guild-name');
@@ -4013,7 +3988,7 @@ async function changeGuildMemberRole(userId, newRole){
     if(!confirm('Are you sure you want to make this member an ADMIN?\n\nAdmins have full control over the guild: manage members, settings, and data.\n\nThis action can only be reversed by another admin.')) return;
   }
   try{
-    var r = await fetch('/api/guilds/'+_currentGuildId+'/members/'+userId+'/role',{method:'POST',headers:apiHeaders(),body:JSON.stringify({role:newRole})});
+    var r = await apiPost('/api/guilds/'+_currentGuildId+'/members/'+userId+'/role',{role:newRole});
     if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); }
     initGuildSettings();
   }catch(e){ Toast.error(e.message); }
@@ -4022,7 +3997,7 @@ async function changeGuildMemberRole(userId, newRole){
 async function kickGuildMember(userId, username){
   if(!confirm('Kick '+username+' from guild?')) return;
   try{
-    await fetch('/api/guilds/'+_currentGuildId+'/members/'+userId,{method:'DELETE',headers:apiHeaders()});
+    await apiDelete('/api/guilds/'+_currentGuildId+'/members/'+userId);
     initGuildSettings();
   }catch(e){ Toast.error(e.message); }
 }
@@ -4042,7 +4017,7 @@ async function generateInviteLink(){
   try{
     var body = { default_role: role };
     if(hours) body.expires_hours = parseInt(hours);
-    var r = await fetch('/api/guilds/'+_currentGuildId+'/invite',{method:'POST',headers:apiHeaders(),body:JSON.stringify(body)});
+    var r = await apiPost('/api/guilds/'+_currentGuildId+'/invite',body);
     var data = await r.json();
     if(!r.ok){ resEl.style.display='';resEl.innerHTML='<span style="color:#e84040;">'+escHtml(data.error)+'</span>'; return; }
     resEl.style.display='';
@@ -4054,7 +4029,7 @@ async function generateInviteLink(){
 async function leaveCurrentGuild(){
   if(!confirm('Leave this guild? You will lose access to all guild data.')) return;
   try{
-    var r = await fetch('/api/guilds/'+_currentGuildId+'/leave',{method:'POST',headers:apiHeaders()});
+    var r = await apiPost('/api/guilds/'+_currentGuildId+'/leave',{});
     if(!r.ok){ var d=await r.json(); Toast.error(d.error||'Failed'); return; }
     localStorage.removeItem('nova_guild_id');
     _currentGuildId = '';
@@ -4085,8 +4060,7 @@ function checkAuth(){
   _authToken = localStorage.getItem('nova_token') || '';
   if(_authToken){
     // Verify token with API
-    fetch('/api/auth/me', {headers:{'Authorization':'Bearer '+_authToken}})
-      .then(function(r){ return r.ok ? r.json() : null; })
+    safeFetch('/api/auth/me', {headers:{'Authorization':'Bearer '+_authToken}})
       .then(function(u){
         if(u){
           _userRole = u.role || 'viewer';
@@ -4659,7 +4633,7 @@ function deleteParty(index){
 }
 
 function renderPartyEditorFromData(parties){
-  var partyDotColors = ['#7c3aed','#2563eb','#059669','#d97706','#dc2626','#0891b2','#4f46e5','#ea580c','#16a34a','#9333ea'];
+  var partyDotColors = PARTY_DOT_COLORS;
   var html = '';
   parties.forEach(function(p,pi){
     var dotColor = partyDotColors[pi % partyDotColors.length];

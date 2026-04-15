@@ -1,3 +1,5 @@
+/* ── RoleBadge ────────────────────────────────────────────────────── */
+
 /**
  * RoleBadge - Displays a player combat role (DPS / TANK / HEALER).
  *
