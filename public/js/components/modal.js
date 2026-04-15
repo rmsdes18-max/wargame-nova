@@ -150,7 +150,7 @@ Modal.inline = function(options) {
   // Header
   html += '<div style="display:flex;justify-content:space-between;align-items:' + (opts.scrollable ? 'start' : 'center') + ';margin-bottom:var(--spacing-lg);">';
   if (opts.title) {
-    html += '<div style="font-family:var(--font-display);font-size:var(--font-size-2xl);font-weight:var(--font-weight-bold);color:#fff;">' + opts.title + '</div>';
+    html += '<div style="font-family:var(--font-display);font-size:var(--font-size-2xl);font-weight:var(--font-weight-bold);color:var(--text);">' + opts.title + '</div>';
   }
   if (opts.bodyId && !opts.title) {
     html += '<div id="' + opts.bodyId + '-header"></div>';

@@ -198,7 +198,7 @@ function viewWar(warId){
       html += '<div class="party-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
     }
     html += '<div class="party-meta">'+p.members.length+' members'
-      +(_vwEditMode ? ' <button onclick="deletePartyFromWar('+w.id+','+pi+')" style="background:transparent;border:none;color:#e84040;cursor:pointer;font-size:11px;margin-left:8px;" title="Delete party">\u2715 Delete</button>' : '')
+      +(_vwEditMode ? ' <button onclick="deletePartyFromWar('+w.id+','+pi+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:11px;margin-left:8px;" title="Delete party">\u2715 Delete</button>' : '')
       +'</div>';
     html += '</div>';
 
@@ -308,14 +308,14 @@ function viewWar(warId){
       html += '<div class="extra-player-card" draggable="true" data-extra-idx="'+ei+'">'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
           +'<span class="role-dot" style="background:'+roleColor(extraRole)+';cursor:pointer;" onclick="cycleExtraRole('+JSON.stringify(w.id)+','+ei+')" title="Click to change role"></span>'
-          +'<span style="font-weight:600;color:#fff;font-size:13px;">'+escHtml(ex.name)+'</span>'
+          +'<span style="font-weight:600;color:var(--text);font-size:13px;">'+escHtml(ex.name)+'</span>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
-          +'<div><span style="color:var(--text-muted);">K</span> <span style="color:#cf4444;">'+(ex.defeat||0)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">K</span> <span style="color:var(--dps);">'+(ex.defeat||0)+'</span></div>'
           +'<div><span style="color:var(--text-muted);">A</span> <span>'+(ex.assist||0)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">'+fmtFull(ex.dmg_dealt)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:#a08090;">'+fmtFull(ex.dmg_taken)+'</span></div>'
-          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:#5eb882;">'+fmtFull(ex.healed)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">DMG</span> <span style="color:var(--color-assists);">'+fmtFull(ex.dmg_dealt)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">TKN</span> <span style="color:var(--color-dmg-taken);">'+fmtFull(ex.dmg_taken)+'</span></div>'
+          +'<div><span style="color:var(--text-muted);">HEAL</span> <span style="color:var(--heal);">'+fmtFull(ex.healed)+'</span></div>'
         +'</div>'
         +'</div>';
     });
@@ -333,12 +333,12 @@ function viewWar(warId){
   function renderPodium(title, list, statKey, statColor){
     var h = '<div class="party-card"><div class="party-header" style="border-bottom:1px solid var(--border);"><div class="party-name" style="font-size:13px;">'+title+'</div></div>';
     h += '<div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">';
-    var medals = ['var(--accent-primary)','#c0c0c0','#cd7f32','var(--text-secondary)','var(--text-muted)'];
+    var medals = ['var(--accent-primary)','#b0b0b0','#a07030','var(--text-secondary)','var(--text-muted)'];
     list.forEach(function(m,idx){
       var val = m[statKey]||0;
       h += '<div style="display:flex;align-items:center;gap:10px;">'
         +'<span style="font-size:'+(idx===0?'18':'16')+'px;font-weight:'+(idx===0?'800':'700')+';color:'+medals[idx]+';width:24px;">'+(idx+1)+'</span>'
-        +'<div style="flex:1;"><div style="font-weight:600;color:'+(idx===0?'#fff':'var(--text-primary)')+';font-size:13px;">'+escHtml(m.name)+'</div>'
+        +'<div style="flex:1;"><div style="font-weight:600;color:'+(idx===0?'var(--text)':'var(--text-primary)')+';font-size:13px;">'+escHtml(m.name)+'</div>'
         +'<div style="font-family:JetBrains Mono,monospace;font-size:12px;color:'+(statColor||'var(--text-secondary)')+';">'+val.toLocaleString()+'</div></div>'
         +'<span class="role-dot" style="background:'+roleColor(m.role)+';width:8px;height:8px;border-radius:50%;"></span>'
         +'</div>';
@@ -346,7 +346,7 @@ function viewWar(warId){
     h += '</div></div>';
     return h;
   }
-  html += renderPodium('Top Damage', topByDmg, 'dmg_dealt', '#c9a06a');
+  html += renderPodium('Top Damage', topByDmg, 'dmg_dealt', 'var(--color-assists)');
   html += renderPodium('Top Healed', topByHeal, 'healed', 'var(--heal)');
   html += renderPodium('Top Kills', topByKills, 'defeat', 'var(--accent-primary)');
   html += '</div></div>';
@@ -434,7 +434,7 @@ function renderPickerList(){
     listHtml += '<div style="font-size:10px;color:'+rc+';font-weight:700;padding:6px 8px 3px;letter-spacing:.06em;">'+role+'</div>';
     roles[role].forEach(function(r){
       var used = usedNames[normalizeName(r.name)];
-      listHtml += '<div data-name="'+escHtml(r.name)+'" data-role="'+r.role+'" class="picker-item" style="color:'+(used?'var(--muted)':'#ddd')+';'+(used?'opacity:.5;':'')+'">'
+      listHtml += '<div data-name="'+escHtml(r.name)+'" data-role="'+r.role+'" class="picker-item" style="color:'+(used?'var(--muted)':'var(--text)')+';'+(used?'opacity:.5;':'')+'">'
         +'<span style="width:7px;height:7px;border-radius:50%;background:'+rc+';"></span>'
         +escHtml(r.name)
         +(used?'<span style="margin-left:auto;font-size:9px;color:var(--muted);">in war</span>':'')
@@ -845,7 +845,7 @@ function updateUIForRole(){
         ? '<img src="'+_userAvatar+'" style="width:34px;height:34px;border-radius:50%;">'
         : '<div style="width:34px;height:34px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-muted);">'+_userName.charAt(0).toUpperCase()+'</div>';
       var userRoleBadge = _userRole === 'admin' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(240,192,64,.15);color:var(--gold);font-weight:600;">ADMIN</span>'
-        : _userRole === 'editor' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(91,143,255,.15);color:#5b8fff;font-weight:600;">EDITOR</span>'
+        : _userRole === 'editor' ? '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(91,143,255,.15);color:var(--color-info);font-weight:600;">EDITOR</span>'
         : '';
       userEl.innerHTML = avatarHtml
         +'<div style="display:flex;flex-direction:column;gap:2px;">'

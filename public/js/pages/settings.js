@@ -33,7 +33,7 @@ function shareWar(warId){
 function exportWarImage(){
   var el = document.getElementById('view-war-content');
   if(!el) return;
-  html2canvas(el, {backgroundColor:'#1e1f22', scale:2}).then(function(canvas){
+  html2canvas(el, {backgroundColor:'var(--bg)', scale:2}).then(function(canvas){
     var link = document.createElement('a');
     link.download = 'war-export.png';
     link.href = canvas.toDataURL();
@@ -265,7 +265,7 @@ function renderGuildPicker(){
     return '<div onclick="enterGuild({id:\''+g.id+'\',name:\''+escHtml(g.name)+'\'})" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'\'">'
       +'<div style="width:40px;height:40px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:var(--gold);">'+escHtml(g.name.charAt(0).toUpperCase())+'</div>'
       +'<div style="flex:1;">'
-        +'<div style="font-weight:600;color:#fff;font-size:14px;">'+escHtml(g.name)+'</div>'
+        +'<div style="font-weight:600;color:var(--text);font-size:14px;">'+escHtml(g.name)+'</div>'
         +'<div style="font-size:11px;color:var(--text-muted);">'+g.member_count+' members · '+g.role+'</div>'
       +'</div>'
       +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;'
@@ -315,7 +315,7 @@ async function initGuildSettings(){
             +'<option value="admin"'+(m.role==='admin'?' selected':'')+'>Admin</option>'
             +'</select>';
         } else {
-          var roleColor = m.role==='admin'?'var(--gold)':m.role==='editor'?'#5b8fff':'var(--text-muted)';
+          var roleColor = m.role==='admin'?'var(--gold)':m.role==='editor'?'var(--color-info)':'var(--text-muted)';
           roleSelect = '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;color:'+roleColor+';">'+m.role.toUpperCase()+'</span>';
         }
       }
@@ -403,9 +403,9 @@ async function generateInviteLink(){
     if(hours) body.expires_hours = parseInt(hours);
     var r = await apiPost('/api/guilds/'+_currentGuildId+'/invite',body);
     var data = await r.json();
-    if(!r.ok){ resEl.style.display='';resEl.innerHTML='<span style="color:#e84040;">'+escHtml(data.error)+'</span>'; return; }
+    if(!r.ok){ resEl.style.display='';resEl.innerHTML='<span style="color:var(--dps);">'+escHtml(data.error)+'</span>'; return; }
     resEl.style.display='';
-    resEl.innerHTML='<div style="color:var(--gold);margin-bottom:4px;">Invite code: <code style="color:#fff;background:var(--bg);padding:2px 6px;border-radius:3px;">'+escHtml(data.code)+'</code> <span style="font-size:10px;color:var(--text-muted);">(joins as '+escHtml(data.default_role||'viewer')+')</span></div>'
+    resEl.innerHTML='<div style="color:var(--gold);margin-bottom:4px;">Invite code: <code style="color:var(--text);background:var(--bg);padding:2px 6px;border-radius:3px;">'+escHtml(data.code)+'</code> <span style="font-size:10px;color:var(--text-muted);">(joins as '+escHtml(data.default_role||'viewer')+')</span></div>'
       +(data.expires_at?'<div style="font-size:10px;color:var(--text-muted);">Expires: '+new Date(data.expires_at).toLocaleString()+'</div>':'');
   }catch(e){ resEl.style.display='';resEl.textContent=e.message; }
 }

@@ -128,7 +128,7 @@ function PartyCard(party, options) {
 
 function _renderSm3PartyCard(party, opts) {
   var pi = opts.partyIndex;
-  var dotColor = opts.dotColor || '#7c3aed';
+  var dotColor = opts.dotColor || 'var(--tank)';
   var statsLookup = opts.memberStatsLookup || {};
   var newMembers = opts.newMembers || {};
   var membersId = opts.membersContainerId || (pi !== undefined ? 'sm3-party-members-' + pi : '');

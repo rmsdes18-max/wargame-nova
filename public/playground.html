@@ -1534,7 +1534,7 @@
     // Header
     document.getElementById('warview-header-demo').innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-        + '<div><h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;">Nova Guild vs Shadow Legion</h2>'
+        + '<div><h2 style="font-size:20px;font-weight:700;color:var(--text);margin:0;">Nova Guild vs Shadow Legion</h2>'
         + '<span style="font-size:12px;color:var(--text-muted);">2026-04-14</span></div>'
         + '<div style="display:flex;gap:8px;">'
           + '<button class="btn btn-secondary" style="padding:6px 14px;font-size:12px;border-radius:6px;">&#x1F517; Share</button>'
@@ -1579,11 +1579,11 @@
       extrasHtml += '<div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
           + '<span class="role-dot" style="background:' + roleColor(ex.role) + ';cursor:pointer;"></span>'
-          + '<span style="font-weight:600;color:#fff;font-size:13px;">' + ex.name + '</span></div>'
+          + '<span style="font-weight:600;color:var(--text);font-size:13px;">' + ex.name + '</span></div>'
         + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">'
-          + '<div><span style="color:var(--text-muted);">K</span> <span style="color:#cf4444;">' + ex.defeat + '</span></div>'
+          + '<div><span style="color:var(--text-muted);">K</span> <span style="color:var(--dps);">' + ex.defeat + '</span></div>'
           + '<div><span style="color:var(--text-muted);">A</span> <span>' + ex.assist + '</span></div>'
-          + '<div><span style="color:var(--text-muted);">DMG</span> <span style="color:#c9a06a;">' + fmtFull(ex.dmg_dealt) + '</span></div>'
+          + '<div><span style="color:var(--text-muted);">DMG</span> <span style="color:var(--color-assists);">' + fmtFull(ex.dmg_dealt) + '</span></div>'
         + '</div></div>';
     });
     extrasHtml += '</div>';
@@ -1642,7 +1642,7 @@
       var alias = aliases[m.name.toLowerCase()] || '';
       rowsHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);">'
         + '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:' + color + '22;color:' + color + ';min-width:55px;text-align:center;">' + m.role + '</span>'
-        + '<div style="flex:1;font-size:13px;font-weight:600;color:#fff;cursor:pointer;">' + m.name + '</div>'
+        + '<div style="flex:1;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">' + m.name + '</div>'
         + '<span style="font-size:12px;color:var(--gold);min-width:140px;">' + (alias || '<span style="color:var(--text-muted);">--</span>') + '</span>'
         + '</div>';
     });
@@ -1670,7 +1670,7 @@
     document.getElementById('members-profile-demo').innerHTML =
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">'
         + '<div style="width:48px;height:48px;border-radius:50%;background:' + profColor + '22;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:' + profColor + ';">' + prof.name.charAt(0) + '</div>'
-        + '<div><div style="font-size:18px;font-weight:700;color:#fff;">' + prof.name + '</div>'
+        + '<div><div style="font-size:18px;font-weight:700;color:var(--text);">' + prof.name + '</div>'
         + '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:' + profColor + '22;color:' + profColor + ';">' + prof.role + '</span></div>'
       + '</div>'
       + StatsRow(prof, { fields: ['kills', 'assists', 'dmg_dealt', 'healed'] })
@@ -1686,7 +1686,7 @@
       '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;">'
         + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
           + '<div style="width:44px;height:44px;border-radius:10px;background:rgba(240,192,64,.15);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--gold);">N</div>'
-          + '<div><div style="font-size:16px;font-weight:700;color:#fff;">Nova Guild</div>'
+          + '<div><div style="font-size:16px;font-weight:700;color:var(--text);">Nova Guild</div>'
           + '<div style="font-size:11px;color:var(--text-muted);">EU &middot; Croxus &middot; 10 members</div></div>'
           + '<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:rgba(240,192,64,.15);color:var(--gold);margin-left:auto;">PRO</span>'
         + '</div>'
@@ -1707,7 +1707,7 @@
       var roleCol = u.role === 'admin' ? 'var(--gold)' : u.role === 'editor' ? '#5b8fff' : 'var(--text-muted)';
       usersHtml += '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">'
         + '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg-tertiary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-muted);">' + u.name.charAt(0).toUpperCase() + '</div>'
-        + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#fff;">' + u.name + '</div>'
+        + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--text);">' + u.name + '</div>'
         + '<div style="font-size:10px;color:var(--text-muted);">Joined ' + u.joined + '</div></div>'
         + '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:' + roleBg + ';color:' + roleCol + ';font-weight:600;">' + u.role.toUpperCase() + '</span>'
         + '</div>';
@@ -1727,14 +1727,14 @@
     // Onboard forms
     document.getElementById('settings-onboard-demo').innerHTML =
       '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;">'
-        + '<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">Create Guild</div>'
-        + '<input placeholder="Guild name" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:#fff;font-size:13px;margin-bottom:8px;outline:none;">'
+        + '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">Create Guild</div>'
+        + '<input placeholder="Guild name" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;margin-bottom:8px;outline:none;">'
         + '<select style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:var(--text-muted);font-size:13px;margin-bottom:12px;">'
           + '<option>Select region...</option><option>EU</option><option>NA</option><option>SA</option></select>'
         + '<button class="btn btn-primary" style="width:100%;padding:10px;font-size:13px;border-radius:6px;border:none;cursor:pointer;">Create</button>'
       + '</div>'
       + '<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;">'
-        + '<div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">Join Guild</div>'
+        + '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;">Join Guild</div>'
         + '<input placeholder="Invite code" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-default);border-radius:6px;padding:10px 14px;color:var(--gold);font-size:13px;font-family:JetBrains Mono,monospace;margin-bottom:12px;outline:none;">'
         + '<button class="btn btn-primary" style="width:100%;padding:10px;font-size:13px;border-radius:6px;border:none;cursor:pointer;">Join</button>'
       + '</div>';
@@ -1748,7 +1748,7 @@
     document.getElementById('newwar-upload-demo').innerHTML =
       '<div class="upload-zone" style="max-width:500px;">'
         + '<div style="font-size:36px;opacity:.3;margin-bottom:12px;">&#128247;</div>'
-        + '<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:4px;">Upload Party Screenshot</div>'
+        + '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">Upload Party Screenshot</div>'
         + '<div style="font-size:12px;color:var(--text-muted);">Drag & drop or click to upload</div>'
       + '</div>';
 
@@ -1762,9 +1762,9 @@
     var matchHtml = '<div style="background:linear-gradient(135deg,rgba(62,207,110,.1),rgba(62,207,110,.05));border:1px solid rgba(62,207,110,.3);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
       + '<div style="display:flex;align-items:center;gap:12px;">'
         + '<div style="width:40px;height:40px;background:rgba(62,207,110,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">&#10003;</div>'
-        + '<div><h3 style="font-size:15px;font-weight:600;color:#3ecf6e;margin:0 0 2px;">6 players matched</h3>'
-        + '<p style="font-size:12px;color:#888;margin:0;">Stats linked to roster</p></div></div>'
-      + '<span style="color:#888;font-size:12px;">View all &#9660;</span></div>';
+        + '<div><h3 style="font-size:15px;font-weight:600;color:var(--heal);margin:0 0 2px;">6 players matched</h3>'
+        + '<p style="font-size:12px;color:var(--text-muted);margin:0;">Stats linked to roster</p></div></div>'
+      + '<span style="color:var(--text-muted);font-size:12px;">View all &#9660;</span></div>';
     matchHtml += StatsRow.summary({ defeat: 40, assist: 128, dmg_dealt: 4200000, healed: 1770000 });
     matchHtml += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:10px;overflow:hidden;padding:14px 20px;">'
       + '<div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid #333;">'

@@ -25,7 +25,7 @@ function EmptyState(options) {
   }
 
   if (opts.title) {
-    html += '<div style="font-size:var(--font-size-2xl);font-weight:var(--font-weight-semibold);color:#fff;margin-bottom:var(--spacing-sm);">' + opts.title + '</div>';
+    html += '<div style="font-size:var(--font-size-2xl);font-weight:var(--font-weight-semibold);color:var(--text);margin-bottom:var(--spacing-sm);">' + opts.title + '</div>';
   }
 
   if (opts.description) {

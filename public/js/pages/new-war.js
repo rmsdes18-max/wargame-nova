@@ -142,8 +142,8 @@ function renderPartyEditor(){
   state.parties.forEach(function(p,pi){
     html += '<div class="party-card">';
     html += '<div class="party-card-hdr">';
-    html += '<input type="text" value="'+p.name+'" style="background:transparent;border:none;color:#fff;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;width:80px;outline:none;" onchange="updatePartyName('+pi+',this.value)">';
-    html += '<input type="text" value="'+p.label+'" style="background:rgba(255,255,255,.08);border:none;color:#9080cc;font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
+    html += '<input type="text" value="'+p.name+'" style="background:transparent;border:none;color:var(--text);font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;width:80px;outline:none;" onchange="updatePartyName('+pi+',this.value)">';
+    html += '<input type="text" value="'+p.label+'" style="background:rgba(255,255,255,.08);border:none;color:var(--tank);font-size:10px;padding:1px 7px;border-radius:99px;outline:none;width:110px;" onchange="updatePartyLabel('+pi+',this.value)">';
     html += '</div>';
     p.members.forEach(function(m,mi){
       var matchDot = m.tlgmKey
@@ -151,7 +151,7 @@ function renderPartyEditor(){
         : '<span title="Nu e în roster TLGM" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;display:inline-block;margin-left:4px;"></span>';
       html += '<div class="party-member">';
       html += RoleBadge(m.role, {pill:false});
-      html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:#ddd;font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
+      html += '<input type="text" value="'+m.name+'" style="flex:1;background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;outline:none;border-bottom:1px solid transparent;padding:1px 0;" onfocus="this.style.borderBottomColor=\'var(--gold)\'" onblur="this.style.borderBottomColor=\'transparent\'" onchange="updateMemberName('+pi+','+mi+',this.value)">';
       html += '<select onchange="updateMemberRole('+pi+','+mi+',this.value)" style="background:var(--bg);border:1px solid var(--border2);color:'+roleColor(m.role)+';font-size:10px;border-radius:4px;padding:2px 4px;cursor:pointer;">';
       ['TANK','HEALER','DPS'].forEach(function(r){
         html += '<option value="'+r+'"'+(r===m.role?' selected':'')+'>'+r+'</option>';
@@ -278,7 +278,7 @@ function handleExcelUpload(e){
       document.getElementById('step2-next').disabled = true;
       document.getElementById('excel-preview').style.display='block';
       document.getElementById('excel-preview').innerHTML =
-        '<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.2);border-radius:8px;padding:10px 14px;color:#e84040;font-size:12px;">✗ '+err.message+'</div>';
+        '<div style="background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.2);border-radius:8px;padding:10px 14px;color:var(--dps);font-size:12px;">✗ '+err.message+'</div>';
     }
   };
   reader.readAsBinaryString(file);
@@ -355,7 +355,7 @@ function goStep3FromExcel(){
   statusEl.style.display='block';
   statusEl.innerHTML =
     '<span style="color:var(--heal);">✅ '+cC+' confirmați</span>'
-    +'  <span style="color:#e8a030;">⚠ '+mC+' lipsă</span>'
+    +'  <span style="color:var(--color-assists);">⚠ '+mC+' lipsă</span>'
     +'  <span style="color:var(--gold);">➕ '+eC+' extra</span>'
     +'  <button onclick="goStep(2)" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:5px;cursor:pointer;margin-left:8px;">← Schimbă fișier</button>';
   statusEl.style.background='rgba(10,16,32,.6)';
@@ -376,7 +376,7 @@ function renderStatsRow(p, i){
     statusBadge = '<span style="font-size:10px;color:var(--heal);">✅</span>';
   } else if(status === 'missing'){
     rowStyle = 'background:rgba(232,160,48,.05);border-left:2px solid rgba(232,160,48,.35);';
-    statusBadge = '<span style="font-size:10px;color:#e8a030;">⚠ lipsă</span>';
+    statusBadge = '<span style="font-size:10px;color:var(--color-assists);">⚠ lipsă</span>';
   } else { // extra
     rowStyle = 'background:rgba(240,192,64,.05);border-left:2px solid rgba(240,192,64,.3);';
     statusBadge = '<span style="font-size:10px;color:var(--gold);">➕ extra</span>';
@@ -398,14 +398,14 @@ function renderStatsRow(p, i){
   html += '<div class="nova-row-name" style="display:flex;align-items:center;gap:5px;">';
   html += '<div class="role-dot" style="background:'+dot+'"></div>';
   html += '<input type="checkbox" class="player-check" '+(p.checked?'checked':'')+' onchange="togglePlayer('+i+',this.checked)">';
-  html += '<span style="font-size:12px;font-weight:600;color:#ddd;">'+p.name+'</span>';
+  html += '<span style="font-size:12px;font-weight:600;color:var(--text);">'+p.name+'</span>';
   html += partyCell;
   html += statusBadge;
   html += '</div>';
-  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#ffcc44;font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'defeat\',+this.value)"></div>';
-  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#aaa;font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'assist\',+this.value)"></div>';
-  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#c8782a;font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_dealt\',+this.value)"></div>';
-  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:#884444;font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_taken\',+this.value)"></div>';
+  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.defeat+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--accent);font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'defeat\',+this.value)"></div>';
+  html += '<div class="stat-num" style="text-align:center;"><input type="number" min="0" value="'+p.assist+'" style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text-muted);font-size:12px;text-align:center;padding:3px;" onchange="setPlayerStat('+i+',\'assist\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_dealt+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--color-assists);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_dealt\',+this.value)"></div>';
+  html += '<div class="stat-num"><input type="number" min="0" value="'+p.dmg_taken+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--color-dmg-taken);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'dmg_taken\',+this.value)"></div>';
   html += '<div class="stat-num"><input type="number" min="0" value="'+p.healed+'" style="width:100px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--heal);font-size:12px;text-align:right;padding:3px;" onchange="setPlayerStat('+i+',\'healed\',+this.value)"></div>';
   html += '</div>';
   return html;
@@ -451,13 +451,13 @@ function renderMatchPreview(){
     });
     var tot_def = matched.reduce(function(a,m){return a+m.defeat;},0);
     html += '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">';
-    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#fff;min-width:80px;">'+p.name+'</div>';
+    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--text);min-width:80px;">'+p.name+'</div>';
     html += '<div style="font-size:11px;color:var(--muted);">'+p.label+'</div>';
     html += '<div style="margin-left:auto;display:flex;gap:16px;align-items:center;">';
     p.members.forEach(function(m){
       var dot=roleColor(m.role);
       var has = findStatsByNameOrAlias(state.confirmed, m.name);
-      html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'#ddd':'var(--muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
+      html += '<div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:'+dot+'"></div><span style="font-size:11px;color:'+(has?'var(--text)':'var(--muted)')+';">'+m.name+'</span>'+(has?'<span style="color:var(--heal);font-size:10px;">✓</span>':'')+'</div>';
     });
     html += '</div>';
     html += '<div style="font-size:13px;font-weight:700;color:var(--gold);min-width:60px;text-align:right;">'+tot_def+' kills</div>';
@@ -483,31 +483,31 @@ function renderPreview(){
     var tdt=members.reduce(function(a,m){return a+m.dmg_taken;},0);
     var th=members.reduce(function(a,m){return a+m.healed;},0);
     html += '<div class="result-party">';
-    html += '<div class="result-party-hdr"><span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;">'+p.name+'</span><span style="font-size:10px;color:#9080cc;background:rgba(255,255,255,.08);padding:1px 8px;border-radius:99px;">'+p.label+'</span></div>';
+    html += '<div class="result-party-hdr"><span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--text);">'+p.name+'</span><span style="font-size:10px;color:var(--tank);background:rgba(255,255,255,.08);padding:1px 8px;border-radius:99px;">'+p.label+'</span></div>';
     html += '<table class="result-tbl"><thead><tr><th style="text-align:left;">Name</th><th>Def</th><th>Ast</th><th>Dmg Dealt</th><th>Dmg Taken</th><th>Healed</th><th style="color:var(--gold);">Kill Part.</th></tr></thead><tbody>';
     members.forEach(function(m){
       var dot=roleColor(m.role);
       var kpv = totalDef>0&&m.defeat>0 ? (m.defeat/totalDef*100) : 0;
       var bw = Math.min(100,kpv*6).toFixed(0);
-      var dc = m.defeat>=20?'#ffcc44':(m.defeat>0?'#bbb':'#444');
-      var hc = m.healed>500000?'var(--heal)':'#555';
-      var kc = m.defeat>0?'var(--gold)':'#444';
+      var dc = m.defeat>=20?var(--accent):(m.defeat>0?'var(--text-muted)':'var(--text-label)');
+      var hc = m.healed>500000?'var(--heal)':'var(--text-muted)';
+      var kc = m.defeat>0?'var(--gold)':'var(--text-label)';
       html += '<tr>';
-      html += '<td><div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></div><span style="font-size:12px;font-weight:600;color:#ddd;">'+m.name+'</span></div></td>';
+      html += '<td><div style="display:flex;align-items:center;gap:7px;"><div style="width:7px;height:7px;border-radius:50%;background:'+dot+'"></div><span style="font-size:12px;font-weight:600;color:var(--text);">'+m.name+'</span></div></td>';
       html += '<td style="color:'+dc+';font-weight:700;">'+fmtF(m.defeat)+'</td>';
-      html += '<td style="color:#777;">'+fmtF(m.assist)+'</td>';
-      html += '<td style="color:#c8782a;">'+fmtF(m.dmg_dealt)+'</td>';
-      html += '<td style="color:#884444;">'+fmtF(m.dmg_taken)+'</td>';
+      html += '<td style="color:var(--text-muted);">'+fmtF(m.assist)+'</td>';
+      html += '<td style="color:var(--color-assists);">'+fmtF(m.dmg_dealt)+'</td>';
+      html += '<td style="color:var(--color-dmg-taken);">'+fmtF(m.dmg_taken)+'</td>';
       html += '<td style="color:'+hc+';">'+fmtF(m.healed)+'</td>';
       html += '<td><div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;"><div class="kp-bar-wrap"><div class="kp-bar-fill" style="width:'+bw+'%"></div></div><span style="font-size:11px;font-weight:700;color:'+kc+';min-width:36px;text-align:right;">'+(kpv>0?kpv.toFixed(1)+'%':'—')+'</span></div></td>';
       html += '</tr>';
     });
     html += '</tbody></table>';
     html += '<div class="result-footer">';
-    html += '<div class="rf-item"><div class="rf-label">Defeats</div><div class="rf-val" style="color:#ffcc44;">'+td+'</div></div>';
-    html += '<div class="rf-item"><div class="rf-label">Assists</div><div class="rf-val" style="color:#999;">'+ta+'</div></div>';
-    html += '<div class="rf-item"><div class="rf-label">Dmg Dealt</div><div class="rf-val" style="color:#e8a030;">'+fmtShort(tdd)+'</div></div>';
-    html += '<div class="rf-item"><div class="rf-label">Dmg Taken</div><div class="rf-val" style="color:#cc4444;">'+fmtShort(tdt)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Defeats</div><div class="rf-val" style="color:var(--accent);">'+td+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Assists</div><div class="rf-val" style="color:var(--text-muted);">'+ta+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Dmg Dealt</div><div class="rf-val" style="color:var(--color-assists);">'+fmtShort(tdd)+'</div></div>';
+    html += '<div class="rf-item"><div class="rf-label">Dmg Taken</div><div class="rf-val" style="color:var(--dps);">'+fmtShort(tdt)+'</div></div>';
     html += '<div class="rf-item"><div class="rf-label">Healed</div><div class="rf-val" style="color:var(--heal);">'+fmtShort(th)+'</div></div>';
     html += '</div></div>';
   });
@@ -570,7 +570,7 @@ function importData(input){
       setTimeout(function(){ location.reload(); },1000);
     } catch(err){
       var s=document.getElementById('import-status');
-      if(s){ s.style.display='block'; s.style.background='rgba(232,64,64,.1)'; s.style.color='#e84040'; s.textContent='Fișier invalid.'; }
+      if(s){ s.style.display='block'; s.style.background='rgba(232,64,64,.1)'; s.style.color='var(--dps)'; s.textContent='Fișier invalid.'; }
     }
   };
   reader.readAsText(file);
@@ -596,7 +596,7 @@ function renderAliasTable(){
         +'<input type="text" value="'+aliases[k]+'" placeholder="Nume în joc" '
         +'style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--gold);font-size:12px;padding:5px 8px;" '
         +'onchange="updateAliasValue(\''+safeK+'\',this.value)">'
-        +'<button onclick="removeAlias(\''+safeK+'\')" style="background:transparent;border:none;color:#e84040;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>'
+        +'<button onclick="removeAlias(\''+safeK+'\')" style="background:transparent;border:none;color:var(--dps);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>'
         +'</div>';
     });
     html += '</div>';
@@ -813,7 +813,7 @@ function renderScoreGrid(){
     return '<div class="score-thumb">'
       +'<img src="'+s.dataUrl+'">'
       +'<button class="rm" onclick="removeScoreImg('+i+')">✕</button>'
-      +'<div style="position:absolute;bottom:4px;left:4px;font-size:9px;color:#fff;background:rgba(0,0,0,.7);padding:1px 5px;border-radius:3px;">'+(i+1)+'</div>'
+      +'<div style="position:absolute;bottom:4px;left:4px;font-size:9px;color:var(--text);background:rgba(0,0,0,.7);padding:1px 5px;border-radius:3px;">'+(i+1)+'</div>'
       +'</div>';
   }).join('');
   var btn = document.getElementById('score-extract-btn');
@@ -888,7 +888,7 @@ async function extractAllScoreboards(){
       statusEl.innerHTML = '<span style="color:var(--heal);">✓ Imaginea '+(i+1)+' procesată — '+players.length+' rânduri extrase</span>';
     } catch(err){
       errors.push('Img '+(i+1)+': '+err.message);
-      statusEl.innerHTML = '<span style="color:#e84040;">✗ Eroare imaginea '+(i+1)+': '+err.message+'</span>';
+      statusEl.innerHTML = '<span style="color:var(--dps);">✗ Eroare imaginea '+(i+1)+': '+err.message+'</span>';
     }
   }
 
@@ -1033,7 +1033,7 @@ async function handlePartyUploadWithVision(e){
       } catch(err){
         console.error('[OCR] Failed:', err);
         document.getElementById('party-manual-editor').innerHTML =
-          '<div style="color:#e84040;font-size:13px;padding:14px;background:rgba(232,64,64,.1);border:1px solid rgba(232,64,64,.2);border-radius:8px;margin-bottom:10px;">'
+          '<div style="color:var(--dps);font-size:13px;padding:14px;background:rgba(232,64,64,.1);border:1px solid rgba(232,64,64,.2);border-radius:8px;margin-bottom:10px;">'
           +'<b>OCR Error:</b> '+escHtml(err.message)
           +'<br><span style="font-size:11px;color:var(--text-muted);">Add members manually below or try a different screenshot.</span></div>';
         state.parties = JSON.parse(JSON.stringify(DEFAULT_PARTIES));
@@ -1269,7 +1269,7 @@ async function goStep3WithVision(){
   for(var i=0;i<state.scoreImgs.length;i++){
     document.getElementById('nova-list-wrap').innerHTML =
       '<div class="processing"><span class="spin">◌</span> Procesez poza '+(i+1)+' din '+state.scoreImgs.length+'...'
-      +(log.length?'<br><small style="color:#888;">'+log.join(' | ')+'</small>':'')
+      +(log.length?'<br><small style="color:var(--text-muted);">'+log.join(' | ')+'</small>':'')
       +'</div>';
     try{
       var players = await extractScoreboardFromImage(state.scoreImgs[i].dataUrl, guildNames);
@@ -1359,9 +1359,9 @@ async function goStep3WithVision(){
     var hadErrors = log.some(function(l){ return l.indexOf('ERR') !== -1; });
     statusEl.innerHTML =
       '<span style="color:var(--heal);">✅ '+confirmedCount+' confirmați</span>'
-      +'  <span style="color:#e8a030;">⚠ '+missingCount+' lipsă</span>'
+      +'  <span style="color:var(--color-assists);">⚠ '+missingCount+' lipsă</span>'
       +'  <span style="color:var(--gold);">➕ '+extraCount+' extra</span>'
-      +'  <small style="color:#666;">'+log.join(' | ')+'</small>'
+      +'  <small style="color:var(--text-label);">'+log.join(' | ')+'</small>'
       +retryBtn;
     statusEl.style.background='rgba(10,16,32,.6)';
     statusEl.style.borderColor='rgba(255,255,255,.08)';
@@ -1370,7 +1370,7 @@ async function goStep3WithVision(){
     statusEl.innerHTML = '✗ 0 jucători găsiți în scoreboard. <small>'+log.join(' | ')+'</small>'+retryBtn;
     statusEl.style.background='rgba(232,64,64,.08)';
     statusEl.style.borderColor='rgba(232,64,64,.2)';
-    statusEl.style.color='#e84040';
+    statusEl.style.color='var(--dps)';
   }
   renderStatsList();
 }

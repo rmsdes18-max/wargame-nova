@@ -23,7 +23,7 @@ async function renderMembersPage(){
     _rosterData = results[0];
     _memberAliases = results[1];
     renderMembersList();
-  }catch(e){ container.innerHTML='<div style="color:#e84040;">Error: '+e.message+'</div>'; }
+  }catch(e){ container.innerHTML='<div style="color:var(--dps);">Error: '+e.message+'</div>'; }
 }
 
 function renderMembersList(){
@@ -118,7 +118,7 @@ function renderMembersList(){
         availableGameNames.forEach(function(gn){ opts += '<option value="'+escHtml(gn)+'">'+escHtml(gn)+'</option>'; });
         output += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,192,64,.1);">'
           +'<span onclick="cycleRole(\''+safeName+'\',\''+nRole+'\')" style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';cursor:pointer;min-width:55px;text-align:center;">'+m.role+'</span>'
-          +'<span style="font-size:13px;font-weight:600;color:#fff;flex:1;">'+escHtml(m.name)+'</span>'
+          +'<span style="font-size:13px;font-weight:600;color:var(--text);flex:1;">'+escHtml(m.name)+'</span>'
           +'<input id="manual-'+safeName+'" list="game-names-datalist" placeholder="Type or search..." style="width:180px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--gold);font-size:12px;outline:none;">'
           +'<button onclick="archiveMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">Archive</button>'
           +'</div>';
@@ -159,10 +159,10 @@ function renderMembersList(){
       +'<div style="flex:1;min-width:0;">'
         +(_membersEditMode
           ? '<div style="display:flex;align-items:center;gap:4px;">'
-            +'<input id="tlgm-'+safeName+'" value="'+escHtml(m.name)+'" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:#fff;font-size:12px;outline:none;max-width:180px;">'
+            +'<input id="tlgm-'+safeName+'" value="'+escHtml(m.name)+'" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:12px;outline:none;max-width:180px;">'
             +'<button onclick="renameMember(\''+safeName+'\')" style="background:transparent;border:none;color:var(--heal);cursor:pointer;font-size:14px;padding:2px;">&#x2713;</button>'
             +'</div>'
-          : '<div onclick="openMemberProfile(\''+safeName+'\')" style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="View profile">'+escHtml(m.name)+'</div>')
+          : '<div onclick="openMemberProfile(\''+safeName+'\')" style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" title="View profile">'+escHtml(m.name)+'</div>')
         +(m.guildRole?'<div style="font-size:10px;color:var(--text-muted);">'+escHtml(m.guildRole)+'</div>':'')
       +'</div>'
       // IN-GAME NAME
@@ -228,11 +228,11 @@ function setRoleFilter(role){
     var btn = document.getElementById('rf-'+r);
     if(!btn) return;
     if(r===role){
-      btn.style.background = r==='ALL'?'var(--gold)':r==='TANK'?'#8B5CF6':r==='HEALER'?'#3ecf6e':'#e84040';
+      btn.style.background = r==='ALL'?'var(--gold)':r==='TANK'?'var(--tank)':r==='HEALER'?'var(--heal)':'var(--dps)';
       btn.style.color = r==='ALL'?'#000':'#fff';
     } else {
       btn.style.background = 'transparent';
-      btn.style.color = r==='ALL'?'var(--text-muted)':r==='TANK'?'#8B5CF6':r==='HEALER'?'#3ecf6e':'#e84040';
+      btn.style.color = r==='ALL'?'var(--text-muted)':r==='TANK'?'var(--tank)':r==='HEALER'?'var(--heal)':'var(--dps)';
     }
   });
   renderMembersList();
@@ -241,9 +241,9 @@ function setRoleFilter(role){
 function switchMembersTab(tab){
   _membersTab = tab;
   document.getElementById('members-tab-active').style.borderBottomColor = tab==='active' ? 'var(--gold)' : 'transparent';
-  document.getElementById('members-tab-active').style.color = tab==='active' ? '#fff' : 'var(--text-muted)';
+  document.getElementById('members-tab-active').style.color = tab==='active' ? 'var(--text)' : 'var(--text-muted)';
   document.getElementById('members-tab-archived').style.borderBottomColor = tab==='archived' ? 'var(--gold)' : 'transparent';
-  document.getElementById('members-tab-archived').style.color = tab==='archived' ? '#fff' : 'var(--text-muted)';
+  document.getElementById('members-tab-archived').style.color = tab==='archived' ? 'var(--text)' : 'var(--text-muted)';
   renderMembersList();
 }
 
@@ -324,7 +324,7 @@ async function syncRosterFromScreenshot(input){
       container.innerHTML = '<div style="padding:14px;color:var(--heal);font-size:13px;">Synced! '+added+' new members added ('+extracted.length+' detected total).</div>';
       setTimeout(function(){ renderMembersPage(); }, 1500);
     }catch(e){
-      container.innerHTML = '<div style="padding:14px;color:#e84040;font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
+      container.innerHTML = '<div style="padding:14px;color:var(--dps);font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
       setTimeout(function(){ renderMembersPage(); }, 3000);
     }
   };
@@ -414,15 +414,15 @@ function importTlgmCsv(input){
 
     // Show preview
     var html = '';
-    if(newMembers.length) html += '<div style="margin-bottom:10px;"><span style="color:#3ecf6e;font-weight:600;">&#x1F7E2; '+newMembers.length+' new members</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+newMembers.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
-    if(archived.length) html += '<div style="margin-bottom:10px;"><span style="color:#e84040;font-weight:600;">&#x1F534; '+archived.length+' will be archived</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+archived.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
+    if(newMembers.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--heal);font-weight:600;">&#x1F7E2; '+newMembers.length+' new members</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+newMembers.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
+    if(archived.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--dps);font-weight:600;">&#x1F534; '+archived.length+' will be archived</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+archived.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
     if(roleChanged.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--gold);font-weight:600;">&#x1F7E1; '+roleChanged.length+' role changes</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+roleChanged.map(function(m){return escHtml(m.name)+' ('+m.from+'→'+m.to+')';}).join(', ')+'</div></div>';
-    if(reactivated.length) html += '<div style="margin-bottom:10px;"><span style="color:#5b8fff;font-weight:600;">&#x1F504; '+reactivated.length+' reactivated</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+reactivated.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
+    if(reactivated.length) html += '<div style="margin-bottom:10px;"><span style="color:var(--color-info);font-weight:600;">&#x1F504; '+reactivated.length+' reactivated</span><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+reactivated.map(function(m){return escHtml(m.name);}).join(', ')+'</div></div>';
     if(!newMembers.length && !archived.length && !roleChanged.length && !reactivated.length) html = '<div style="color:var(--text-muted);">No changes detected — roster is already in sync.</div>';
 
     var activeCount = merged.filter(function(m){return m.active!==false;}).length;
     var archivedCount = merged.filter(function(m){return m.active===false;}).length;
-    html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">After sync: <b style="color:#fff;">'+activeCount+' active</b>, '+archivedCount+' archived</div>';
+    html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">After sync: <b style="color:var(--text);">'+activeCount+' active</b>, '+archivedCount+' archived</div>';
 
     document.getElementById('csv-preview-content').innerHTML = html;
     Modal.open('csv-modal');
@@ -489,7 +489,7 @@ async function syncTlGameAliases(input){
       window._allRosterNames = rosterNames;
       renderAliasSyncPreview();
     }catch(e){
-      container.innerHTML = '<div style="padding:14px;color:#e84040;font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
+      container.innerHTML = '<div style="padding:14px;color:var(--dps);font-size:13px;">Sync failed: '+escHtml(e.message)+'</div>';
       setTimeout(function(){ renderMembersPage(); },3000);
     }
   input.value='';
@@ -508,10 +508,10 @@ function renderAliasSyncPreview(){
     if(sel.value) usedTlgm[sel.value.toLowerCase()] = true;
   });
 
-  var typeColors = {exact:'#3ecf6e',fuzzy:'var(--gold)',manual:'#5b8fff'};
+  var typeColors = {exact:'var(--heal)',fuzzy:'var(--gold)',manual:'var(--color-info)'};
 
   // Header
-  var html = '<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:16px;">Alias Sync Preview</div>';
+  var html = '<div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:16px;">Alias Sync Preview</div>';
 
   // Column headers
   html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);border-bottom:1px solid var(--border);">'
@@ -535,7 +535,7 @@ function renderAliasSyncPreview(){
   // Unmatched rows with dynamic dropdowns
   if(unmatched.length){
     html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border);">';
-    html += '<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:8px;padding:0 12px;">'+unmatched.length+' unmatched — select TLGM member or skip</div>';
+    html += '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px;padding:0 12px;">'+unmatched.length+' unmatched — select TLGM member or skip</div>';
     unmatched.forEach(function(gn, idx){
       var available = rosterNames.filter(function(rn){ return !usedTlgm[rn.toLowerCase()]; });
       var currentVal = '';
@@ -717,7 +717,7 @@ function openMemberProfile(encodedName){
     '<div style="display:flex;align-items:center;gap:12px;">'
       +'<div style="width:48px;height:48px;border-radius:50%;background:'+color+'22;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:'+color+';">'+name.charAt(0).toUpperCase()+'</div>'
       +'<div>'
-        +'<div style="font-size:18px;font-weight:700;color:#fff;">'+escHtml(name)+'</div>'
+        +'<div style="font-size:18px;font-weight:700;color:var(--text);">'+escHtml(name)+'</div>'
         +(alias?'<div style="font-size:12px;color:var(--gold);margin-top:2px;">In-game: '+escHtml(alias)+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:4px;">'
           +'<span style="font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;background:'+color+'22;color:'+color+';">'+member.role+'</span>'
@@ -737,12 +737,12 @@ function openMemberProfile(encodedName){
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;">'
       +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Total Kills</div>'
-        +'<div style="font-size:22px;font-weight:700;color:#e84040;">'+totalK+'</div>'
+        +'<div style="font-size:22px;font-weight:700;color:var(--dps);">'+totalK+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+avgK+'/war</div>'
       +'</div>'
       +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Total Assists</div>'
-        +'<div style="font-size:22px;font-weight:700;color:#8b8d94;">'+totalA+'</div>'
+        +'<div style="font-size:22px;font-weight:700;color:var(--text-muted);">'+totalA+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+avgA+'/war</div>'
       +'</div>'
       +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
@@ -752,7 +752,7 @@ function openMemberProfile(encodedName){
       +'</div>'
       +'<div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center;">'
         +'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;">Healed</div>'
-        +'<div style="font-size:22px;font-weight:700;color:#3ecf6e;">'+fmtShort(totalHeal)+'</div>'
+        +'<div style="font-size:22px;font-weight:700;color:var(--heal);">'+fmtShort(totalHeal)+'</div>'
         +'<div style="font-size:10px;color:var(--text-muted);">avg '+fmtShort(avgHeal)+'/war</div>'
       +'</div>'
     +'</div>';
@@ -767,21 +767,21 @@ function openMemberProfile(encodedName){
       var last5 = warHistory.slice(-5);
       var recentAvg = last5.reduce(function(s,w){return s+w.dmg;},0)/5;
       var overallAvg = totalDmg/warCount;
-      if(recentAvg > overallAvg*1.1){ trend='improving ↑'; trendColor='#3ecf6e'; }
-      else if(recentAvg < overallAvg*0.9){ trend='declining ↓'; trendColor='#e84040'; }
+      if(recentAvg > overallAvg*1.1){ trend='improving ↑'; trendColor='var(--heal)'; }
+      else if(recentAvg < overallAvg*0.9){ trend='declining ↓'; trendColor='var(--dps)'; }
       else { trend='stable →'; trendColor='var(--gold)'; }
     }
     var bestWar = warHistory.slice().sort(function(a,b){return(b.k+b.dmg)-(a.k+a.dmg);})[0];
     document.getElementById('mp-stats').innerHTML += '<div style="display:flex;gap:20px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;">'
       +'<div><span style="color:var(--text-muted);">Trend: </span><span style="color:'+trendColor+';font-weight:600;">'+trend+'</span></div>'
-      +(bestWar?'<div><span style="color:var(--text-muted);">Best War: </span><span style="color:#fff;font-weight:600;">vs '+escHtml(bestWar.opponent)+' ('+bestWar.k+'K, '+fmtShort(bestWar.dmg)+' DMG)</span></div>':'')
+      +(bestWar?'<div><span style="color:var(--text-muted);">Best War: </span><span style="color:var(--text);font-weight:600;">vs '+escHtml(bestWar.opponent)+' ('+bestWar.k+'K, '+fmtShort(bestWar.dmg)+' DMG)</span></div>':'')
       +'</div>';
   }
 
   // War history table
   var warsHtml = '';
   if(warHistory.length){
-    warsHtml = '<div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:8px;">War History</div>';
+    warsHtml = '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">War History</div>';
     warsHtml += '<div style="background:var(--bg3);border-radius:8px;overflow:hidden;">';
     warsHtml += '<div style="display:flex;padding:6px 10px;font-size:10px;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);">'
       +'<div style="width:80px;">Date</div><div style="flex:1;">Opponent</div><div style="width:70px;">Party</div>'
@@ -791,12 +791,12 @@ function openMemberProfile(encodedName){
     warHistory.forEach(function(wh){
       warsHtml += '<div onclick="closeMemberProfile();viewWar('+wh.warId+')" style="display:flex;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;font-size:12px;" title="View war">'
         +'<div style="width:80px;color:var(--text-muted);">'+escHtml(wh.date)+'</div>'
-        +'<div style="flex:1;color:#fff;font-weight:600;">vs '+escHtml(wh.opponent)+'</div>'
+        +'<div style="flex:1;color:var(--text);font-weight:600;">vs '+escHtml(wh.opponent)+'</div>'
         +'<div style="width:70px;color:var(--text-muted);">'+escHtml(wh.party)+'</div>'
-        +'<div style="width:40px;text-align:right;color:#e84040;">'+wh.k+'</div>'
+        +'<div style="width:40px;text-align:right;color:var(--dps);">'+wh.k+'</div>'
         +'<div style="width:40px;text-align:right;">'+wh.a+'</div>'
         +'<div style="width:60px;text-align:right;color:var(--gold);">'+fmtShort(wh.dmg)+'</div>'
-        +'<div style="width:60px;text-align:right;color:#3ecf6e;">'+fmtShort(wh.heal)+'</div>'
+        +'<div style="width:60px;text-align:right;color:var(--heal);">'+fmtShort(wh.heal)+'</div>'
         +'</div>';
     });
     warsHtml += '</div>';
