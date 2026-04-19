@@ -743,52 +743,12 @@ initApp();
 <!-- SETTINGS PAGE -->
 <!-- ═══════════════ MEMBERS PAGE ═══════════════ -->
 <div class="page" id="page-members">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div>
-      <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;">Guild Members</h2>
+      <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;">Players</h2>
       <div id="members-count" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
     </div>
-    <div id="members-actions" style="display:none;gap:8px;flex-wrap:wrap;">
-      <div id="members-edit-tools" style="display:none;gap:8px;flex-wrap:wrap;">
-        <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-          Import TLGM CSV
-          <input type="file" accept=".csv" onchange="importTlgmCsv(this)" style="display:none;">
-        </label>
-        <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-          Sync TL Game
-          <input type="file" accept="image/*" multiple onchange="syncTlGameAliases(this)" style="display:none;">
-        </label>
-        <button onclick="showAddMemberForm()" class="btn btn-secondary btn-sm">+ Add</button>
-        <button onclick="clearAllMembersAndAliases()" class="btn btn-secondary btn-sm" style="color:#e84040;border-color:rgba(232,64,64,.3);">Clear All</button>
-      </div>
-      <button id="members-edit-btn" onclick="toggleMembersEditMode()" class="btn btn-primary btn-sm">Edit</button>
-    </div>
-  </div>
-  <!-- Add member form (hidden) -->
-  <div id="add-member-form" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
-    <div style="display:flex;gap:8px;align-items:center;">
-      <input id="add-member-name" type="text" placeholder="Player name" style="flex:1;background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;">
-      <select id="add-member-role" style="background:var(--bg-hover);border:1px solid var(--border-default);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;">
-        <option value="TANK">Tank</option>
-        <option value="HEALER">Healer</option>
-        <option value="DPS">DPS</option>
-      </select>
-      <button onclick="addMember()" class="btn btn-primary btn-sm">Add</button>
-      <button onclick="document.getElementById('add-member-form').style.display='none'" class="btn btn-secondary btn-sm">Cancel</button>
-    </div>
-    <div id="add-member-error" style="display:none;color:#e84040;font-size:11px;margin-top:6px;"></div>
-  </div>
-  <!-- Tabs: Active / Archived -->
-  <div id="members-tabs" class="tabs">
-    <button id="members-tab-active" class="tab active" onclick="switchMembersTab('active')">Active</button>
-    <button id="members-tab-archived" class="tab" onclick="switchMembersTab('archived')">Archived</button>
-  </div>
-  <div style="display:flex;gap:6px;margin-bottom:12px;" id="members-role-filters">
-    <button onclick="setRoleFilter('ALL')" id="rf-ALL" class="badge badge-pill badge-admin" style="cursor:pointer;border:none;">All</button>
-    <button onclick="setRoleFilter('TANK')" id="rf-TANK" class="badge badge-pill badge-tank" style="cursor:pointer;border:none;opacity:0.6;">Tank</button>
-    <button onclick="setRoleFilter('HEALER')" id="rf-HEALER" class="badge badge-pill badge-heal" style="cursor:pointer;border:none;opacity:0.6;">Healer</button>
-    <button onclick="setRoleFilter('DPS')" id="rf-DPS" class="badge badge-pill badge-dps" style="cursor:pointer;border:none;opacity:0.6;">DPS</button>
-    <button onclick="setRoleFilter('ALL');document.getElementById('members-list-container').scrollTop=0;" id="rf-UNMATCHED" class="badge badge-pill" style="cursor:pointer;border:1px solid rgba(212,225,87,.3);background:transparent;color:var(--accent);display:none;">⚠ 0</button>
+    <div id="members-actions" style="display:none;"></div>
   </div>
   <div id="members-list-container"></div>
 </div>
