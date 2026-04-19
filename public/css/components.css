@@ -237,8 +237,8 @@ body.shell-locked .page-container{overflow:hidden;display:flex;flex-direction:co
 .stat-card .sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
 
 /* Tabs */
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0;}
-.tab{height:32px;padding:0 12px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border:1px solid var(--border);border-radius:var(--r-btn);background:transparent;transition:all 0.15s ease;border-bottom:none;}
+.tabs{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0;}
+.tab{display:flex;align-items:center;height:32px;padding:0 14px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border:1px solid var(--border);border-radius:var(--r-btn);background:transparent;transition:all 0.15s ease;border-bottom:none;}
 .tab:hover{background:var(--bg-hover);color:var(--text);}
 .tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
 
