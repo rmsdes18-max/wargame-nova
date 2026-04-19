@@ -2,6 +2,39 @@
 
 var _compareSelected = {};
 var _compareChart = null;
+var _compareMerges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+var _mergeSource = null;
+
+/* ── Manual merge ── */
+function startMerge(playerName){
+  if(!_mergeSource){
+    _mergeSource = playerName;
+    document.getElementById('merge-status').innerHTML = '<span style="color:var(--accent);font-size:12px;">Merging <b>' + escHtml(playerName) + '</b> — click another player to merge into, or </span><button onclick="cancelMerge()" class="btn btn-secondary" style="font-size:11px;padding:2px 8px;">Cancel</button>';
+    document.getElementById('merge-status').style.display = 'block';
+  } else {
+    if(_mergeSource === playerName){ cancelMerge(); return; }
+    // Merge source INTO clicked player (target)
+    _compareMerges[_mergeSource] = playerName;
+    localStorage.setItem('nova_compare_merges', JSON.stringify(_compareMerges));
+    _mergeSource = null;
+    document.getElementById('merge-status').style.display = 'none';
+    renderComparison();
+  }
+}
+
+function cancelMerge(){
+  _mergeSource = null;
+  document.getElementById('merge-status').style.display = 'none';
+}
+
+function clearAllMerges(){
+  if(!confirm('Clear all manual merges?')) return;
+  _compareMerges = {};
+  localStorage.removeItem('nova_compare_merges');
+  _mergeSource = null;
+  document.getElementById('merge-status').style.display = 'none';
+  renderComparison();
+}
 
 /* ── Deduplicate similar player names across wars ── */
 function extractLatin(s){
@@ -9,6 +42,15 @@ function extractLatin(s){
 }
 
 function findCanonicalKey(name, playerData){
+  // Check manual merges first
+  var merged = _compareMerges[name];
+  if(merged){
+    var mKey = normalizeName(merged);
+    if(playerData[mKey]) return mKey;
+    // Recurse in case target was also merged
+    return findCanonicalKey(merged, playerData);
+  }
+
   var key = normalizeName(name);
   if(playerData[key]) return key;
 
@@ -190,7 +232,7 @@ function renderComparison(){
   players.forEach(function(p, idx){
     html += '<tr>';
     html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
-    html += '<td><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span></td>';
+    html += '<td><div style="display:flex;align-items:center;gap:4px;"><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span><span onclick="startMerge(\'' + p.name.replace(/'/g, "\\'") + '\')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span></div></td>';
 
     var trendValues = [];
     wars.forEach(function(w){
