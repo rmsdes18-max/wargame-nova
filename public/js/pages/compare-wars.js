@@ -88,29 +88,22 @@ function renderComparison(){
   wars.sort(function(a, b){ return (a.id || 0) - (b.id || 0); });
 
   var stat = document.getElementById('compare-stat-select').value || 'defeat';
-  var roleFilter = document.getElementById('compare-role-filter').value || 'ALL';
 
-  // Build player data across wars
+  // Build player data across wars — all players, no role filter
   var playerData = {};
-  var roster = loadMembriRoster();
-  var rosterRoles = {};
-  if(roster && roster.length){
-    roster.forEach(function(r){ rosterRoles[normalizeName(r.name)] = r.role; });
-  }
 
   wars.forEach(function(w){
     if(!w.parties) return;
     w.parties.forEach(function(p){
       p.members.forEach(function(m){
         var key = normalizeName(m.name);
-        var role = m.role || rosterRoles[key] || 'DPS';
-        if(roleFilter !== 'ALL' && role !== roleFilter) return;
-        if(!playerData[key]) playerData[key] = {name: m.name, role: role, wars: {}};
+        if(!playerData[key]) playerData[key] = {name: m.name, wars: {}};
         playerData[key].wars[w.id] = m[stat] || 0;
       });
     });
   });
 
+  // Sort by total stat descending (top performers first)
   var players = Object.values(playerData).sort(function(a, b){
     var ta = 0, tb = 0;
     Object.values(a.wars).forEach(function(v){ ta += v; });
@@ -119,7 +112,7 @@ function renderComparison(){
   });
 
   if(!players.length){
-    document.getElementById('compare-table-wrap').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px 0;">No ' + roleFilter + ' players found in selected wars.</div>';
+    document.getElementById('compare-table-wrap').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px 0;">No players found in selected wars.</div>';
     document.getElementById('compare-chart-wrap').innerHTML = '';
     if(_compareChart){ _compareChart.destroy(); _compareChart = null; }
     return;
@@ -130,16 +123,16 @@ function renderComparison(){
   var statLabel = statLabels[stat] || stat;
   var html = '<div style="overflow-x:auto;">';
   html += '<table class="compare-table">';
-  html += '<thead><tr><th style="text-align:left;">Player</th>';
+  html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th>';
   wars.forEach(function(w){
     html += '<th style="text-align:center;font-size:11px;"><div>' + escHtml(w.date) + '</div><div style="color:var(--text-muted);font-size:10px;">vs ' + escHtml(w.opponent) + '</div></th>';
   });
   html += '<th style="text-align:center;">Trend</th></tr></thead><tbody>';
 
-  players.forEach(function(p){
-    var rc = p.role === 'TANK' ? 'var(--tank)' : p.role === 'HEALER' ? 'var(--heal)' : 'var(--dps)';
+  players.forEach(function(p, idx){
     html += '<tr>';
-    html += '<td><div style="display:flex;align-items:center;gap:6px;"><div style="width:7px;height:7px;border-radius:50%;background:' + rc + ';"></div><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span></div></td>';
+    html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
+    html += '<td><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span></td>';
 
     var values = [];
     wars.forEach(function(w){ values.push(p.wars[w.id] || 0); });
