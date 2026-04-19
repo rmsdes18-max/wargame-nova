@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS token_usage (
   id SERIAL PRIMARY KEY,
-  guild_id INTEGER REFERENCES guilds(id),
-  user_id INTEGER REFERENCES users(id),
+  guild_id INTEGER,
+  user_id INTEGER,
   model VARCHAR(64) NOT NULL DEFAULT 'unknown',
   input_tokens INTEGER NOT NULL DEFAULT 0,
   output_tokens INTEGER NOT NULL DEFAULT 0,
