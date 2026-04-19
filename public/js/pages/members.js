@@ -272,11 +272,15 @@ function toggleVariants(id){
 
 function saveVariantAlias(variant, target){
   var setObj = {};
-  setObj[normalizeName(target)] = variant;
+  setObj[normalizeName(variant)] = target;
   apiPatch('/api/aliases/member', {set: setObj}).then(function(){
-    _memberAliases[normalizeName(target)] = variant;
+    _memberAliases[normalizeName(variant)] = target;
     _mAliasCache = _memberAliases;
-    Toast.success(variant + ' → ' + target);
+    // Also save in localStorage merges
+    var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+    merges[variant] = target;
+    localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
+    renderMembersV2();
   }).catch(function(e){ Toast.error('Failed: ' + e.message); });
 }
 
