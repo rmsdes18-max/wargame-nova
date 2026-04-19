@@ -89,7 +89,7 @@ function renderComparison(){
 
   var stat = document.getElementById('compare-stat-select').value || 'defeat';
 
-  // Build player data across wars — all players, no role filter
+  // Build player data across wars — store ALL stats per war
   var playerData = {};
 
   wars.forEach(function(w){
@@ -98,16 +98,22 @@ function renderComparison(){
       p.members.forEach(function(m){
         var key = normalizeName(m.name);
         if(!playerData[key]) playerData[key] = {name: m.name, wars: {}};
-        playerData[key].wars[w.id] = m[stat] || 0;
+        playerData[key].wars[w.id] = {
+          defeat: m.defeat || 0,
+          assist: m.assist || 0,
+          dmg_dealt: m.dmg_dealt || 0,
+          dmg_taken: m.dmg_taken || 0,
+          healed: m.healed || 0
+        };
       });
     });
   });
 
-  // Sort by total stat descending (top performers first)
+  // Sort by selected stat total descending
   var players = Object.values(playerData).sort(function(a, b){
     var ta = 0, tb = 0;
-    Object.values(a.wars).forEach(function(v){ ta += v; });
-    Object.values(b.wars).forEach(function(v){ tb += v; });
+    Object.values(a.wars).forEach(function(s){ ta += s[stat] || 0; });
+    Object.values(b.wars).forEach(function(s){ tb += s[stat] || 0; });
     return tb - ta;
   });
 
@@ -125,7 +131,7 @@ function renderComparison(){
   html += '<table class="compare-table">';
   html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th>';
   wars.forEach(function(w){
-    html += '<th style="text-align:center;font-size:11px;"><div>' + escHtml(w.date) + '</div><div style="color:var(--text-muted);font-size:10px;">vs ' + escHtml(w.opponent) + '</div></th>';
+    html += '<th style="text-align:center;font-size:11px;min-width:120px;"><div>' + escHtml(w.date) + '</div><div style="color:var(--text-muted);font-size:10px;">vs ' + escHtml(w.opponent) + '</div></th>';
   });
   html += '<th style="text-align:center;">Trend</th></tr></thead><tbody>';
 
@@ -134,25 +140,31 @@ function renderComparison(){
     html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
     html += '<td><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span></td>';
 
-    var values = [];
-    wars.forEach(function(w){ values.push(p.wars[w.id] || 0); });
-
-    var prevVal = null;
-    values.forEach(function(v){
-      var arrow = '';
-      var color = 'var(--text)';
-      if(prevVal !== null && v !== prevVal){
-        if(v > prevVal){ arrow = ' &#8593;'; color = 'var(--heal)'; }
-        else{ arrow = ' &#8595;'; color = 'var(--dps)'; }
+    var trendValues = [];
+    wars.forEach(function(w){
+      var s = p.wars[w.id];
+      if(!s){
+        html += '<td style="text-align:center;color:var(--text-muted);font-size:11px;">&#8212;</td>';
+        trendValues.push(0);
+        return;
       }
-      var display = (stat === 'defeat' || stat === 'assist') ? v : fmtShort(v);
-      html += '<td style="text-align:center;color:' + color + ';font-weight:600;font-size:13px;">' + display + arrow + '</td>';
-      prevVal = v;
+      trendValues.push(s[stat] || 0);
+      html += '<td style="padding:6px 8px;">';
+      html += '<div style="display:flex;gap:8px;justify-content:center;font-size:11px;font-weight:600;">';
+      html += '<span style="color:var(--accent);">K:' + s.defeat + '</span>';
+      html += '<span style="color:var(--text-muted);">A:' + s.assist + '</span>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;justify-content:center;font-size:10px;margin-top:2px;">';
+      html += '<span style="color:var(--color-assists);">D:' + fmtShort(s.dmg_dealt) + '</span>';
+      html += '<span style="color:var(--dps);">T:' + fmtShort(s.dmg_taken) + '</span>';
+      html += '<span style="color:var(--heal);">H:' + fmtShort(s.healed) + '</span>';
+      html += '</div>';
+      html += '</td>';
     });
 
-    // Trend
-    var first = values[0] || 0;
-    var last = values[values.length - 1] || 0;
+    // Trend on selected stat
+    var first = trendValues[0] || 0;
+    var last = trendValues[trendValues.length - 1] || 0;
     var trendPct = first > 0 ? Math.round((last - first) / first * 100) : (last > 0 ? 100 : 0);
     var trendColor = trendPct > 0 ? 'var(--heal)' : trendPct < 0 ? 'var(--dps)' : 'var(--text-muted)';
     var trendArrow = trendPct > 0 ? '&#9650;' : trendPct < 0 ? '&#9660;' : '&#8212;';
@@ -186,7 +198,7 @@ function renderCompareChart(wars, players, stat, statLabel){
   var datasets = topPlayers.map(function(p, pi){
     return {
       label: p.name,
-      data: wars.map(function(w){ return p.wars[w.id] || 0; }),
+      data: wars.map(function(w){ var s = p.wars[w.id]; return s ? (s[stat] || 0) : 0; }),
       borderColor: chartColors[pi % chartColors.length],
       backgroundColor: chartColors[pi % chartColors.length] + '20',
       tension: 0.3,
