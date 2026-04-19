@@ -4,14 +4,43 @@ var _compareSelected = {};
 var _compareChart = null;
 
 /* ── Deduplicate similar player names across wars ── */
+function extractLatin(s){
+  return (s || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
 function findCanonicalKey(name, playerData){
   var key = normalizeName(name);
-  // 1. Exact normalized match
   if(playerData[key]) return key;
-  // 2. Fuzzy match against existing keys
+
   var keys = Object.keys(playerData);
+  var latin = extractLatin(name);
+  var nfm = normalizeForMatch(name);
+
   for(var i = 0; i < keys.length; i++){
-    if(similarityScore(name, playerData[keys[i]].name) > 75) return keys[i];
+    var existing = playerData[keys[i]].name;
+
+    // 1. normalizeForMatch exact
+    if(nfm && nfm === normalizeForMatch(existing)) return keys[i];
+
+    // 2. Fuzzy full name > 65%
+    if(similarityScore(name, existing) > 65) return keys[i];
+
+    // 3. Latin-only prefix match (4+ chars)
+    if(latin.length >= 4){
+      var exLatin = extractLatin(existing);
+      if(exLatin.length >= 4){
+        var shorter = latin.length <= exLatin.length ? latin : exLatin;
+        var longer = latin.length <= exLatin.length ? exLatin : latin;
+        if(longer.indexOf(shorter) === 0) return keys[i];
+        if(similarityScore(latin, exLatin) > 70) return keys[i];
+      }
+    }
+
+    // 4. Latin-only exact (3+ chars) — catches Oggy/Oggyメ, Ricki/Rickiメ
+    if(latin.length >= 3){
+      var exLatin2 = extractLatin(existing);
+      if(exLatin2.length >= 3 && (latin === exLatin2)) return keys[i];
+    }
   }
   return key;
 }
