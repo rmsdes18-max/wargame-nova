@@ -85,7 +85,7 @@ function renderComparison(){
   }
 
   var wars = loadWars().filter(function(w){ return _compareSelected[w.id]; });
-  wars.sort(function(a, b){ return (a.id || 0) - (b.id || 0); });
+  wars.sort(function(a, b){ return (b.id || 0) - (a.id || 0); });
 
   var stat = document.getElementById('compare-stat-select').value || 'defeat';
 
