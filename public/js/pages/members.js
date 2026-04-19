@@ -5,14 +5,15 @@ var _membersRoleFilter = 'ALL';
 var _rosterData = [];
 var _memberAliases = {}; // key: normalizedTlgmName → value: inGameName
 
+var _membersMergeSource = null;
+
 async function renderMembersPage(){
   var container = document.getElementById('members-list-container');
   var countEl = document.getElementById('members-count');
   var actionsEl = document.getElementById('members-actions');
   if(!container) return;
 
-  var isEditor = _userRole === 'admin' || _userRole === 'editor';
-  if(actionsEl) actionsEl.style.display = isEditor ? 'flex' : 'none';
+  if(actionsEl) actionsEl.style.display = 'none';
 
   container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Loading...</div>';
   try{
@@ -22,8 +23,178 @@ async function renderMembersPage(){
     ]);
     _rosterData = results[0];
     _memberAliases = results[1];
-    renderMembersList();
+    // Ensure wars are loaded
+    if(!_warsCache){
+      _warsCache = await apiGet('/api/wars', {fallback: []});
+    }
+    renderMembersV2();
   }catch(e){ container.innerHTML='<div style="color:var(--dps);">Error: '+e.message+'</div>'; }
+}
+
+/* ── Build unique player list from all wars ── */
+function buildPlayersFromWars(){
+  var wars = _warsCache || [];
+  var playerData = {};
+  var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+
+  wars.forEach(function(w){
+    if(!w.parties) return;
+    w.parties.forEach(function(p){
+      p.members.forEach(function(m){
+        // Use same dedup as compare page
+        var key = normalizeName(m.name);
+        // Check manual merges
+        if(merges[m.name]){ key = normalizeName(merges[m.name]); }
+        // Check aliases
+        var aliasKeys = Object.keys(_memberAliases);
+        for(var a = 0; a < aliasKeys.length; a++){
+          if(normalizeName(_memberAliases[aliasKeys[a]]) === normalizeName(m.name)){
+            key = aliasKeys[a]; break;
+          }
+        }
+        // Fuzzy match existing keys
+        if(!playerData[key]){
+          var existingKeys = Object.keys(playerData);
+          for(var e = 0; e < existingKeys.length; e++){
+            var ex = playerData[existingKeys[e]];
+            if(typeof similarityScore === 'function' && similarityScore(m.name, ex.name) > 65){
+              key = existingKeys[e]; break;
+            }
+            var latinA = (m.name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            var latinB = (ex.name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            if(latinA.length >= 4 && latinB.length >= 4 && (latinA === latinB || latinB.indexOf(latinA) === 0 || latinA.indexOf(latinB) === 0)){
+              key = existingKeys[e]; break;
+            }
+          }
+        }
+
+        if(!playerData[key]){
+          playerData[key] = {name: m.name, wars: 0, variants: [], totalK: 0, totalA: 0, totalD: 0, totalT: 0, totalH: 0, lastWar: ''};
+        }
+        var pd = playerData[key];
+        if(m.name.length > pd.name.length) pd.name = m.name;
+        if(pd.variants.indexOf(m.name) === -1 && normalizeName(m.name) !== normalizeName(pd.name)){
+          pd.variants.push(m.name);
+        }
+        pd.wars++;
+        pd.totalK += m.defeat || 0;
+        pd.totalA += m.assist || 0;
+        pd.totalD += m.dmg_dealt || 0;
+        pd.totalT += m.dmg_taken || 0;
+        pd.totalH += m.healed || 0;
+        pd.lastWar = w.date || pd.lastWar;
+      });
+    });
+  });
+
+  return Object.values(playerData).sort(function(a, b){ return b.totalK - a.totalK; });
+}
+
+/* ── Render Members V2 ── */
+function renderMembersV2(){
+  var container = document.getElementById('members-list-container');
+  var countEl = document.getElementById('members-count');
+  var players = buildPlayersFromWars();
+
+  if(countEl) countEl.textContent = players.length + ' players from ' + (_warsCache || []).length + ' wars';
+
+  if(!players.length){
+    container.innerHTML = EmptyState({icon: '&#9878;', title: 'No players yet', description: 'Create wars via Discord bot (/warlog) to see players here.', padding: '40px 20px'});
+    return;
+  }
+
+  // Search
+  var html = '<input type="text" id="members-search" placeholder="Search player..." oninput="filterMembersV2()" style="width:100%;max-width:300px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 12px;margin-bottom:12px;">';
+
+  // Merge status bar
+  html += '<div id="members-merge-status" style="display:none;padding:8px 14px;background:rgba(212,225,87,.1);border:1px solid rgba(212,225,87,.2);border-radius:8px;margin-bottom:12px;position:sticky;top:0;z-index:50;"></div>';
+
+  // Aliases section (collapsible)
+  var aliasKeys = Object.keys(_memberAliases);
+  if(aliasKeys.length){
+    html += '<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Aliases (' + aliasKeys.length + ')</summary>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">';
+    aliasKeys.forEach(function(k){
+      html += '<span style="font-size:11px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--text-muted);">' + escHtml(k) + ' &#8594; ' + escHtml(_memberAliases[k]) + '</span>';
+    });
+    html += '</div></details>';
+  }
+
+  // Table
+  html += '<div style="overflow-x:auto;">';
+  html += '<table class="compare-table">';
+  html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th><th class="num">Wars</th><th class="num">Avg K</th><th class="num">Avg A</th><th class="num">Avg DMG</th><th class="num">Avg H</th></tr></thead>';
+  html += '<tbody id="members-tbody">';
+
+  players.forEach(function(p, idx){
+    var avgK = p.wars > 0 ? Math.round(p.totalK / p.wars) : 0;
+    var avgA = p.wars > 0 ? Math.round(p.totalA / p.wars) : 0;
+    var avgD = p.wars > 0 ? Math.round(p.totalD / p.wars) : 0;
+    var avgH = p.wars > 0 ? Math.round(p.totalH / p.wars) : 0;
+    var safeName = p.name.replace(/'/g, "\\'");
+
+    html += '<tr class="members-row" data-name="' + escHtml(p.name.toLowerCase()) + '">';
+    html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
+    html += '<td>';
+    html += '<div style="display:flex;align-items:center;gap:6px;">';
+    html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openMemberProfile(\'' + encodeURIComponent(p.name) + '\')">' + escHtml(p.name) + '</span>';
+    html += '<span onclick="memberStartMerge(\'' + safeName + '\')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
+    if(p.variants.length){
+      html += '<span style="font-size:9px;color:var(--text-muted);" title="' + escHtml(p.variants.join(', ')) + '">+' + p.variants.length + ' aliases</span>';
+    }
+    html += '</div>';
+    html += '</td>';
+    html += '<td style="text-align:center;color:var(--text-muted);font-size:12px;">' + p.wars + '</td>';
+    html += '<td style="text-align:center;color:var(--accent);font-weight:600;">' + avgK + '</td>';
+    html += '<td style="text-align:center;color:var(--text-muted);">' + avgA + '</td>';
+    html += '<td style="text-align:center;color:var(--color-assists);">' + fmtShort(avgD) + '</td>';
+    html += '<td style="text-align:center;color:var(--heal);">' + fmtShort(avgH) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+/* ── Search filter ── */
+function filterMembersV2(){
+  var q = (document.getElementById('members-search').value || '').toLowerCase();
+  var rows = document.querySelectorAll('.members-row');
+  rows.forEach(function(row){
+    var name = row.getAttribute('data-name') || '';
+    row.style.display = name.indexOf(q) !== -1 ? '' : 'none';
+  });
+}
+
+/* ── Merge from Members page ── */
+function memberStartMerge(playerName){
+  var statusEl = document.getElementById('members-merge-status');
+  if(!_membersMergeSource){
+    _membersMergeSource = playerName;
+    statusEl.innerHTML = '<span style="color:var(--accent);font-size:12px;">Merging <b>' + escHtml(playerName) + '</b> — click another player\'s link icon, or </span><button onclick="memberCancelMerge()" class="btn btn-secondary" style="font-size:11px;padding:2px 8px;">Cancel</button>';
+    statusEl.style.display = 'block';
+  } else {
+    if(_membersMergeSource === playerName){ memberCancelMerge(); return; }
+    // Save merge
+    var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+    merges[_membersMergeSource] = playerName;
+    localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
+    // Save alias on server
+    var targetKey = normalizeName(playerName);
+    var setObj = {};
+    setObj[targetKey] = _membersMergeSource;
+    apiPatch('/api/aliases/member', {set: setObj}).catch(function(e){
+      console.warn('[Members Merge] alias save failed:', e);
+    });
+    _membersMergeSource = null;
+    statusEl.style.display = 'none';
+    renderMembersV2();
+  }
+}
+
+function memberCancelMerge(){
+  _membersMergeSource = null;
+  document.getElementById('members-merge-status').style.display = 'none';
 }
 
 function renderMembersList(){
