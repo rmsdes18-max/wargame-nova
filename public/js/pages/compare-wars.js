@@ -209,10 +209,7 @@ function renderCompareChart(wars, players, stat, statLabel){
           labels: { color: '#999', font: { size: 11 }, boxWidth: 12 }
         },
         title: {
-          display: true,
-          text: statLabel + ' per War (Top 10)',
-          color: '#fff',
-          font: { size: 14, weight: '600' }
+          display: false
         }
       },
       scales: {
