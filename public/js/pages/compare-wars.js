@@ -150,11 +150,9 @@ function renderComparison(){
       }
       trendValues.push(s[stat] || 0);
       html += '<td style="padding:6px 8px;">';
-      html += '<div style="display:flex;gap:8px;justify-content:center;font-size:11px;font-weight:600;">';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;font-size:11px;font-weight:600;">';
       html += '<span style="color:var(--accent);">K:' + s.defeat + '</span>';
       html += '<span style="color:var(--text-muted);">A:' + s.assist + '</span>';
-      html += '</div>';
-      html += '<div style="display:flex;gap:6px;justify-content:center;font-size:10px;margin-top:2px;">';
       html += '<span style="color:var(--color-assists);">D:' + fmtShort(s.dmg_dealt) + '</span>';
       html += '<span style="color:var(--dps);">T:' + fmtShort(s.dmg_taken) + '</span>';
       html += '<span style="color:var(--heal);">H:' + fmtShort(s.healed) + '</span>';
