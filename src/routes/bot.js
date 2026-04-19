@@ -63,6 +63,12 @@ router.post('/warlog', requireBotKey, async function(req, res) {
     var rosterMap = {};
     roster.forEach(function(r) { rosterMap[normalizeName(r.name)] = r; });
 
+    console.log('[Bot] Roster: ' + roster.length + ' members, Aliases: ' + aliasRows.length);
+    console.log('[Bot] Roster names:', roster.slice(0, 5).map(function(r) { return r.name + '(' + r.role + ')'; }).join(', '));
+
+    var matchedCount = 0;
+    var unmatchedNames = [];
+
     var mapped = players.map(function(p) {
       var key = normalizeName(p.name);
       var rosterMember = rosterMap[key] || null;
@@ -79,6 +85,9 @@ router.post('/warlog', requireBotKey, async function(req, res) {
         }
       }
 
+      if (rosterMember) { matchedCount++; }
+      else { unmatchedNames.push(p.name); }
+
       return {
         name: rosterMember ? rosterMember.name : p.name,
         role: rosterMember ? rosterMember.role : 'DPS',
@@ -89,6 +98,8 @@ router.post('/warlog', requireBotKey, async function(req, res) {
         healed: p.heal || 0
       };
     });
+
+    console.log('[Bot] Matched: ' + matchedCount + '/' + players.length + '. Unmatched: ' + unmatchedNames.join(', '));
 
     // 5. Group by role into parties
     var groups = { DPS: [], TANK: [], HEALER: [] };
