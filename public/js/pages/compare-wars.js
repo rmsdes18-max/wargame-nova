@@ -16,6 +16,16 @@ function startMerge(playerName){
     // Merge source INTO clicked player (target)
     _compareMerges[_mergeSource] = playerName;
     localStorage.setItem('nova_compare_merges', JSON.stringify(_compareMerges));
+
+    // Save as server-side alias (persists for all users + future wars)
+    var aliases = loadMembriAliases();
+    var targetKey = normalizeName(playerName);
+    aliases[targetKey] = _mergeSource;
+    _mAliasCache = aliases;
+    apiPut('/api/aliases/member', aliases, {admin: true}).catch(function(e){
+      console.warn('[Merge] alias save failed:', e);
+    });
+
     _mergeSource = null;
     document.getElementById('merge-status').style.display = 'none';
     renderComparison();
