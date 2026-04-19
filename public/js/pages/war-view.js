@@ -248,15 +248,15 @@ function viewWar(warId){
 
       html += '<tr class="vw-row'+(isDimmed?' player-dimmed':'')+'" draggable="'+(_vwEditMode?'true':'false')+'" data-pi="'+pi+'" data-mi="'+mi+'" data-is-missing="'+(isDimmed?'1':'0')+'">';
 
-      // Player name cell with role badge
+      // Player name cell with rank number
       html += '<td>';
       html += '<div class="player-cell">';
+      var rankNum = mi + 1;
+      html += '<span style="color:var(--text-muted);font-size:11px;min-width:20px;text-align:right;margin-right:6px;">' + rankNum + '</span>';
       if(_vwEditMode){
-        html += '<span class="badge badge-' + badgeCls + '" onclick="cycleWarMemberRole('+w.id+','+pi+','+mi+')" style="cursor:pointer;" title="Click to change role">'+roleLabel+'</span>';
-        html += '<span class="player-name '+nc+'" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
+        html += '<span class="player-name" style="color:var(--text);" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
       } else {
-        html += '<span class="badge badge-' + badgeCls + '">'+roleLabel+'</span>';
-        html += '<span class="player-name '+nc+'">'+escHtml(m.name)+'</span>';
+        html += '<span class="player-name" style="color:var(--text);">'+escHtml(m.name)+'</span>';
       }
       html += '</div></td>';
 
