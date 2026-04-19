@@ -17,12 +17,11 @@ function startMerge(playerName){
     _compareMerges[_mergeSource] = playerName;
     localStorage.setItem('nova_compare_merges', JSON.stringify(_compareMerges));
 
-    // Save as server-side alias (persists for all users + future wars)
-    var aliases = loadMembriAliases();
+    // Save as server-side alias (PATCH — only adds, doesn't overwrite others)
     var targetKey = normalizeName(playerName);
-    aliases[targetKey] = _mergeSource;
-    _mAliasCache = aliases;
-    apiPut('/api/aliases/member', aliases, {admin: true}).catch(function(e){
+    var setObj = {};
+    setObj[targetKey] = _mergeSource;
+    apiPatch('/api/aliases/member', {set: setObj}).catch(function(e){
       console.warn('[Merge] alias save failed:', e);
     });
 
