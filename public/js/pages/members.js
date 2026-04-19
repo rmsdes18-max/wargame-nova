@@ -123,14 +123,10 @@ function renderMembersV2(){
   // Table
   html += '<div style="overflow-x:auto;">';
   html += '<table class="compare-table">';
-  html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th><th class="num">Wars</th><th class="num">Avg K</th><th class="num">Avg A</th><th class="num">Avg DMG</th><th class="num">Avg H</th></tr></thead>';
+  html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th><th class="num">Wars</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th><th class="num">H</th></tr></thead>';
   html += '<tbody id="members-tbody">';
 
   players.forEach(function(p, idx){
-    var avgK = p.wars > 0 ? Math.round(p.totalK / p.wars) : 0;
-    var avgA = p.wars > 0 ? Math.round(p.totalA / p.wars) : 0;
-    var avgD = p.wars > 0 ? Math.round(p.totalD / p.wars) : 0;
-    var avgH = p.wars > 0 ? Math.round(p.totalH / p.wars) : 0;
     var safeName = p.name.replace(/'/g, "\\'");
 
     html += '<tr class="members-row" data-name="' + escHtml(p.name.toLowerCase()) + '">';
@@ -145,10 +141,10 @@ function renderMembersV2(){
     html += '</div>';
     html += '</td>';
     html += '<td style="text-align:center;color:var(--text-muted);font-size:12px;">' + p.wars + '</td>';
-    html += '<td style="text-align:center;color:var(--accent);font-weight:600;">' + avgK + '</td>';
-    html += '<td style="text-align:center;color:var(--text-muted);">' + avgA + '</td>';
-    html += '<td style="text-align:center;color:var(--color-assists);">' + fmtShort(avgD) + '</td>';
-    html += '<td style="text-align:center;color:var(--heal);">' + fmtShort(avgH) + '</td>';
+    html += '<td style="text-align:center;color:var(--accent);font-weight:600;">' + p.totalK + '</td>';
+    html += '<td style="text-align:center;color:var(--text-muted);">' + p.totalA + '</td>';
+    html += '<td style="text-align:center;color:var(--color-assists);">' + fmtShort(p.totalD) + '</td>';
+    html += '<td style="text-align:center;color:var(--heal);">' + fmtShort(p.totalH) + '</td>';
     html += '</tr>';
   });
 
