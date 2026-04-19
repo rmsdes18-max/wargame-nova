@@ -90,7 +90,7 @@ router.post('/warlog', requireBotKey, async function(req, res) {
 
       return {
         name: rosterMember ? rosterMember.name : p.name,
-        role: rosterMember ? rosterMember.role : 'DPS',
+        role: 'DPS',
         defeat: p.kills || 0,
         assist: p.assists || 0,
         dmg_dealt: p.damage || 0,
@@ -101,18 +101,8 @@ router.post('/warlog', requireBotKey, async function(req, res) {
 
     console.log('[Bot] Matched: ' + matchedCount + '/' + players.length + '. Unmatched: ' + unmatchedNames.join(', '));
 
-    // 5. Group by role into parties
-    var groups = { DPS: [], TANK: [], HEALER: [] };
-    mapped.forEach(function(m) {
-      var role = m.role || 'DPS';
-      if (groups[role]) groups[role].push(m);
-      else groups.DPS.push(m);
-    });
-
-    var parties = [];
-    if (groups.DPS.length) parties.push({ name: 'DPS', label: 'DPS', members: groups.DPS });
-    if (groups.TANK.length) parties.push({ name: 'TANK', label: 'Tank', members: groups.TANK });
-    if (groups.HEALER.length) parties.push({ name: 'HEALER', label: 'Healer', members: groups.HEALER });
+    // 5. Single party — keep original order from scoreboard
+    var parties = [{ name: 'Nova', label: 'All', members: mapped }];
 
     // 6. Create war
     var warId = Date.now();
@@ -125,16 +115,13 @@ router.post('/warlog', requireBotKey, async function(req, res) {
 
     logActivity(guild.id, null, 'war_created_bot', 'vs ' + opponent + ' (' + mapped.length + ' players)');
 
-    console.log('[Bot] War created: vs ' + opponent + ', ' + mapped.length + ' players (' + groups.DPS.length + ' DPS, ' + groups.TANK.length + ' TANK, ' + groups.HEALER.length + ' HEAL)');
+    console.log('[Bot] War created: vs ' + opponent + ', ' + mapped.length + ' Nova players');
 
     res.status(201).json({
       id: warId,
       opponent: opponent,
       date: warDate,
       players: mapped.length,
-      dps: groups.DPS.length,
-      tanks: groups.TANK.length,
-      healers: groups.HEALER.length,
       url: '/#war-' + warId
     });
   } catch (e) {
