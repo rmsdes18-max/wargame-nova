@@ -141,7 +141,18 @@ function renderMembersV2(){
     html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openMemberProfile(\'' + encodeURIComponent(p.name) + '\')">' + escHtml(p.name) + '</span>';
     html += '<span onclick="memberStartMerge(\'' + safeName + '\')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
     if(p.variants.length){
-      html += '<span style="font-size:9px;color:var(--text-muted);" title="' + escHtml(p.variants.join(', ')) + '">+' + p.variants.length + ' aliases</span>';
+      var varId = 'var-' + idx;
+      html += '<span onclick="toggleVariants(\'' + varId + '\')" style="font-size:9px;color:var(--accent);cursor:pointer;background:rgba(212,225,87,.1);padding:1px 6px;border-radius:3px;">+' + p.variants.length + ' variants</span>';
+      html += '<div id="' + varId + '" style="display:none;margin-top:4px;">';
+      p.variants.forEach(function(v){
+        var safeV = v.replace(/'/g, "\\'");
+        var safeTarget = p.name.replace(/'/g, "\\'");
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:2px 0;font-size:11px;">';
+        html += '<span style="color:var(--text-muted);">' + escHtml(v) + '</span>';
+        html += '<button onclick="saveVariantAlias(\'' + safeV + '\',\'' + safeTarget + '\')" class="btn btn-secondary" style="font-size:9px;padding:1px 6px;">Save alias</button>';
+        html += '</div>';
+      });
+      html += '</div>';
     }
     html += '</div>';
     html += '</td>';
@@ -251,6 +262,21 @@ function removeAliasMember(key){
     Object.keys(merges).forEach(function(mk){ if(normalizeName(mk) === key || normalizeName(merges[mk]) === key) delete merges[mk]; });
     localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
     renderMembersV2();
+  }).catch(function(e){ Toast.error('Failed: ' + e.message); });
+}
+
+function toggleVariants(id){
+  var el = document.getElementById(id);
+  if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveVariantAlias(variant, target){
+  var setObj = {};
+  setObj[normalizeName(target)] = variant;
+  apiPatch('/api/aliases/member', {set: setObj}).then(function(){
+    _memberAliases[normalizeName(target)] = variant;
+    _mAliasCache = _memberAliases;
+    Toast.success(variant + ' → ' + target);
   }).catch(function(e){ Toast.error('Failed: ' + e.message); });
 }
 
