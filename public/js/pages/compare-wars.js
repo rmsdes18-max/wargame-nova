@@ -3,6 +3,19 @@
 var _compareSelected = {};
 var _compareChart = null;
 
+/* ── Deduplicate similar player names across wars ── */
+function findCanonicalKey(name, playerData){
+  var key = normalizeName(name);
+  // 1. Exact normalized match
+  if(playerData[key]) return key;
+  // 2. Fuzzy match against existing keys
+  var keys = Object.keys(playerData);
+  for(var i = 0; i < keys.length; i++){
+    if(similarityScore(name, playerData[keys[i]].name) > 75) return keys[i];
+  }
+  return key;
+}
+
 function initComparePage(){
   _compareSelected = {};
   renderWarSelector();
@@ -102,15 +115,19 @@ function renderComparison(){
     if(!w.parties) return;
     w.parties.forEach(function(p){
       p.members.forEach(function(m){
-        var key = normalizeName(m.name);
+        var key = findCanonicalKey(m.name, playerData);
         if(!playerData[key]) playerData[key] = {name: m.name, wars: {}};
-        playerData[key].wars[w.id] = {
-          defeat: m.defeat || 0,
-          assist: m.assist || 0,
-          dmg_dealt: m.dmg_dealt || 0,
-          dmg_taken: m.dmg_taken || 0,
-          healed: m.healed || 0
-        };
+        // Keep the longer/more readable name variant
+        if(m.name.length > playerData[key].name.length) playerData[key].name = m.name;
+        if(!playerData[key].wars[w.id]){
+          playerData[key].wars[w.id] = {
+            defeat: m.defeat || 0,
+            assist: m.assist || 0,
+            dmg_dealt: m.dmg_dealt || 0,
+            dmg_taken: m.dmg_taken || 0,
+            healed: m.healed || 0
+          };
+        }
       });
     });
   });
