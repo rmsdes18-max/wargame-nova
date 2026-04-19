@@ -158,6 +158,7 @@ function viewWar(warId){
   } else {
     html += '<input id="edit-opponent" type="hidden" value="'+escHtml(w.opponent)+'">';
     html += '<input id="edit-date" type="hidden" value="'+escHtml(w.date)+'">';
+    html += '<button class="btn btn-secondary" onclick="addToCompare('+w.id+')">&#x2261; Compare</button>';
     html += '<button class="btn btn-secondary" onclick="shareWar('+w.id+')">&#x1F517; Share</button>';
     html += '<button class="btn btn-secondary" onclick="exportWarImage()">&#x1F4F8; Export</button>';
     if(_vwEditMode){

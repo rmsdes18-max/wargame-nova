@@ -96,11 +96,21 @@ function findCanonicalKey(name, playerData){
   return key;
 }
 
+function addToCompare(warId){
+  _compareSelected[warId] = true;
+  showPage('compare');
+}
+
 function initComparePage(){
-  _compareSelected = {};
+  // Don't reset if wars already pre-selected (from addToCompare)
+  var hasPreSelected = Object.keys(_compareSelected).length > 0;
+  if(!hasPreSelected) _compareSelected = {};
   renderWarSelector();
-  document.getElementById('compare-table-wrap').innerHTML = '';
-  document.getElementById('compare-chart-wrap').innerHTML = '';
+  if(hasPreSelected) renderComparison();
+  else {
+    document.getElementById('compare-table-wrap').innerHTML = '';
+    document.getElementById('compare-chart-wrap').innerHTML = '';
+  }
 }
 
 /* ── War Selector ── */
