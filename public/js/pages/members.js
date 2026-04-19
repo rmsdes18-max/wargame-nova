@@ -6,6 +6,7 @@ var _rosterData = [];
 var _memberAliases = {}; // key: normalizedTlgmName → value: inGameName
 
 var _membersMergeSource = null;
+var _membersMergeQueue = []; // collect multiple players to merge into one
 
 async function renderMembersPage(){
   var container = document.getElementById('members-list-container');
@@ -162,34 +163,78 @@ function filterMembersV2(){
   });
 }
 
-/* ── Merge from Members page ── */
+/* ── Merge from Members page (multi-select) ── */
 function memberStartMerge(playerName){
   var statusEl = document.getElementById('members-merge-status');
-  if(!_membersMergeSource){
-    _membersMergeSource = playerName;
-    statusEl.innerHTML = '<span style="color:var(--accent);font-size:12px;">Merging <b>' + escHtml(playerName) + '</b> — click another player\'s link icon, or </span><button onclick="memberCancelMerge()" class="btn btn-secondary" style="font-size:11px;padding:2px 8px;">Cancel</button>';
-    statusEl.style.display = 'block';
-  } else {
-    if(_membersMergeSource === playerName){ memberCancelMerge(); return; }
-    // Save merge
-    var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
-    merges[_membersMergeSource] = playerName;
-    localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
-    // Save alias on server
-    var targetKey = normalizeName(playerName);
-    var setObj = {};
-    setObj[targetKey] = _membersMergeSource;
-    apiPatch('/api/aliases/member', {set: setObj}).catch(function(e){
-      console.warn('[Members Merge] alias save failed:', e);
-    });
-    _membersMergeSource = null;
-    statusEl.style.display = 'none';
-    renderMembersV2();
+
+  // If already in queue, remove it
+  var qIdx = _membersMergeQueue.indexOf(playerName);
+  if(qIdx !== -1){
+    _membersMergeQueue.splice(qIdx, 1);
+    if(!_membersMergeQueue.length){ memberCancelMerge(); return; }
+    updateMergeStatus();
+    return;
   }
+
+  _membersMergeQueue.push(playerName);
+  updateMergeStatus();
+}
+
+function updateMergeStatus(){
+  var statusEl = document.getElementById('members-merge-status');
+  if(!_membersMergeQueue.length){ statusEl.style.display = 'none'; return; }
+
+  var names = _membersMergeQueue.map(function(n){ return '<b>' + escHtml(n) + '</b>'; }).join(', ');
+  var html = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+  html += '<span style="color:var(--accent);font-size:12px;">Selected: ' + names + '</span>';
+  if(_membersMergeQueue.length >= 2){
+    html += '<button onclick="memberFinishMerge()" class="btn btn-primary" style="font-size:11px;padding:4px 12px;">Merge ' + _membersMergeQueue.length + ' into one</button>';
+  } else {
+    html += '<span style="color:var(--text-muted);font-size:11px;">Click more players to add</span>';
+  }
+  html += '<button onclick="memberCancelMerge()" class="btn btn-secondary" style="font-size:11px;padding:3px 8px;">Cancel</button>';
+  html += '</div>';
+  statusEl.innerHTML = html;
+  statusEl.style.display = 'block';
+}
+
+function memberFinishMerge(){
+  if(_membersMergeQueue.length < 2) return;
+
+  // First in queue = target (keep), rest = sources (merge into target)
+  var target = _membersMergeQueue[0];
+  var sources = _membersMergeQueue.slice(1);
+
+  var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+  var setObj = {};
+  var targetKey = normalizeName(target);
+
+  sources.forEach(function(src){
+    merges[src] = target;
+    setObj[targetKey] = src; // each source → target alias
+  });
+
+  localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
+
+  // Save all aliases on server in one PATCH
+  var patchSet = {};
+  sources.forEach(function(src){ patchSet[normalizeName(target)] = src; });
+  // Actually need one alias per source pointing to target
+  var allSet = {};
+  sources.forEach(function(src){
+    allSet[normalizeName(src)] = target;
+  });
+  apiPatch('/api/aliases/member', {set: allSet}).catch(function(e){
+    console.warn('[Members Merge] alias save failed:', e);
+  });
+
+  _membersMergeQueue = [];
+  document.getElementById('members-merge-status').style.display = 'none';
+  renderMembersV2();
 }
 
 function memberCancelMerge(){
-  _membersMergeSource = null;
+  _membersMergeQueue = [];
   document.getElementById('members-merge-status').style.display = 'none';
 }
 
