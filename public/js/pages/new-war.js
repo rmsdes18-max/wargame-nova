@@ -649,8 +649,8 @@ function initSettingsPage(){
 
 // ── IMAGE COMPRESSION ─────────────────────────────────────────────────────
 function compressImage(dataUrl, maxWidth, quality){
-  maxWidth = maxWidth || 1600;
-  quality  = quality  || 0.82;
+  maxWidth = maxWidth || 1024;
+  quality  = quality  || 0.80;
   return new Promise(function(resolve){
     var img = new Image();
     img.onload = function(){
