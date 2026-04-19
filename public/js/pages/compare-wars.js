@@ -89,6 +89,12 @@ function renderComparison(){
 
   var stat = document.getElementById('compare-stat-select').value || 'defeat';
 
+  // Read visible stat toggles
+  var visibleStats = {defeat: false, assist: false, dmg_dealt: false, dmg_taken: false, healed: false};
+  document.querySelectorAll('.cmp-stat-toggle').forEach(function(cb){
+    visibleStats[cb.getAttribute('data-stat')] = cb.checked;
+  });
+
   // Build player data across wars — store ALL stats per war
   var playerData = {};
 
@@ -151,11 +157,11 @@ function renderComparison(){
       trendValues.push(s[stat] || 0);
       html += '<td style="padding:6px 8px;">';
       html += '<div style="display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;font-size:11px;font-weight:600;">';
-      html += '<span style="color:var(--accent);">K:' + s.defeat + '</span>';
-      html += '<span style="color:var(--text-muted);">A:' + s.assist + '</span>';
-      html += '<span style="color:var(--color-assists);">D:' + fmtShort(s.dmg_dealt) + '</span>';
-      html += '<span style="color:var(--dps);">T:' + fmtShort(s.dmg_taken) + '</span>';
-      html += '<span style="color:var(--heal);">H:' + fmtShort(s.healed) + '</span>';
+      if(visibleStats.defeat) html += '<span style="color:var(--accent);">K:' + s.defeat + '</span>';
+      if(visibleStats.assist) html += '<span style="color:var(--text-muted);">A:' + s.assist + '</span>';
+      if(visibleStats.dmg_dealt) html += '<span style="color:var(--color-assists);">D:' + fmtShort(s.dmg_dealt) + '</span>';
+      if(visibleStats.dmg_taken) html += '<span style="color:var(--dps);">T:' + fmtShort(s.dmg_taken) + '</span>';
+      if(visibleStats.healed) html += '<span style="color:var(--heal);">H:' + fmtShort(s.healed) + '</span>';
       html += '</div>';
       html += '</td>';
     });

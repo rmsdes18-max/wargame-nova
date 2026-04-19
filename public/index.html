@@ -437,13 +437,23 @@ input[type=number]{-moz-appearance:textfield;}
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
     <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0;">Compare Wars</h2>
     <div style="display:flex;gap:8px;">
-      <select id="compare-stat-select" onchange="renderComparison()" style="background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:6px 12px;">
-        <option value="defeat">Kills</option>
-        <option value="dmg_dealt">Dmg Dealt</option>
-        <option value="assist">Assists</option>
-        <option value="dmg_taken">Dmg Taken</option>
-        <option value="healed">Healed</option>
-      </select>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-muted);">Show:</span>
+        <label style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--accent);cursor:pointer;"><input type="checkbox" checked onchange="renderComparison()" class="cmp-stat-toggle" data-stat="defeat" style="accent-color:var(--accent);">K</label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--text-muted);cursor:pointer;"><input type="checkbox" checked onchange="renderComparison()" class="cmp-stat-toggle" data-stat="assist" style="accent-color:var(--accent);">A</label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--color-assists);cursor:pointer;"><input type="checkbox" checked onchange="renderComparison()" class="cmp-stat-toggle" data-stat="dmg_dealt" style="accent-color:var(--accent);">DMG</label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--dps);cursor:pointer;"><input type="checkbox" onchange="renderComparison()" class="cmp-stat-toggle" data-stat="dmg_taken" style="accent-color:var(--accent);">Taken</label>
+        <label style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--heal);cursor:pointer;"><input type="checkbox" onchange="renderComparison()" class="cmp-stat-toggle" data-stat="healed" style="accent-color:var(--accent);">Heal</label>
+        <span style="color:var(--border);margin:0 4px;">|</span>
+        <span style="font-size:11px;color:var(--text-muted);">Sort/Trend:</span>
+        <select id="compare-stat-select" onchange="renderComparison()" style="background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px;">
+          <option value="defeat">Kills</option>
+          <option value="dmg_dealt">Dmg</option>
+          <option value="assist">Assists</option>
+          <option value="dmg_taken">Taken</option>
+          <option value="healed">Healed</option>
+        </select>
+      </div>
     </div>
   </div>
   <div id="compare-war-selector" style="margin-bottom:20px;"></div>
