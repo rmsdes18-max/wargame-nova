@@ -146,10 +146,11 @@ function viewWar(warId){
   html += '<div class="war-title">';
   if(!_isPublicView && _vwEditMode){
     html += '<h2>'+escHtml(guildName)+' vs <span contenteditable="true" style="outline:none;border-bottom:1px dashed var(--accent);cursor:text;" onblur="document.getElementById(\'edit-opponent\').value=this.textContent.trim()">'+escHtml(w.opponent)+'</span></h2>';
+    html += '<span class="date" contenteditable="true" style="outline:none;border-bottom:1px dashed var(--accent);cursor:text;" onblur="document.getElementById(\'edit-date\').value=this.textContent.trim()">'+escHtml(w.date)+'</span>';
   } else {
     html += '<h2>'+escHtml(guildName)+' vs '+escHtml(w.opponent)+'</h2>';
+    html += '<span class="date">'+escHtml(w.date)+'</span>';
   }
-  html += '<span class="date">'+escHtml(w.date)+'</span>';
   html += '</div>';
   html += '<div class="war-actions">';
   if(_isPublicView){
