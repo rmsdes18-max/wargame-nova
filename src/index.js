@@ -35,6 +35,7 @@ app.use('/api/roster',  require('./routes/roster'));
 app.use('/api/aliases', require('./routes/aliases'));
 app.use('/api/users',   require('./routes/users'));
 app.use('/api/ocr',     require('./routes/ocr'));
+app.use('/api/bot',     require('./routes/bot'));
 app.use('/api/sudo',    require('./routes/sudo'));
 
 app.get('/api/health', (req, res) => {
