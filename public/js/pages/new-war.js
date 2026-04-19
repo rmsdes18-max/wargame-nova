@@ -15,6 +15,7 @@ function showPage(id){
   if(id==='members'){ renderMembersPage(); }
   if(id==='guild-settings'){ initGuildSettings(); }
   if(id==='guild-picker'){ renderGuildPicker(); }
+  if(id==='compare'){ initComparePage(); }
   // Reveal app shell (hidden until first showPage to prevent flash)
   var shell = document.getElementById('app-shell');
   if(shell) shell.style.opacity = '1';
