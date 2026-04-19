@@ -273,6 +273,8 @@ router.post('/join', requireAuth, async (req, res) => {
     res.status(201).json({ guild: guildInfo[0], role: joinRole });
   } catch (e) {
     await client.query('ROLLBACK');
+    if (e.code === '23503') return res.status(400).json({ error: 'User account not found. Try logging out and back in.' });
+    if (e.code === '23505') return res.status(409).json({ error: 'Already a member of this guild' });
     res.status(500).json({ error: e.message });
   } finally { client.release(); }
 });

@@ -111,25 +111,24 @@ function renderUsersList(){
 
         var roleSelect = '';
         if(u.role !== 'admin'){
-          roleSelect = '<select class="select" onchange="changeUserRole('+u.id+',this.value)">'
+          roleSelect = '<select class="select" onchange="changeUserRole('+u.id+',this.value)" style="max-width:100px;font-size:12px;flex-shrink:0;">'
             +'<option value="viewer"'+(u.role==='viewer'?' selected':'')+'>Viewer</option>'
             +'<option value="editor"'+(u.role==='editor'?' selected':'')+'>Editor</option>'
             +'</select>';
         } else {
-          roleSelect = '<span class="badge badge-pill badge-admin">ADMIN</span>';
+          roleSelect = '<span class="badge badge-pill badge-admin" style="flex-shrink:0;">ADMIN</span>';
         }
 
         html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);">'
           +avatarHtml
-          +'<div style="flex:1;min-width:0;">'
-            +'<div style="display:flex;align-items:center;gap:6px;">'
-              +'<span style="font-weight:600;color:var(--text);font-size:13px;">'+escHtml(u.username)+'</span>'
-              +discordBadge
+          +'<div style="flex:1;min-width:0;overflow:hidden;">'
+            +'<div style="font-weight:600;color:var(--text);font-size:13px;display:flex;align-items:center;gap:6px;">'
+              +escHtml(u.username)+discordBadge
             +'</div>'
             +'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined '+dateStr+'</div>'
           +'</div>'
           +roleSelect
-          +(u.role!=='admin'?'<button onclick="deleteUser('+u.id+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:16px;padding:2px 6px;" title="Remove user">\u00d7</button>':'')
+          +(u.role!=='admin'?'<button onclick="deleteUser('+u.id+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:16px;padding:2px 6px;flex-shrink:0;" title="Remove user">\u00d7</button>':'')
           +'</div>';
       });
       document.getElementById('users-list').innerHTML = html || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
