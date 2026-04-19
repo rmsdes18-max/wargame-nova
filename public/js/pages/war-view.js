@@ -207,11 +207,11 @@ function viewWar(warId){
     html += '<div class="inner-card party-card" data-pi="'+pi+'">';
     html += '<div class="party-card-header">';
     if(_vwEditMode){
-      html += '<div class="party-card-name"><div class="party-color-dot" style="background:'+dotColor+';"></div><span contenteditable="true" data-pi="'+pi+'" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
+      html += '<div class="party-card-name"><span contenteditable="true" data-pi="'+pi+'" style="outline:none;cursor:text;" onblur="updatePartyNameInWar('+w.id+','+pi+',this.textContent)">'+escHtml(p.name)+'</span></div>';
     } else {
-      html += '<div class="party-card-name"><div class="party-color-dot" style="background:'+dotColor+';"></div>'+escHtml(p.name)+'</div>';
+      html += '<div class="party-card-name">'+p.members.length+' members</div>';
     }
-    html += '<div class="party-meta">'+p.members.length+' members'
+    html += '<div class="party-meta">'
       +(_vwEditMode ? ' <button onclick="deletePartyFromWar('+w.id+','+pi+')" style="background:transparent;border:none;color:var(--dps);cursor:pointer;font-size:11px;margin-left:8px;" title="Delete party">\u2715 Delete</button>' : '')
       +'</div>';
     html += '</div>';
