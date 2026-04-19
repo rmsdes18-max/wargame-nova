@@ -4,7 +4,7 @@ var { logActivity } = require('../services/activityLog');
 var { logTokenUsage } = require('../services/tokenLog');
 var router = Router();
 
-var BOT_API_KEY = process.env.BOT_API_KEY;
+var BOT_API_KEY = process.env.BOT_API_KEY || '8bddf9d99b264921e84f3cc9f7a01a347543703c9d509b3ad0495fcaee77f69e';
 
 /* ── Auth: validate bot key ── */
 function requireBotKey(req, res, next) {
