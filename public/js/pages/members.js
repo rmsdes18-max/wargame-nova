@@ -96,6 +96,7 @@ function renderMembersV2(){
   var container = document.getElementById('members-list-container');
   var countEl = document.getElementById('members-count');
   var players = buildPlayersFromWars();
+  window._membersPlayers = players;
 
   if(countEl) countEl.textContent = players.length + ' players from ' + (_warsCache || []).length + ' wars';
 
@@ -132,24 +133,20 @@ function renderMembersV2(){
   html += '<tbody id="members-tbody">';
 
   players.forEach(function(p, idx){
-    var safeName = p.name.replace(/'/g, "\\'");
-
     html += '<tr class="members-row" data-name="' + escHtml(p.name.toLowerCase()) + '">';
     html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
     html += '<td>';
     html += '<div style="display:flex;align-items:center;gap:6px;">';
-    html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openMemberProfile(\'' + encodeURIComponent(p.name) + '\')">' + escHtml(p.name) + '</span>';
-    html += '<span onclick="memberStartMerge(\'' + safeName + '\')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
+    html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openPlayerProfile(' + idx + ')">' + escHtml(p.name) + '</span>';
+    html += '<span onclick="memberStartMergeByIdx(' + idx + ')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
     if(p.variants.length){
       var varId = 'var-' + idx;
       html += '<span onclick="toggleVariants(\'' + varId + '\')" style="font-size:9px;color:var(--accent);cursor:pointer;background:rgba(212,225,87,.1);padding:1px 6px;border-radius:3px;">+' + p.variants.length + ' variants</span>';
       html += '<div id="' + varId + '" style="display:none;margin-top:4px;">';
-      p.variants.forEach(function(v){
-        var safeV = v.replace(/'/g, "\\'");
-        var safeTarget = p.name.replace(/'/g, "\\'");
+      p.variants.forEach(function(v, vi){
         html += '<div style="display:flex;align-items:center;gap:6px;padding:2px 0;font-size:11px;">';
         html += '<span style="color:var(--text-muted);">' + escHtml(v) + '</span>';
-        html += '<button onclick="saveVariantAlias(\'' + safeV + '\',\'' + safeTarget + '\')" class="btn btn-secondary" style="font-size:9px;padding:1px 6px;">Save alias</button>';
+        html += '<button onclick="saveVariantByIdx(' + idx + ',' + vi + ')" class="btn btn-secondary" style="font-size:9px;padding:1px 6px;">Save alias</button>';
         html += '</div>';
       });
       html += '</div>';
@@ -176,6 +173,25 @@ function filterMembersV2(){
     var name = row.getAttribute('data-name') || '';
     row.style.display = name.indexOf(q) !== -1 ? '' : 'none';
   });
+}
+
+/* ── Index-based wrappers (safe for CJK names) ── */
+function openPlayerProfile(idx){
+  var p = window._membersPlayers[idx];
+  if(!p) return;
+  openMemberProfile(encodeURIComponent(p.name));
+}
+
+function memberStartMergeByIdx(idx){
+  var p = window._membersPlayers[idx];
+  if(!p) return;
+  memberStartMerge(p.name);
+}
+
+function saveVariantByIdx(playerIdx, variantIdx){
+  var p = window._membersPlayers[playerIdx];
+  if(!p || !p.variants[variantIdx]) return;
+  saveVariantAlias(p.variants[variantIdx], p.name);
 }
 
 /* ── Merge from Members page (multi-select) ── */
@@ -934,17 +950,45 @@ function closeMemberProfile(){ Modal.close('member-profile-modal'); }
 function openMemberProfile(encodedName){
   var name = decodeURIComponent(encodedName);
   var member = _rosterData.find(function(m){ return m.name === name; });
-  if(!member) return;
+  // If not in roster, create from war data
+  if(!member){
+    var wp = (window._membersPlayers || []).find(function(p){ return p.name === name; });
+    member = {name: name, role: 'DPS', guildRole: null};
+    if(wp) member.wars = wp.wars;
+  }
 
   var aliasKey = normalizeName(name);
   var alias = _memberAliases[aliasKey] || '';
-  // roleHex() from party-helpers.js
+  // Also check all aliases for this player (reverse lookup)
+  if(!alias){
+    var aKeys = Object.keys(_memberAliases);
+    for(var ai = 0; ai < aKeys.length; ai++){
+      if(normalizeName(_memberAliases[aKeys[ai]]) === normalizeName(name)){
+        alias = _memberAliases[aKeys[ai]]; break;
+      }
+    }
+  }
   var color = roleHex(member.role);
+
+  // Collect all name variants for matching
+  var searchNames = [name];
+  if(alias) searchNames.push(alias);
+  // Add variants from _membersPlayers
+  var wp = (window._membersPlayers || []).find(function(pp){ return pp.name === name; });
+  if(wp && wp.variants) wp.variants.forEach(function(v){ if(searchNames.indexOf(v) === -1) searchNames.push(v); });
 
   // Find all wars this member participated in
   var wars = _warsCache || [];
   var warHistory = [];
   var totalK=0,totalA=0,totalDmg=0,totalTkn=0,totalHeal=0;
+
+  function matchesPlayer(mName){
+    for(var si = 0; si < searchNames.length; si++){
+      if(namesMatch(mName, searchNames[si])) return true;
+      if(typeof similarityScore === 'function' && similarityScore(mName, searchNames[si]) > 65) return true;
+    }
+    return false;
+  }
 
   wars.forEach(function(w){
     if(!w.parties) return;
@@ -953,7 +997,7 @@ function openMemberProfile(encodedName){
     w.parties.forEach(function(p){
       if(isExtrasParty(p)) return;
       p.members.forEach(function(m){
-        if(namesMatch(m.name, name) || (alias && namesMatch(m.name, alias))){
+        if(matchesPlayer(m.name)){
           found = m; partyName = p.name;
         }
       });
@@ -962,7 +1006,7 @@ function openMemberProfile(encodedName){
     if(!found){
       var extras = getExtrasParty(w);
       if(extras) extras.members.forEach(function(m){
-        if(namesMatch(m.name, name) || (alias && namesMatch(m.name, alias))){
+        if(matchesPlayer(m.name)){
           found = m; partyName = 'Extra';
         }
       });
