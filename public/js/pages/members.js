@@ -113,10 +113,14 @@ function renderMembersV2(){
   // Aliases section (collapsible)
   var aliasKeys = Object.keys(_memberAliases);
   if(aliasKeys.length){
-    html += '<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Aliases (' + aliasKeys.length + ')</summary>';
+    html += '<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Aliases (' + aliasKeys.length + ') <button onclick="event.stopPropagation();resetAllAliases()" style="background:transparent;border:1px solid rgba(232,64,64,.3);color:var(--dps);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:8px;">Reset all</button></summary>';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">';
     aliasKeys.forEach(function(k){
-      html += '<span style="font-size:11px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--text-muted);">' + escHtml(k) + ' &#8594; ' + escHtml(_memberAliases[k]) + '</span>';
+      var safeK = k.replace(/'/g, "\\'");
+      html += '<span style="font-size:11px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
+        + escHtml(k) + ' &#8594; ' + escHtml(_memberAliases[k])
+        + ' <span onclick="removeAliasMember(\'' + safeK + '\')" style="cursor:pointer;color:var(--dps);font-size:13px;line-height:1;" title="Remove">&times;</span>'
+        + '</span>';
     });
     html += '</div></details>';
   }
@@ -236,6 +240,28 @@ function memberFinishMerge(){
 function memberCancelMerge(){
   _membersMergeQueue = [];
   document.getElementById('members-merge-status').style.display = 'none';
+}
+
+function removeAliasMember(key){
+  apiPatch('/api/aliases/member', {delete: [key]}).then(function(){
+    delete _memberAliases[key];
+    _mAliasCache = _memberAliases;
+    // Also remove from localStorage merges
+    var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+    Object.keys(merges).forEach(function(mk){ if(normalizeName(mk) === key || normalizeName(merges[mk]) === key) delete merges[mk]; });
+    localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
+    renderMembersV2();
+  }).catch(function(e){ Toast.error('Failed: ' + e.message); });
+}
+
+function resetAllAliases(){
+  if(!confirm('Reset all aliases? Players will appear as duplicates again.')) return;
+  apiPut('/api/aliases/member', {}, {admin: true}).then(function(){
+    _memberAliases = {};
+    _mAliasCache = {};
+    localStorage.removeItem('nova_compare_merges');
+    renderMembersV2();
+  }).catch(function(e){ Toast.error('Failed: ' + e.message); });
 }
 
 function renderMembersList(){
