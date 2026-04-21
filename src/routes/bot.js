@@ -132,16 +132,5 @@ router.post('/warlog', requireBotKey, async function(req, res) {
 });
 
 
-/* ── GET /api/bot/alias-stats — temporary ── */
-router.get('/alias-stats', requireBotKey, async function(req, res) {
-  try {
-    var { rows: nova } = await pool.query("SELECT id FROM guilds WHERE LOWER(name) = 'nova' LIMIT 1");
-    if (!nova.length) return res.json({ error: 'Nova not found' });
-    var gid = nova[0].id;
-    var { rows: total } = await pool.query('SELECT COUNT(*) as cnt FROM aliases WHERE guild_id = $1', [gid]);
-    var { rows: all } = await pool.query('SELECT normalized_key, actual_name FROM aliases WHERE guild_id = $1 AND type = $2 ORDER BY actual_name', [gid, 'member']);
-    res.json({ guild_id: gid, total: +total[0].cnt, aliases: all });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
 module.exports = router;
