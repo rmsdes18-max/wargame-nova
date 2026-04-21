@@ -75,7 +75,15 @@ function buildPlayersFromWars(){
         var pd = playerData[key];
         if(m.name.length > pd.name.length) pd.name = m.name;
         if(pd.variants.indexOf(m.name) === -1 && normalizeName(m.name) !== normalizeName(pd.name)){
-          pd.variants.push(m.name);
+          // Don't add if already saved as alias
+          var isAliased = false;
+          var aliasKeys = Object.keys(_memberAliases);
+          for(var ak = 0; ak < aliasKeys.length; ak++){
+            if(normalizeName(_memberAliases[aliasKeys[ak]]) === normalizeName(m.name) || normalizeName(m.name) === aliasKeys[ak]){
+              isAliased = true; break;
+            }
+          }
+          if(!isAliased) pd.variants.push(m.name);
         }
         pd.wars++;
         pd.totalK += m.defeat || 0;
@@ -139,8 +147,42 @@ function renderMembersV2(){
     html += '<div style="display:flex;align-items:center;gap:6px;">';
     html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openPlayerProfile(' + idx + ')">' + escHtml(p.name) + '</span>';
     html += '<span onclick="memberStartMergeByIdx(' + idx + ')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
+    // Existing aliases for this player
+    var pAliases = [];
+    var aliasKeysAll = Object.keys(_memberAliases);
+    aliasKeysAll.forEach(function(ak){
+      if(normalizeName(_memberAliases[ak]) === normalizeName(p.name)){
+        pAliases.push(ak);
+      }
+    });
+    if(pAliases.length){
+      html += '<span style="font-size:9px;color:var(--heal);background:rgba(76,175,80,.1);padding:1px 6px;border-radius:3px;">' + pAliases.length + ' alias</span>';
+    }
+    // Add alias button
+    html += '<span onclick="toggleAddAlias(' + idx + ')" style="cursor:pointer;font-size:9px;color:var(--text-muted);opacity:.6;padding:1px 4px;" title="Add alias">+ alias</span>';
+    html += '</div>';
+    // Add alias input (hidden by default)
+    html += '<div id="add-alias-' + idx + '" style="display:none;margin-top:4px;padding-left:26px;">';
+    html += '<div style="display:flex;align-items:center;gap:6px;">';
+    html += '<input id="alias-input-' + idx + '" type="text" placeholder="Type alias name..." style="width:160px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font-size:11px;outline:none;" onkeydown="if(event.key===\'Enter\')saveManualAliasByIdx(' + idx + ')">';
+    html += '<button onclick="saveManualAliasByIdx(' + idx + ')" class="btn btn-secondary" style="font-size:9px;padding:2px 8px;">Save</button>';
+    html += '</div>';
+    // Show existing aliases with delete
+    if(pAliases.length){
+      html += '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">';
+      pAliases.forEach(function(ak){
+        var safeAk = ak.replace(/'/g, "\\'");
+        html += '<span style="font-size:10px;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.2);border-radius:3px;padding:2px 6px;color:var(--heal);display:inline-flex;align-items:center;gap:3px;">'
+          + escHtml(ak)
+          + ' <span onclick="removeAliasMember(\'' + safeAk + '\')" style="cursor:pointer;color:var(--dps);font-size:12px;">&times;</span>'
+          + '</span>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
     if(p.variants.length){
       var varId = 'var-' + idx;
+      html += '<div style="margin-top:4px;padding-left:26px;">';
       html += '<span onclick="toggleVariants(\'' + varId + '\')" style="font-size:9px;color:var(--accent);cursor:pointer;background:rgba(212,225,87,.1);padding:1px 6px;border-radius:3px;">+' + p.variants.length + ' variants</span>';
       html += '<div id="' + varId + '" style="display:none;margin-top:4px;">';
       p.variants.forEach(function(v, vi){
@@ -150,8 +192,8 @@ function renderMembersV2(){
         html += '</div>';
       });
       html += '</div>';
+      html += '</div>';
     }
-    html += '</div>';
     html += '</td>';
     html += '<td style="text-align:center;color:var(--text-muted);font-size:12px;">' + p.wars + '</td>';
     html += '<td style="text-align:center;color:var(--accent);font-weight:600;">' + p.totalK + '</td>';
@@ -284,6 +326,36 @@ function removeAliasMember(key){
 function toggleVariants(id){
   var el = document.getElementById(id);
   if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleAddAlias(idx){
+  var el = document.getElementById('add-alias-' + idx);
+  if(el){
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    if(el.style.display === 'block'){
+      var input = document.getElementById('alias-input-' + idx);
+      if(input) input.focus();
+    }
+  }
+}
+
+function saveManualAliasByIdx(idx){
+  var p = window._membersPlayers[idx];
+  if(!p) return;
+  var input = document.getElementById('alias-input-' + idx);
+  if(!input) return;
+  var aliasName = input.value.trim();
+  if(!aliasName){ Toast.warning('Scrie un alias'); return; }
+  var setObj = {};
+  setObj[normalizeName(aliasName)] = p.name;
+  apiPatch('/api/aliases/member', {set: setObj}).then(function(){
+    _memberAliases[normalizeName(aliasName)] = p.name;
+    _mAliasCache = _memberAliases;
+    var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
+    merges[aliasName] = p.name;
+    localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
+    renderMembersV2();
+  }).catch(function(e){ Toast.error('Failed: ' + e.message); });
 }
 
 function saveVariantAlias(variant, target){
