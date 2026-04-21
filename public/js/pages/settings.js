@@ -353,7 +353,7 @@ async function initGuildSettings(){
       var roleSelect = '';
       if(m.role !== 'admin' || data.your_role === 'admin'){
         if(m.id !== data.owner_id && data.your_role === 'admin'){
-          roleSelect = '<select class="select" onchange="changeGuildMemberRole('+m.id+',this.value)">'
+          roleSelect = '<select class="select" onchange="changeGuildMemberRole('+m.id+',this.value)" style="min-width:90px;">'
             +'<option value="viewer"'+(m.role==='viewer'?' selected':'')+'>Viewer</option>'
             +'<option value="editor"'+(m.role==='editor'?' selected':'')+'>Editor</option>'
             +'<option value="admin"'+(m.role==='admin'?' selected':'')+'>Admin</option>'
@@ -379,8 +379,10 @@ async function initGuildSettings(){
           +'</div>'
           +'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined '+dateStr+'</div>'
         +'</div>'
-        +roleSelect
-        +kickBtn
+        +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+          +roleSelect
+          +kickBtn
+        +'</div>'
         +'</div>';
     });
     document.getElementById('gs-members-list').innerHTML = html || EmptyState.inline('No members');

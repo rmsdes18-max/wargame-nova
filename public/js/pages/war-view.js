@@ -848,7 +848,9 @@ function updateUIForRole(){
   var nwBtn = document.querySelector('.topbar-actions .btn-primary');
   if(nwBtn) nwBtn.style.display = isEditor ? '' : 'none';
 
-  // Guild settings - visible for all (page handles admin-only actions)
+  // Guild settings — admin only
+  var gsTab = document.getElementById('guild-settings-tab');
+  if(gsTab) gsTab.style.display = isAdmin ? '' : 'none';
 
   // Topbar user area
   var userEl = document.getElementById('topbar-user');
