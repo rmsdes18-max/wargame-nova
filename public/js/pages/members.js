@@ -41,6 +41,7 @@ function buildPlayersFromWars(){
   wars.forEach(function(w){
     if(!w.parties) return;
     w.parties.forEach(function(p){
+      if(!p.members) return;
       p.members.forEach(function(m){
         // Use same dedup as compare page
         var key = normalizeName(m.name);

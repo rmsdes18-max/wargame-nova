@@ -724,6 +724,7 @@ function updatePlayerNameInWar(warId, pi, mi, newName){
 }
 
 function cycleWarMemberRole(warId, pi, mi){
+  if(!_warsCache) return;
   var war = _warsCache.find(function(w){ return w.id === warId; });
   if(!war || !war.parties[pi] || !war.parties[pi].members[mi]) return;
   war.parties[pi].members[mi].role = nextRole(war.parties[pi].members[mi].role);
@@ -731,6 +732,7 @@ function cycleWarMemberRole(warId, pi, mi){
 }
 
 function cycleExtraRole(warId, extraIdx){
+  if(!_warsCache) return;
   var war = _warsCache.find(function(w){ return w.id === warId; });
   if(!war) return;
   var extras = getExtrasParty(war);
@@ -740,6 +742,7 @@ function cycleExtraRole(warId, extraIdx){
 }
 
 function deletePartyFromWar(warId, partyIndex){
+  if(!_warsCache) return;
   var war = _warsCache.find(function(w){ return w.id === warId; });
   if(!war) return;
   var partyName = war.parties[partyIndex] ? war.parties[partyIndex].name : 'Party';
