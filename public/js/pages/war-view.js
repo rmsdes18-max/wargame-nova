@@ -256,7 +256,7 @@ function viewWar(warId){
       var rankNum = mi + 1;
       html += '<span style="color:var(--text-muted);font-size:11px;min-width:20px;text-align:right;margin-right:6px;">' + rankNum + '</span>';
       if(_vwEditMode){
-        html += '<span class="player-name" style="color:var(--text);" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" style="outline:none;cursor:text;" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
+        html += '<span class="player-name" style="color:var(--text);outline:none;cursor:text;" contenteditable="true" data-pi="'+pi+'" data-mi="'+mi+'" onblur="updatePlayerNameInWar('+w.id+','+pi+','+mi+',this.textContent)">'+escHtml(m.name)+'</span>';
       } else {
         html += '<span class="player-name" style="color:var(--text);">'+escHtml(m.name)+'</span>';
       }
@@ -816,18 +816,12 @@ async function saveWarEdits(warId){
   var dt  = document.getElementById('edit-date').value || w.date;
   w.opponent = opp; w.date = dt;
 
-  // Collect all editable fields (name, stats, color)
-  document.querySelectorAll('#view-war-content input[data-pi][data-field="name"]').forEach(function(inp){
-    var pi=+inp.dataset.pi, mi=+inp.dataset.mi;
-    var v = inp.value.trim();
-    if(v && w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi].name = v;
-  });
-  ['defeat','assist','dmg_dealt','dmg_taken','healed'].forEach(function(field){
-    document.querySelectorAll('#view-war-content input[data-field="'+field+'"]').forEach(function(inp){
-      var pi=+inp.dataset.pi, mi=+inp.dataset.mi;
-      if(w.parties[pi] && w.parties[pi].members[mi]) w.parties[pi].members[mi][field] = +inp.value || 0;
-    });
-  });
+  // Force any active editable input to blur (triggers its onblur save handler)
+  if(document.activeElement && document.activeElement.tagName === 'INPUT'){
+    document.activeElement.blur();
+  }
+  // Names and stats are already saved to war object via onblur handlers
+  // (updatePlayerNameInWar for names, makeEditable onblur for stats)
   document.querySelectorAll('#view-war-content select[data-field="color"]').forEach(function(sel){
     var pi=+sel.dataset.pi;
     if(w.parties[pi]) w.parties[pi].color = sel.value;
