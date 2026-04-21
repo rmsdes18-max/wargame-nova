@@ -279,20 +279,12 @@ function memberFinishMerge(){
   var sources = _membersMergeQueue.slice(1);
 
   var merges = JSON.parse(localStorage.getItem('nova_compare_merges') || '{}');
-  var setObj = {};
-  var targetKey = normalizeName(target);
-
   sources.forEach(function(src){
     merges[src] = target;
-    setObj[targetKey] = src; // each source → target alias
   });
-
   localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
 
-  // Save all aliases on server in one PATCH
-  var patchSet = {};
-  sources.forEach(function(src){ patchSet[normalizeName(target)] = src; });
-  // Actually need one alias per source pointing to target
+  // Save aliases on server: each source name → target name
   var allSet = {};
   sources.forEach(function(src){
     allSet[normalizeName(src)] = target;
