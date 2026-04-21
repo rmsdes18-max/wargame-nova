@@ -140,10 +140,13 @@ function renderMembersV2(){
     return;
   }
 
-  // Filter by status
+  // Filter by status (unknown = active for display purposes)
   var filtered = players;
   if(_membersStatusFilter !== 'all'){
-    filtered = players.filter(function(p){ return p.status === _membersStatusFilter; });
+    filtered = players.filter(function(p){
+      if(_membersStatusFilter === 'active') return p.status === 'active' || p.status === 'unknown';
+      return p.status === _membersStatusFilter;
+    });
   }
 
   // Status tabs
