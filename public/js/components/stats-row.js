@@ -31,7 +31,8 @@ var STAT_DEFS = {
   assists:   { key: 'assist',    label: 'Assists',   shortLabel: 'A', color: 'var(--color-assists)' },
   dmg_dealt: { key: 'dmg_dealt', label: 'Dmg Dealt', shortLabel: 'D', color: 'var(--color-dmg-dealt)' },
   dmg_taken: { key: 'dmg_taken', label: 'Dmg Taken', shortLabel: 'TKN', color: 'var(--color-dmg-taken)' },
-  healed:    { key: 'healed',    label: 'Healed',    shortLabel: 'H', color: 'var(--color-healed)' }
+  healed:    { key: 'healed',    label: 'Healed',    shortLabel: 'H', color: 'var(--color-healed)' },
+  heal_cd:   { key: 'heal_cd',   label: 'Heal CD',   shortLabel: 'HC', color: 'var(--color-healed)' }
 };
 
 /* ── StatsRow ─────────────────────────────────────────────────────── */
@@ -54,7 +55,7 @@ var STAT_DEFS = {
  */
 function StatsRow(stats, options) {
   var opts   = options || {};
-  var fields = opts.fields || ['kills', 'assists', 'dmg_dealt', 'dmg_taken', 'healed'];
+  var fields = opts.fields || ['kills', 'assists', 'dmg_dealt', 'dmg_taken', 'healed', 'heal_cd'];
   var compact    = !!opts.compact;
   var showLabels = opts.showLabels !== false;
   var emptyText  = opts.emptyText !== undefined ? opts.emptyText : '—';
