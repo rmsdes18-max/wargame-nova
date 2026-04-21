@@ -1,0 +1,124 @@
+-- Classification SQL
+-- REVIEW BEFORE RUNNING
+
+DO $$
+DECLARE
+  gid UUID;
+BEGIN
+  SELECT id INTO gid FROM guilds WHERE LOWER(name) = 'nova' LIMIT 1;
+  IF gid IS NULL THEN RAISE NOTICE 'Nova not found'; RETURN; END IF;
+
+  -- Ensure all 66 active members exist in roster with status='active'
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('gogurm', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('wattsOn', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Rventra', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('yacoobb', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('HdPwNer', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Lven', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Oggyメ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('XSt3fRO', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('AirMouz', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('AKILEVSS', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('alkais', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Argonautis', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('BlackDIABLO99', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('BloOdMoon', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('BoobienatoR', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Buldoza', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Cakoぞ゜', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ClintHoris', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Corvixus', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('DareOner', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('DiamondProx1', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('EternalWarrior', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Ezaryメ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('FastKiller01', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Firebang', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Freesk', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Haloran', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Igris+', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ilenia', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Kallikantzaros', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('LazyLello', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Loelialoy', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Mezzy·', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Nicrooz', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Noobboy21', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('omgHE4L', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Orcianna', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Orianae', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Pablo13', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('PaoloBrosio', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('RamboCv9', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Ricchan', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Rickiメ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ShibaTan', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Shimunbg', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Sinbian', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Skarrgan', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('StarshipTrooper', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Stormyial', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('tarantulanebula', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('TinySpark', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('TooAlone', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Valkerynメ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('vapx', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Welgian', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('しuvモvモ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ツSugaFly', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('メAskadrasメ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('メMarkoメ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('モ几モしソモ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('与ロI爪ひ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('下ひれ长Yるる', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃oo爪|モ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃卍G乂丁乙ひ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('卄卍Gひ几ツ', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('长尺|丁卄', 'DPS', gid, true, 'active') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'active', active = true;
+
+  -- Mark unmatched war players as inactive
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Cakoヌ゛', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('卄яGひルツ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Cakoヌ*', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('LaQueTeLoMete', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Raquell', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('下ひれ長Yる', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('モル毛レソモ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Draknothツ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('McQuay', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Hagun', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('BilalBlc', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ᐸZavaᐳ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Cklioz', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('XBladde', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Funky33', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Enelyye', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Xin9', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ちロ爪ひ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Gitalex', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Enelvye', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Cako♂`', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('くZava', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Bagyytzuu', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Bu千千D卩ddy', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Lᴜᴠ·Eᴠ·E', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ちロパひ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('CallMeBabyツ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Gumlina', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Raquel1', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃ㄚGXㄒZひ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('下ひれだYる', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Samuel88', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('サやGo爪ツ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('XSt3lR0', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('モルモレツモ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃中GXすZひ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('ちロ爪な', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('计书Gαルツ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('Cakoそ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃øøƒĭ丨モ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('XSI3fR0', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃RとVTてひ', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+  INSERT INTO roster_members (name, role, guild_id, active, status) VALUES ('乃忆℃义てZ℃', 'DPS', gid, false, 'inactive') ON CONFLICT (guild_id, name) DO UPDATE SET status = 'inactive', active = false;
+
+END $$;
