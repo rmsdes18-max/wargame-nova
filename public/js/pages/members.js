@@ -3,6 +3,8 @@ var _membersTab = 'active';
 var _membersEditMode = false;
 var _membersRoleFilter = 'ALL';
 var _membersStatusFilter = 'active'; // active|inactive|external|all
+var _membersSortBy = 'name'; // name|wars|k|a|dmg|h
+var _membersSortDir = 'asc'; // asc|desc
 var _rosterData = [];
 var _memberAliases = {}; // key: normalizedTlgmName → value: inGameName
 
@@ -113,13 +115,21 @@ function buildPlayersFromWars(){
       p.status = 'unknown';
     }
   });
-  // Sort: Latin names first (A-Z), then CJK/special at the end
-  return result.sort(function(a, b){
-    var aLatin = /^[a-zA-Z]/.test(a.name) ? 0 : 1;
-    var bLatin = /^[a-zA-Z]/.test(b.name) ? 0 : 1;
-    if(aLatin !== bLatin) return aLatin - bLatin;
-    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  // Sort by _membersSortBy / _membersSortDir
+  var sortKeys = { name: 'name', wars: 'wars', k: 'totalK', a: 'totalA', dmg: 'totalD', h: 'totalH' };
+  var sk = sortKeys[_membersSortBy];
+  result.sort(function(a, b){
+    if(_membersSortBy === 'name'){
+      var aL = /^[a-zA-Z]/.test(a.name) ? 0 : 1;
+      var bL = /^[a-zA-Z]/.test(b.name) ? 0 : 1;
+      if(aL !== bL) return aL - bL;
+      var cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      return _membersSortDir === 'desc' ? -cmp : cmp;
+    }
+    var av = a[sk] || 0, bv = b[sk] || 0;
+    return _membersSortDir === 'desc' ? bv - av : av - bv;
   });
+  return result;
 }
 
 /* ── Render Members V2 ── */
@@ -187,7 +197,12 @@ function renderMembersV2(){
   // Table
   html += '<div style="overflow-x:auto;">';
   html += '<table class="compare-table">';
-  html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th><th class="num">Wars</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th><th class="num">H</th></tr></thead>';
+  function sortTh(field, label){
+    var arrow = _membersSortBy === field ? (_membersSortDir === 'desc' ? ' ▼' : ' ▲') : '';
+    var style = 'cursor:pointer;user-select:none;' + (_membersSortBy === field ? 'color:var(--accent);' : '');
+    return '<th class="num" style="' + style + '" onclick="setMembersSort(\'' + field + '\')">' + label + arrow + '</th>';
+  }
+  html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;cursor:pointer;user-select:none;' + (_membersSortBy === 'name' ? 'color:var(--accent);' : '') + '" onclick="setMembersSort(\'name\')">Player' + (_membersSortBy === 'name' ? (_membersSortDir === 'desc' ? ' ▼' : ' ▲') : '') + '</th>' + sortTh('wars','Wars') + sortTh('k','K') + sortTh('a','A') + sortTh('dmg','DMG') + sortTh('h','H') + '</tr></thead>';
   html += '<tbody id="members-tbody">';
 
   // Bulk action bar (editor only)
@@ -384,6 +399,16 @@ function removeAliasMember(key){
     localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
     renderMembersV2();
   }).catch(function(e){ Toast.error('Failed: ' + e.message); });
+}
+
+function setMembersSort(field){
+  if(_membersSortBy === field){
+    _membersSortDir = _membersSortDir === 'desc' ? 'asc' : 'desc';
+  } else {
+    _membersSortBy = field;
+    _membersSortDir = field === 'name' ? 'asc' : 'desc';
+  }
+  renderMembersV2();
 }
 
 function setMembersStatusFilter(status){
