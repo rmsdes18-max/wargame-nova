@@ -113,7 +113,13 @@ function buildPlayersFromWars(){
       p.status = 'unknown';
     }
   });
-  return result.sort(function(a, b){ return b.totalK - a.totalK; });
+  // Sort: Latin names first (A-Z), then CJK/special at the end
+  return result.sort(function(a, b){
+    var aLatin = /^[a-zA-Z]/.test(a.name) ? 0 : 1;
+    var bLatin = /^[a-zA-Z]/.test(b.name) ? 0 : 1;
+    if(aLatin !== bLatin) return aLatin - bLatin;
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  });
 }
 
 /* ── Render Members V2 ── */
