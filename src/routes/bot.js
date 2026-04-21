@@ -131,4 +131,36 @@ router.post('/warlog', requireBotKey, async function(req, res) {
   }
 });
 
+/* ── GET /api/bot/diagnostic — temporary name analysis ── */
+router.get('/diagnostic', requireBotKey, async function(req, res) {
+  try {
+    // 1. All player names from last 10 wars
+    var { rows: wars } = await pool.query(
+      'SELECT id, opponent, date, parties FROM wars ORDER BY id DESC LIMIT 10'
+    );
+    var warNames = [];
+    wars.forEach(function(w) {
+      (w.parties || []).forEach(function(p) {
+        (p.members || []).forEach(function(m) {
+          warNames.push({ war: w.opponent, date: w.date, name: m.name });
+        });
+      });
+    });
+
+    // 2. Roster members with non-ASCII
+    var { rows: roster } = await pool.query(
+      "SELECT name, role, guild_id FROM roster_members WHERE name ~ '[^a-zA-Z0-9 _-]'"
+    );
+
+    // 3. All aliases
+    var { rows: aliases } = await pool.query(
+      'SELECT normalized_key, actual_name, type FROM aliases'
+    );
+
+    res.json({ warNames: warNames, nonAsciiRoster: roster, aliases: aliases });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
