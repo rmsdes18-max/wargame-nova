@@ -95,8 +95,7 @@ router.post('/warlog', requireBotKey, async function(req, res) {
         assist: p.assists || 0,
         dmg_dealt: p.damage || 0,
         dmg_taken: p.damageTaken || 0,
-        healed: p.heal || 0,
-        heal_cd: p.healCooldown || 0
+        healed: p.heal || 0
       };
     });
 
