@@ -63,6 +63,22 @@ function findCanonicalKey(name, playerData){
   var key = normalizeName(name);
   if(playerData[key]) return key;
 
+  // Check server-side aliases
+  if(typeof _memberAliases !== 'undefined' && _memberAliases){
+    var aliasKeys = Object.keys(_memberAliases);
+    for(var ai = 0; ai < aliasKeys.length; ai++){
+      // Variant name → find canonical player's key
+      if(normalizeName(_memberAliases[aliasKeys[ai]]) === key){
+        if(playerData[aliasKeys[ai]]) return aliasKeys[ai];
+      }
+      // This name IS an alias key → find canonical player
+      if(key === aliasKeys[ai]){
+        var canonKey = normalizeName(_memberAliases[aliasKeys[ai]]);
+        if(playerData[canonKey]) return canonKey;
+      }
+    }
+  }
+
   var keys = Object.keys(playerData);
   var latin = extractLatin(name);
   var nfm = normalizeForMatch(name);
