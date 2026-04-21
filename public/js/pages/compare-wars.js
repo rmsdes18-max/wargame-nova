@@ -50,14 +50,16 @@ function extractLatin(s){
   return (s || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
 
-function findCanonicalKey(name, playerData){
-  // Check manual merges first
+function findCanonicalKey(name, playerData, _visited){
+  // Check manual merges first (with cycle detection)
   var merged = _compareMerges[name];
   if(merged){
+    if(!_visited) _visited = {};
+    if(_visited[name]) return normalizeName(name); // cycle detected
+    _visited[name] = true;
     var mKey = normalizeName(merged);
     if(playerData[mKey]) return mKey;
-    // Recurse in case target was also merged
-    return findCanonicalKey(merged, playerData);
+    return findCanonicalKey(merged, playerData, _visited);
   }
 
   var key = normalizeName(name);
