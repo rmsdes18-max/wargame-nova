@@ -371,11 +371,24 @@ function memberFinishMerge(){
   localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
 
   // Save aliases on server: each source name → target name
+  // Also transfer existing aliases of sources to target
   var allSet = {};
   sources.forEach(function(src){
     allSet[normalizeName(src)] = target;
+    // Transfer existing aliases that pointed to this source
+    var aliasKeys = Object.keys(_memberAliases);
+    for(var i = 0; i < aliasKeys.length; i++){
+      if(normalizeName(_memberAliases[aliasKeys[i]]) === normalizeName(src)){
+        allSet[aliasKeys[i]] = target;
+      }
+    }
   });
-  apiPatch('/api/aliases/member', {set: allSet}).catch(function(e){
+  apiPatch('/api/aliases/member', {set: allSet}).then(function(){
+    // Update local alias cache
+    Object.keys(allSet).forEach(function(k){ _memberAliases[k] = allSet[k]; });
+    _mAliasCache = _memberAliases;
+    renderMembersV2();
+  }).catch(function(e){
     console.warn('[Members Merge] alias save failed:', e);
   });
 
