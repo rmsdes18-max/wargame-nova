@@ -121,15 +121,18 @@ function renderMembersV2(){
   html += '<div id="members-merge-status" style="display:none;padding:8px 14px;background:rgba(212,225,87,.1);border:1px solid rgba(212,225,87,.2);border-radius:8px;margin-bottom:12px;position:sticky;top:0;z-index:50;"></div>';
 
   // Aliases section (collapsible)
+  var isEditor = _userRole === 'admin' || _userRole === 'editor';
   var aliasKeys = Object.keys(_memberAliases);
   if(aliasKeys.length){
-    html += '<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Aliases (' + aliasKeys.length + ') <button onclick="event.stopPropagation();resetAllAliases()" style="background:transparent;border:1px solid rgba(232,64,64,.3);color:var(--dps);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:8px;">Reset all</button></summary>';
+    html += '<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Aliases (' + aliasKeys.length + ')'
+      + (isEditor ? ' <button onclick="event.stopPropagation();resetAllAliases()" style="background:transparent;border:1px solid rgba(232,64,64,.3);color:var(--dps);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:8px;">Reset all</button>' : '')
+      + '</summary>';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">';
     aliasKeys.forEach(function(k){
       var safeK = k.replace(/'/g, "\\'");
       html += '<span style="font-size:11px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">'
         + escHtml(k) + ' &#8594; ' + escHtml(_memberAliases[k])
-        + ' <span onclick="removeAliasMember(\'' + safeK + '\')" style="cursor:pointer;color:var(--dps);font-size:13px;line-height:1;" title="Remove">&times;</span>'
+        + (isEditor ? ' <span onclick="removeAliasMember(\'' + safeK + '\')" style="cursor:pointer;color:var(--dps);font-size:13px;line-height:1;" title="Remove">&times;</span>' : '')
         + '</span>';
     });
     html += '</div></details>';
@@ -147,7 +150,7 @@ function renderMembersV2(){
     html += '<td>';
     html += '<div style="display:flex;align-items:center;gap:6px;">';
     html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openPlayerProfile(' + idx + ')">' + escHtml(p.name) + '</span>';
-    html += '<span onclick="memberStartMergeByIdx(' + idx + ')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
+    if(isEditor) html += '<span onclick="memberStartMergeByIdx(' + idx + ')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
     // Existing aliases for this player
     var pAliases = [];
     var aliasKeysAll = Object.keys(_memberAliases);
@@ -159,8 +162,8 @@ function renderMembersV2(){
     if(pAliases.length){
       html += '<span style="font-size:9px;color:var(--heal);background:rgba(76,175,80,.1);padding:1px 6px;border-radius:3px;">' + pAliases.length + ' alias</span>';
     }
-    // Add alias button
-    html += '<span onclick="toggleAddAlias(' + idx + ')" style="cursor:pointer;font-size:9px;color:var(--text-muted);opacity:.6;padding:1px 4px;" title="Add alias">+ alias</span>';
+    // Add alias button (editor+ only)
+    if(isEditor) html += '<span onclick="toggleAddAlias(' + idx + ')" style="cursor:pointer;font-size:9px;color:var(--text-muted);opacity:.6;padding:1px 4px;" title="Add alias">+ alias</span>';
     html += '</div>';
     // Add alias input (hidden by default)
     html += '<div id="add-alias-' + idx + '" style="display:none;margin-top:4px;padding-left:26px;">';

@@ -852,6 +852,10 @@ function updateUIForRole(){
   var gsTab = document.getElementById('guild-settings-tab');
   if(gsTab) gsTab.style.display = isAdmin ? '' : 'none';
 
+  // Compare — Reset merges — editor+ only
+  var rmBtn = document.getElementById('compare-reset-merges');
+  if(rmBtn) rmBtn.style.display = isEditor ? '' : 'none';
+
   // Topbar user area
   var userEl = document.getElementById('topbar-user');
   if(userEl){

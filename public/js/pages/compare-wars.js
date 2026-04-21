@@ -269,7 +269,8 @@ function renderComparison(){
   players.forEach(function(p, idx){
     html += '<tr>';
     html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
-    html += '<td><div style="display:flex;align-items:center;gap:4px;"><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span><span onclick="startMerge(\'' + p.name.replace(/'/g, "\\'") + '\')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span></div></td>';
+    var mergeLink = (_userRole === 'admin' || _userRole === 'editor') ? '<span onclick="startMerge(\'' + p.name.replace(/'/g, "\\'") + '\')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>' : '';
+    html += '<td><div style="display:flex;align-items:center;gap:4px;"><span style="font-weight:600;font-size:13px;">' + escHtml(p.name) + '</span>' + mergeLink + '</div></td>';
 
     var trendValues = [];
     wars.forEach(function(w){
