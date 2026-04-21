@@ -1125,8 +1125,13 @@ function namesMatch(a, b){
 function normalizeForMatch(str){
   if(!str) return '';
   return str.toLowerCase()
-    .replace(/[\s\|\u4e28\-\_\:\·\•\(\)\[\]]/g,'')
+    .replace(/[\s\-\_\:\·\•\(\)\[\]]/g,'')
     .replace(/[\uff01-\uff5e]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);})
+    // Equalize frequently confused Unicode characters
+    .replace(/[\u30e1\u30cc\u2716\u2717\u00d7\u4e42]/g,'x')  // メヌ✖✗×乂 → x
+    .replace(/[\u30e2\u6bdb\u30e8]/g,'m')                      // モ毛ヨ → m
+    .replace(/[\u30d0\u722a\u03c0]/g,'b')                      // バ爪π → b
+    .replace(/[\u4e28\uff5c\u007c]/g,'i')                        // 丨｜| → i
     .trim();
 }
 
