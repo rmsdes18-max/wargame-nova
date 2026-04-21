@@ -9,7 +9,16 @@ var ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 var SYSTEM_PROMPT = 'You are an OCR assistant for a gaming guild management app (Throne & Liberty). '
   + 'You analyze screenshots of party compositions and war scoreboards. '
   + 'Extract data accurately, preserving special Unicode characters in player names. '
-  + 'Return ONLY valid JSON, no explanations or preamble.';
+  + 'Return ONLY valid JSON, no explanations or preamble.\n\n'
+  + 'CRITICAL — Frequently confused Japanese/Unicode characters:\n'
+  + 'These characters look visually similar but are DIFFERENT. '
+  + 'When transcribing player names, preserve EXACTLY what you see:\n'
+  + '- メ (katakana me) is NOT the same as ヌ (katakana nu) or ✖ (cross mark)\n'
+  + '- モ (katakana mo) is NOT the same as 毛 (kanji hair) or ヨ (katakana yo)\n'
+  + '- バ (katakana ba) is NOT the same as 爪 (kanji claw)\n'
+  + '- 丨 (cjk radical line) is NOT the same as | (pipe) or l (latin L) or I (latin I)\n'
+  + 'When a name ends with a decorative suffix, copy it character by character. '
+  + 'Do not guess or substitute similar-looking characters — the exact character matters for matching.';
 
 // POST /api/ocr — proxy Anthropic API call (editor+)
 router.post('/', requireAuth, guildContext, requireGuildRole('editor'), async function(req, res) {
