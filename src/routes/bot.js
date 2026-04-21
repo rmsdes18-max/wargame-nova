@@ -133,4 +133,78 @@ router.post('/warlog', requireBotKey, async function(req, res) {
 
 
 
+/* ── GET /api/bot/diag2 — temporary player count diagnostic ── */
+router.get('/diag2', requireBotKey, async function(req, res) {
+  try {
+    var { rows: nova } = await pool.query("SELECT id FROM guilds WHERE LOWER(name) = 'nova' LIMIT 1");
+    if (!nova.length) return res.json({ error: 'Nova not found' });
+    var gid = nova[0].id;
+
+    // 1. Active roster count
+    var { rows: r1 } = await pool.query(
+      'SELECT COUNT(*) as cnt FROM roster_members WHERE guild_id = $1 AND active = true', [gid]
+    );
+
+    // 2. All war player names (last 30 days worth, up to last 10 wars)
+    var { rows: wars } = await pool.query(
+      'SELECT id, opponent, date, parties FROM wars WHERE guild_id = $1 ORDER BY id DESC LIMIT 10', [gid]
+    );
+    var allNames = [];
+    wars.forEach(function(w) {
+      (w.parties || []).forEach(function(p) {
+        (p.members || []).forEach(function(m) {
+          if (m.name) allNames.push({ name: m.name, war: w.opponent + ' ' + w.date });
+        });
+      });
+    });
+    var uniqueNames = {};
+    allNames.forEach(function(e) {
+      if (!uniqueNames[e.name]) uniqueNames[e.name] = [];
+      uniqueNames[e.name].push(e.war);
+    });
+
+    // 3. Roster names for matching
+    var { rows: roster } = await pool.query(
+      'SELECT name FROM roster_members WHERE guild_id = $1 AND active = true', [gid]
+    );
+    var rosterSet = {};
+    roster.forEach(function(r) { rosterSet[r.name.toLowerCase()] = r.name; });
+
+    var notInRoster = [];
+    Object.keys(uniqueNames).forEach(function(n) {
+      if (!rosterSet[n.toLowerCase()]) {
+        notInRoster.push({ name: n, wars: uniqueNames[n] });
+      }
+    });
+
+    // 4. Aliases
+    var { rows: aliases } = await pool.query(
+      'SELECT normalized_key, actual_name FROM aliases WHERE guild_id = $1 AND type = $2', [gid, 'member']
+    );
+
+    // 5. Check which alias keys still appear in recent wars
+    var aliasKeysInWars = [];
+    aliases.forEach(function(a) {
+      if (uniqueNames[a.normalized_key]) {
+        aliasKeysInWars.push({
+          alias: a.normalized_key,
+          canonical: a.actual_name,
+          appearsInWars: uniqueNames[a.normalized_key]
+        });
+      }
+    });
+
+    res.json({
+      rosterActiveCount: +r1[0].cnt,
+      uniqueWarPlayers: Object.keys(uniqueNames).length,
+      totalWarAppearances: allNames.length,
+      warsAnalyzed: wars.length,
+      notInRoster: notInRoster,
+      notInRosterCount: notInRoster.length,
+      aliasKeysStillInWars: aliasKeysInWars,
+      allUniqueNames: Object.keys(uniqueNames)
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;
