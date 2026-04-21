@@ -240,6 +240,20 @@ function renderComparison(){
     });
   });
 
+  // Filter by roster status (default: hide external)
+  var showExternal = localStorage.getItem('wartl_compare_show_external') === 'true';
+  if(!showExternal && _rosterData){
+    var externalNames = {};
+    _rosterData.forEach(function(r){
+      if(r.status === 'external') externalNames[normalizeName(r.name)] = true;
+    });
+    Object.keys(playerData).forEach(function(key){
+      if(externalNames[key] || externalNames[normalizeName(playerData[key].name)]){
+        delete playerData[key];
+      }
+    });
+  }
+
   // Sort by selected stat total descending
   var players = Object.values(playerData).sort(function(a, b){
     var ta = 0, tb = 0;

@@ -2,11 +2,13 @@
 var _membersTab = 'active';
 var _membersEditMode = false;
 var _membersRoleFilter = 'ALL';
+var _membersStatusFilter = 'active'; // active|inactive|external|all
 var _rosterData = [];
 var _memberAliases = {}; // key: normalizedTlgmName → value: inGameName
 
 var _membersMergeSource = null;
 var _membersMergeQueue = []; // collect multiple players to merge into one
+var _membersBulkSelected = {}; // name → true
 
 async function renderMembersPage(){
   var container = document.getElementById('members-list-container');
@@ -97,7 +99,21 @@ function buildPlayersFromWars(){
     });
   });
 
-  return Object.values(playerData).sort(function(a, b){ return b.totalK - a.totalK; });
+  // Attach roster status to each player
+  var rosterByName = {};
+  (_rosterData || []).forEach(function(r) {
+    rosterByName[normalizeName(r.name)] = r;
+  });
+  var result = Object.values(playerData);
+  result.forEach(function(p) {
+    var r = rosterByName[normalizeName(p.name)];
+    if (r) {
+      p.status = r.status || (r.active !== false ? 'active' : 'inactive');
+    } else {
+      p.status = 'unknown';
+    }
+  });
+  return result.sort(function(a, b){ return b.totalK - a.totalK; });
 }
 
 /* ── Render Members V2 ── */
@@ -107,15 +123,36 @@ function renderMembersV2(){
   var players = buildPlayersFromWars();
   window._membersPlayers = players;
 
-  if(countEl) countEl.textContent = players.length + ' players from ' + (_warsCache || []).length + ' wars';
+  // Count by status
+  var statusCounts = { active: 0, inactive: 0, external: 0, unknown: 0, all: players.length };
+  players.forEach(function(p) { statusCounts[p.status] = (statusCounts[p.status] || 0) + 1; });
+
+  if(countEl) countEl.textContent = statusCounts.all + ' players from ' + (_warsCache || []).length + ' wars';
 
   if(!players.length){
     container.innerHTML = EmptyState({icon: '&#9878;', title: 'No players yet', description: 'Create wars via Discord bot (/warlog) to see players here.', padding: '40px 20px'});
     return;
   }
 
+  // Filter by status
+  var filtered = players;
+  if(_membersStatusFilter !== 'all'){
+    filtered = players.filter(function(p){ return p.status === _membersStatusFilter; });
+  }
+
+  // Status tabs
+  var html = '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">';
+  ['active','inactive','external','all'].forEach(function(s){
+    var label = s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1);
+    var cnt = s === 'all' ? statusCounts.all : (statusCounts[s] || 0) + (s === 'active' ? (statusCounts.unknown || 0) : 0);
+    var isActive = _membersStatusFilter === s;
+    var colors = { active: 'var(--heal)', inactive: 'var(--accent)', external: 'var(--text-muted)', all: 'var(--text)' };
+    html += '<button onclick="setMembersStatusFilter(\'' + s + '\')" style="font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer;border:1px solid ' + (isActive ? colors[s] : 'var(--border)') + ';background:' + (isActive ? colors[s] + '15' : 'transparent') + ';color:' + (isActive ? colors[s] : 'var(--text-muted)') + ';font-weight:' + (isActive ? '600' : '400') + ';">' + label + ' (' + cnt + ')</button>';
+  });
+  html += '</div>';
+
   // Search
-  var html = '<input type="text" id="members-search" placeholder="Search player..." oninput="filterMembersV2()" style="width:100%;max-width:300px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 12px;margin-bottom:12px;">';
+  html += '<input type="text" id="members-search" placeholder="Search player..." oninput="filterMembersV2()" style="width:100%;max-width:300px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 12px;margin-bottom:12px;">';
 
   // Merge status bar
   html += '<div id="members-merge-status" style="display:none;padding:8px 14px;background:rgba(212,225,87,.1);border:1px solid rgba(212,225,87,.2);border-radius:8px;margin-bottom:12px;position:sticky;top:0;z-index:50;"></div>';
@@ -144,13 +181,26 @@ function renderMembersV2(){
   html += '<thead><tr><th style="text-align:left;">#</th><th style="text-align:left;">Player</th><th class="num">Wars</th><th class="num">K</th><th class="num">A</th><th class="num">DMG</th><th class="num">H</th></tr></thead>';
   html += '<tbody id="members-tbody">';
 
-  players.forEach(function(p, idx){
+  // Bulk action bar (editor only)
+  if(isEditor){
+    html += '<div id="members-bulk-bar" style="display:none;padding:8px 14px;background:rgba(91,143,255,.1);border:1px solid rgba(91,143,255,.2);border-radius:8px;margin-bottom:12px;position:sticky;top:0;z-index:50;"></div>';
+  }
+
+  filtered.forEach(function(p, idx){
+    var realIdx = players.indexOf(p);
+    var statusColors = { active: 'var(--heal)', inactive: 'var(--accent)', external: 'var(--text-muted)', unknown: 'var(--dps)' };
+    var statusColor = statusColors[p.status] || 'var(--text-muted)';
+
     html += '<tr class="members-row" data-name="' + escHtml(p.name.toLowerCase()) + '">';
     html += '<td style="color:var(--text-muted);font-size:12px;width:30px;">' + (idx + 1) + '</td>';
     html += '<td>';
     html += '<div style="display:flex;align-items:center;gap:6px;">';
-    html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openPlayerProfile(' + idx + ')">' + escHtml(p.name) + '</span>';
-    if(isEditor) html += '<span onclick="memberStartMergeByIdx(' + idx + ')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
+    html += '<span style="font-weight:600;font-size:13px;cursor:pointer;color:var(--text);" onclick="openPlayerProfile(' + realIdx + ')">' + escHtml(p.name) + '</span>';
+    // Status badge (only show if not active to keep clean)
+    if(p.status !== 'active' && p.status !== 'unknown'){
+      html += '<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:' + statusColor + '18;color:' + statusColor + ';text-transform:uppercase;letter-spacing:.03em;">' + p.status + '</span>';
+    }
+    if(isEditor) html += '<span onclick="memberStartMergeByIdx(' + realIdx + ')" style="cursor:pointer;font-size:10px;color:var(--text-muted);opacity:.4;" title="Merge with another player">&#x1F517;</span>';
     // Existing aliases for this player
     var pAliases = [];
     var aliasKeysAll = Object.keys(_memberAliases);
@@ -163,13 +213,21 @@ function renderMembersV2(){
       html += '<span style="font-size:9px;color:var(--heal);background:rgba(76,175,80,.1);padding:1px 6px;border-radius:3px;">' + pAliases.length + ' alias</span>';
     }
     // Add alias button (editor+ only)
-    if(isEditor) html += '<span onclick="toggleAddAlias(' + idx + ')" style="cursor:pointer;font-size:9px;color:var(--text-muted);opacity:.6;padding:1px 4px;" title="Add alias">+ alias</span>';
+    if(isEditor) html += '<span onclick="toggleAddAlias(' + realIdx + ')" style="cursor:pointer;font-size:9px;color:var(--text-muted);opacity:.6;padding:1px 4px;" title="Add alias">+ alias</span>';
+    // Status action (editor only)
+    if(isEditor){
+      var statusOpts = ['active','inactive','external'].filter(function(s){ return s !== p.status; });
+      html += '<select onchange="changeMemberStatus(\'' + escHtml(p.name).replace(/'/g,"\\'") + '\',this.value)" style="font-size:9px;background:var(--bg-hover);border:1px solid var(--border);border-radius:3px;color:var(--text-muted);padding:1px 4px;cursor:pointer;">';
+      html += '<option value="">status</option>';
+      statusOpts.forEach(function(s){ html += '<option value="' + s + '">→ ' + s + '</option>'; });
+      html += '</select>';
+    }
     html += '</div>';
     // Add alias input (hidden by default)
-    html += '<div id="add-alias-' + idx + '" style="display:none;margin-top:4px;padding-left:26px;">';
+    html += '<div id="add-alias-' + realIdx + '" style="display:none;margin-top:4px;padding-left:26px;">';
     html += '<div style="display:flex;align-items:center;gap:6px;">';
-    html += '<input id="alias-input-' + idx + '" type="text" placeholder="Type alias name..." style="width:160px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font-size:11px;outline:none;" onkeydown="if(event.key===\'Enter\')saveManualAliasByIdx(' + idx + ')">';
-    html += '<button onclick="saveManualAliasByIdx(' + idx + ')" class="btn btn-secondary" style="font-size:9px;padding:2px 8px;">Save</button>';
+    html += '<input id="alias-input-' + realIdx + '" type="text" placeholder="Type alias name..." style="width:160px;background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font-size:11px;outline:none;" onkeydown="if(event.key===\'Enter\')saveManualAliasByIdx(' + realIdx + ')">';
+    html += '<button onclick="saveManualAliasByIdx(' + realIdx + ')" class="btn btn-secondary" style="font-size:9px;padding:2px 8px;">Save</button>';
     html += '</div>';
     // Show existing aliases with delete
     if(pAliases.length){
@@ -317,6 +375,30 @@ function removeAliasMember(key){
     localStorage.setItem('nova_compare_merges', JSON.stringify(merges));
     renderMembersV2();
   }).catch(function(e){ Toast.error('Failed: ' + e.message); });
+}
+
+function setMembersStatusFilter(status){
+  _membersStatusFilter = status;
+  renderMembersV2();
+}
+
+function changeMemberStatus(name, newStatus){
+  if(!newStatus) return;
+  apiPatch('/api/roster/' + encodeURIComponent(name), { status: newStatus }).then(function(r){
+    if(!r.ok){ Toast.error('Failed to update status'); return; }
+    // Update local roster data
+    var member = _rosterData.find(function(m){ return m.name === name; });
+    if(member){
+      member.status = newStatus;
+      member.active = (newStatus === 'active');
+    } else {
+      // Player not in roster yet — add them
+      _rosterData.push({ name: name, role: 'DPS', active: newStatus === 'active', status: newStatus });
+      // Also POST to server
+      apiPost('/api/roster', { name: name, role: 'DPS', status: newStatus });
+    }
+    renderMembersV2();
+  }).catch(function(e){ Toast.error(e.message); });
 }
 
 function toggleVariants(id){
