@@ -36,6 +36,36 @@ async function renderMembersPage(){
   }catch(e){ container.innerHTML='<div style="color:var(--dps);">Error: '+e.message+'</div>'; }
 }
 
+/* ── Resolve alias chains to canonical name ── */
+function resolveAliasChain(key){
+  var visited = {};
+  var current = key;
+  // Follow alias keys: if current IS an alias key, jump to its target
+  for(var step = 0; step < 10; step++){
+    if(visited[current]) break; // cycle
+    visited[current] = true;
+    var found = false;
+    var aliasKeys = Object.keys(_memberAliases);
+    for(var i = 0; i < aliasKeys.length; i++){
+      if(aliasKeys[i] === current){
+        current = normalizeName(_memberAliases[aliasKeys[i]]);
+        found = true;
+        break;
+      }
+    }
+    if(!found) break; // no more aliases, current is the root
+  }
+  // Also check reverse: if current matches an alias TARGET, use that alias key
+  // (so all variants of the same player share the same dedup key)
+  var aliasKeys2 = Object.keys(_memberAliases);
+  for(var j = 0; j < aliasKeys2.length; j++){
+    if(normalizeName(_memberAliases[aliasKeys2[j]]) === current){
+      return current; // current IS the canonical target
+    }
+  }
+  return current;
+}
+
 /* ── Build unique player list from all wars ── */
 function buildPlayersFromWars(){
   var wars = _warsCache || [];
@@ -51,19 +81,8 @@ function buildPlayersFromWars(){
         var key = normalizeName(m.name);
         // Check manual merges
         if(merges[m.name]){ key = normalizeName(merges[m.name]); }
-        // Check aliases (both directions)
-        var aliasKeys = Object.keys(_memberAliases);
-        for(var a = 0; a < aliasKeys.length; a++){
-          // m.name is the alias target → use alias key as dedup key
-          if(normalizeName(_memberAliases[aliasKeys[a]]) === normalizeName(m.name)){
-            key = aliasKeys[a]; break;
-          }
-          // m.name IS an alias key → use target's normalized name as dedup key
-          if(aliasKeys[a] === normalizeName(m.name)){
-            key = normalizeName(_memberAliases[aliasKeys[a]]);
-            break;
-          }
-        }
+        // Resolve alias chain to find the canonical (root) name
+        key = resolveAliasChain(key);
         // Fuzzy match existing keys
         if(!playerData[key]){
           var existingKeys = Object.keys(playerData);
