@@ -51,11 +51,17 @@ function buildPlayersFromWars(){
         var key = normalizeName(m.name);
         // Check manual merges
         if(merges[m.name]){ key = normalizeName(merges[m.name]); }
-        // Check aliases
+        // Check aliases (both directions)
         var aliasKeys = Object.keys(_memberAliases);
         for(var a = 0; a < aliasKeys.length; a++){
+          // m.name is the alias target → use alias key as dedup key
           if(normalizeName(_memberAliases[aliasKeys[a]]) === normalizeName(m.name)){
             key = aliasKeys[a]; break;
+          }
+          // m.name IS an alias key → use target's normalized name as dedup key
+          if(aliasKeys[a] === normalizeName(m.name)){
+            key = normalizeName(_memberAliases[aliasKeys[a]]);
+            break;
           }
         }
         // Fuzzy match existing keys
