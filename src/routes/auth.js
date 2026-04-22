@@ -6,8 +6,8 @@ const router     = Router();
 const DISCORD_CLIENT_ID     = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_REDIRECT_URI  = process.env.DISCORD_REDIRECT_URI || '';
-if (!process.env.JWT_SECRET && !process.env.ADMIN_SECRET) throw new Error('JWT_SECRET or ADMIN_SECRET must be set');
-const JWT_SECRET            = process.env.JWT_SECRET || process.env.ADMIN_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_SECRET || '';
+if (!JWT_SECRET) console.error('WARNING: JWT_SECRET not set — auth will not work');
 
 // Simple JWT-like token (base64 encoded JSON + signature)
 function createToken(payload) {

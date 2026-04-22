@@ -4,8 +4,7 @@ var { logActivity } = require('../services/activityLog');
 var { logTokenUsage } = require('../services/tokenLog');
 var router = Router();
 
-if (!process.env.BOT_API_KEY) throw new Error('BOT_API_KEY must be set');
-var BOT_API_KEY = process.env.BOT_API_KEY;
+var BOT_API_KEY = process.env.BOT_API_KEY || '';
 
 /* ── Auth: validate bot key ── */
 function requireBotKey(req, res, next) {
