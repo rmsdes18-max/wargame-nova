@@ -6,7 +6,8 @@ const router     = Router();
 const DISCORD_CLIENT_ID     = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_REDIRECT_URI  = process.env.DISCORD_REDIRECT_URI || '';
-const JWT_SECRET            = process.env.JWT_SECRET || process.env.ADMIN_SECRET || 'nova-jwt-fallback';
+if (!process.env.JWT_SECRET && !process.env.ADMIN_SECRET) throw new Error('JWT_SECRET or ADMIN_SECRET must be set');
+const JWT_SECRET            = process.env.JWT_SECRET || process.env.ADMIN_SECRET;
 
 // Simple JWT-like token (base64 encoded JSON + signature)
 function createToken(payload) {
