@@ -9,6 +9,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Trust reverse proxy (Dokploy nginx) for correct IP in rate limiter
+app.set('trust proxy', 1);
+
 // Security headers (CSP off — inline scripts in HTML)
 app.use(helmet({ contentSecurityPolicy: false }));
 
